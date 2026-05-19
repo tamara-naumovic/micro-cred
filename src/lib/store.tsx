@@ -633,7 +633,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         console.warn("[store] bulkIssue: no matching earners found by email");
         return;
       }
-      const { error } = await supabase.from("credentials").insert(inserts);
+      const { error } = await (supabase.from("credentials") as unknown as { insert: (r: Record<string, unknown>[]) => Promise<{ error: unknown }> }).insert(inserts);
       if (error) console.error("[store] bulkIssue", error);
       refetchAll();
     })();
