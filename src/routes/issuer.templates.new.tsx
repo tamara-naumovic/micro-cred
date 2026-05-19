@@ -50,7 +50,7 @@ function Form() {
       id: crypto.randomUUID(),
       title,
       description,
-      issuerId: activeUser.organizationId ?? "org-fos",
+      issuerId: activeUser.organizationId,
       issuerName: issuerOrg?.name ?? activeUser.organization ?? "Issuer",
       country: issuerOrg?.country ?? "Serbia",
       source,
