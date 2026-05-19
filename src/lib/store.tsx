@@ -4,20 +4,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import {
-  mockApplications,
-  mockAudit,
-  mockCredentials,
-  mockNotifications,
-  mockOrganizations,
-  mockPlatformEvents,
-  mockRegistrations,
-  mockTemplates,
-  mockUsers,
-} from "./mock-data";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LIFECYCLE_STAGES,
   type AppNotification,
@@ -25,19 +16,23 @@ import {
   type CredentialApplication,
   type CredentialStatus,
   type IssuedCredential,
+  type Level,
+  type LearningSource,
   type MicroCredentialTemplate,
   type MockUser,
+  type NonFormalSubcategory,
   type Organization,
+  type Participation,
   type PlatformEvent,
   type RegistrationRequest,
   type RequestStatus,
   type Role,
   type SharingSettings,
+  type TemplateStatus,
   type TimelineEvent,
 } from "./types";
 
-const KEY = "mc-platform-state-v3";
-const ROLE_KEY = "mc-platform-active-user-v3";
+const ROLE_KEY = "mc-active-user-v4";
 
 interface State {
   templates: MicroCredentialTemplate[];
@@ -51,16 +46,16 @@ interface State {
   users: MockUser[];
 }
 
-const initialState: State = {
-  templates: mockTemplates,
-  credentials: mockCredentials,
-  applications: mockApplications,
-  notifications: mockNotifications,
-  organizations: mockOrganizations,
-  registrations: mockRegistrations,
-  audit: mockAudit,
-  events: mockPlatformEvents,
-  users: mockUsers,
+const emptyState: State = {
+  templates: [],
+  credentials: [],
+  applications: [],
+  notifications: [],
+  organizations: [],
+  registrations: [],
+  audit: [],
+  events: [],
+  users: [],
 };
 
 export interface BulkRow {
@@ -76,6 +71,7 @@ export interface BulkRow {
 interface StoreCtx extends State {
   activeUser: MockUser | null;
   setActiveUser: (u: MockUser | null) => void;
+  loading: boolean;
 
   createApplication: (templateId: string) => CredentialApplication | null;
   updateSharing: (credentialId: string, settings: Partial<SharingSettings>) => void;
@@ -104,16 +100,6 @@ interface StoreCtx extends State {
 
 const Ctx = createContext<StoreCtx | null>(null);
 
-function load(): State {
-  if (typeof window === "undefined") return initialState;
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return initialState;
-    return { ...initialState, ...JSON.parse(raw) } as State;
-  } catch {
-    return initialState;
-  }
-}
 function loadUser(): MockUser | null {
   if (typeof window === "undefined") return null;
   try {
@@ -123,61 +109,152 @@ function loadUser(): MockUser | null {
     return null;
   }
 }
-function uuid() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+
+function mapDbRoleToRole(dbRole: string): Role {
+  if (dbRole === "issuer_admin") return "issuer";
+  if (dbRole === "platform_admin") return "admin";
+  if (dbRole === "verifier") return "verifier";
+  return "earner";
 }
+
+// ============ Row mappers ============
+type Row = Record<string, unknown>;
+
+function mapTemplate(r: Row, orgName: Map<string, string>): MicroCredentialTemplate {
+  return {
+    id: r.id as string,
+    title: r.title as string,
+    description: (r.description as string) ?? "",
+    issuerId: r.issuer_id as string,
+    issuerName: orgName.get(r.issuer_id as string) ?? "Unknown issuer",
+    country: (r.country as string) ?? "",
+    source: r.source as LearningSource,
+    subcategory: (r.subcategory as NonFormalSubcategory | null) ?? undefined,
+    outcomes: (r.outcomes as string[]) ?? [],
+    skills: (r.skills as string[]) ?? [],
+    ects: (r.ects as number | null) ?? undefined,
+    level: (r.level as Level) ?? "N/A",
+    assessment: (r.assessment as string) ?? "",
+    participation: (r.participation as Participation) ?? "online",
+    qualityAssurance: (r.quality_assurance as string) ?? "",
+    prerequisites: (r.prerequisites as string) ?? "",
+    supervision: (r.supervision as string) ?? "",
+    stackability: (r.stackability as string) ?? "",
+    furtherInfo: (r.further_info as string | null) ?? undefined,
+    expiryRule: (r.expiry_rule as string | null) ?? undefined,
+    status: (r.status as TemplateStatus) ?? "draft",
+    version: (r.version as string) ?? "1.0",
+  };
+}
+
+function mapCredential(r: Row): IssuedCredential {
+  return {
+    id: r.id as string,
+    templateId: r.template_id as string,
+    title: r.title as string,
+    earnerId: r.earner_id as string,
+    earnerName: r.earner_name as string,
+    issuerId: r.issuer_id as string,
+    issuerName: r.issuer_name as string,
+    issuedAt: r.issued_at as string,
+    expiresAt: (r.expires_at as string | null) ?? undefined,
+    status: r.status as CredentialStatus,
+    source: r.source as LearningSource,
+    subcategory: (r.subcategory as NonFormalSubcategory | null) ?? undefined,
+    level: (r.level as Level) ?? "N/A",
+    ects: (r.ects as number | null) ?? undefined,
+    skills: (r.skills as string[]) ?? [],
+    grade: (r.grade as string | null) ?? undefined,
+    verificationLink: `/verify/${r.id as string}`,
+    shareToken: (r.share_token as string | null) ?? undefined,
+    sharing: {
+      isPublic: (r.share_is_public as boolean) ?? true,
+      showGrade: (r.share_show_grade as boolean) ?? true,
+      showSource: (r.share_show_source as boolean) ?? true,
+      showExpiry: (r.share_show_expiry as boolean) ?? true,
+      showSkills: (r.share_show_skills as boolean) ?? true,
+    },
+    blockchain: {
+      did: (r.ebsi_did as string | null) ?? undefined,
+      vcId: (r.ebsi_vc_id as string | null) ?? undefined,
+      txHash: (r.ebsi_tx_hash as string | null) ?? undefined,
+      ebsiStatus: (r.ebsi_status as "not_anchored" | "pending" | "anchored") ?? "not_anchored",
+    },
+    revocationReason: (r.revocation_reason as string | null) ?? undefined,
+    renewedFromId: (r.renewed_from_id as string | null) ?? undefined,
+  };
+}
+
+function mapNotification(r: Row): AppNotification {
+  return {
+    id: r.id as string,
+    forRole: r.for_role
+      ? mapDbRoleToRole(r.for_role as string)
+      : ("earner" as Role),
+    forUserId: (r.for_user_id as string | null) ?? undefined,
+    title: r.title as string,
+    body: r.body as string,
+    createdAt: r.created_at as string,
+    read: (r.read as boolean) ?? false,
+    link: (r.link as string | null) ?? undefined,
+  };
+}
+
+function mapOrg(r: Row): Organization {
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    type: "issuer",
+    country: r.country as string,
+    about: (r.about as string | null) ?? undefined,
+    website: (r.website as string | null) ?? undefined,
+    accreditations: (r.accreditations as string[]) ?? [],
+    registeredAt: r.registered_at as string,
+  };
+}
+
+function mapRegistration(r: Row): RegistrationRequest {
+  return {
+    id: r.id as string,
+    type: "issuer",
+    organizationName: r.organization_name as string,
+    contactName: r.contact_name as string,
+    contactEmail: r.contact_email as string,
+    country: r.country as string,
+    submittedAt: r.submitted_at as string,
+    status: (r.status as "pending" | "approved" | "rejected") ?? "pending",
+  };
+}
+
+function mapAudit(r: Row): AuditEvent {
+  return {
+    id: r.id as string,
+    at: r.created_at as string,
+    actor: (r.actor_name as string) ?? "system",
+    action: r.action as string,
+    target: r.target as string,
+  };
+}
+
+function mapEvent(r: Row): PlatformEvent {
+  return {
+    id: r.id as string,
+    at: r.created_at as string,
+    type: r.type as PlatformEvent["type"],
+    description: r.description as string,
+  };
+}
+
 function nowISO() {
   return new Date().toISOString();
 }
-function pushNotification(state: State, n: Omit<AppNotification, "id" | "createdAt" | "read">): State {
-  return {
-    ...state,
-    notifications: [
-      { ...n, id: `n-${uuid().slice(0, 8)}`, createdAt: nowISO(), read: false },
-      ...state.notifications,
-    ],
-  };
-}
-function pushAudit(state: State, a: Omit<AuditEvent, "id" | "at">): State {
-  return { ...state, audit: [{ ...a, id: `a-${uuid().slice(0, 8)}`, at: nowISO() }, ...state.audit] };
-}
-function pushEvent(state: State, e: Omit<PlatformEvent, "id" | "at">): State {
-  return { ...state, events: [{ ...e, id: `p-${uuid().slice(0, 8)}`, at: nowISO() }, ...state.events] };
-}
-function addTimeline(app: CredentialApplication, ev: Omit<TimelineEvent, "id">): CredentialApplication {
-  return {
-    ...app,
-    updatedAt: nowISO(),
-    timeline: [...app.timeline, { ...ev, id: `t-${uuid().slice(0, 6)}` }],
-  };
-}
-
-const defaultSharing: SharingSettings = {
-  isPublic: true,
-  showGrade: true,
-  showSource: true,
-  showExpiry: true,
-  showSkills: true,
-};
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<State>(initialState);
+  const [state, setState] = useState<State>(emptyState);
   const [activeUser, setActiveUserState] = useState<MockUser | null>(null);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setState(load());
-    setActiveUserState(loadUser());
-    setHydrated(true);
-  }, []);
-  useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }, [state, hydrated]);
+  const [loading, setLoading] = useState(true);
+  const activeUserRef = useRef<MockUser | null>(null);
+  activeUserRef.current = activeUser;
 
   const setActiveUser = useCallback((u: MockUser | null) => {
     setActiveUserState(u);
@@ -187,307 +264,477 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const createApplication: StoreCtx["createApplication"] = useCallback(
-    (templateId) => {
-      let created: CredentialApplication | null = null;
-      setState((s) => {
-        const tpl = s.templates.find((t) => t.id === templateId);
-        const earner = activeUser;
-        if (!tpl || !earner) return s;
-        const app: CredentialApplication = {
-          id: `app-${uuid().slice(0, 6)}`,
-          earnerId: earner.id,
-          earnerName: earner.name,
-          templateId: tpl.id,
-          templateTitle: tpl.title,
-          issuerId: tpl.issuerId,
-          issuerName: tpl.issuerName,
-          status: "submitted",
-          reviewerComments: [],
-          timeline: [
-            { id: `t-${uuid().slice(0, 6)}`, at: nowISO(), actor: earner.name, action: "Application submitted" },
-          ],
-          createdAt: nowISO(),
-          updatedAt: nowISO(),
-        };
-        created = app;
-        let next: State = { ...s, applications: [app, ...s.applications] };
-        next = pushNotification(next, {
-          forRole: "issuer",
-          title: "New application submitted",
-          body: `${earner.name} — ${tpl.title}`,
-          link: "/issuer/requests",
-        });
-        next = pushAudit(next, { actor: earner.name, action: "submitted application", target: app.id });
-        next = pushEvent(next, { type: "application", description: `${earner.name} applied for ${tpl.title}` });
-        return next;
-      });
-      return created;
-    },
-    [activeUser],
-  );
-
-  const updateSharing: StoreCtx["updateSharing"] = useCallback((credentialId, settings) => {
-    setState((s) => ({
-      ...s,
-      credentials: s.credentials.map((c) =>
-        c.id === credentialId ? { ...c, sharing: { ...c.sharing, ...settings } } : c,
-      ),
-    }));
+  useEffect(() => {
+    setActiveUserState(loadUser());
   }, []);
 
-  const buildCredential = useCallback(
+  // ============ Loaders ============
+  const refetchAll = useCallback(async () => {
+    try {
+      const [
+        tplRes,
+        appRes,
+        credRes,
+        notifRes,
+        orgRes,
+        regRes,
+        auditRes,
+        eventRes,
+        profilesRes,
+        rolesRes,
+        tlRes,
+        commentsRes,
+      ] = await Promise.all([
+        supabase.from("templates").select("*"),
+        supabase.from("applications").select("*"),
+        supabase.from("credentials").select("*"),
+        supabase.from("notifications").select("*").order("created_at", { ascending: false }),
+        supabase.from("organizations").select("*"),
+        supabase.from("registration_requests").select("*"),
+        supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(200),
+        supabase.from("platform_events").select("*").order("created_at", { ascending: false }).limit(200),
+        supabase.from("profiles").select("*"),
+        supabase.from("user_roles").select("*"),
+        supabase.from("application_timeline").select("*").order("created_at", { ascending: true }),
+        supabase.from("application_comments").select("*").order("created_at", { ascending: true }),
+      ]);
+
+      const orgs = (orgRes.data ?? []).map(mapOrg);
+      const orgName = new Map(orgs.map((o) => [o.id, o.name]));
+
+      const templates = (tplRes.data ?? []).map((r) => mapTemplate(r as Row, orgName));
+      const templateById = new Map(templates.map((t) => [t.id, t]));
+
+      const profiles = (profilesRes.data ?? []) as Row[];
+      const profileById = new Map(profiles.map((p) => [p.id as string, p]));
+      const roles = (rolesRes.data ?? []) as Row[];
+      const rolesByUser = new Map<string, Row[]>();
+      for (const r of roles) {
+        const uid = r.user_id as string;
+        const arr = rolesByUser.get(uid) ?? [];
+        arr.push(r);
+        rolesByUser.set(uid, arr);
+      }
+      const users: MockUser[] = profiles.map((p) => {
+        const userRoles = rolesByUser.get(p.id as string) ?? [];
+        const primary = userRoles[0];
+        return {
+          id: p.id as string,
+          name: (p.display_name as string) || ((p.email as string)?.split("@")[0] ?? "User"),
+          email: (p.email as string) ?? "",
+          role: primary ? mapDbRoleToRole(primary.role as string) : "earner",
+          organizationId: (primary?.organization_id as string | undefined) ?? undefined,
+          organization: primary?.organization_id
+            ? orgName.get(primary.organization_id as string)
+            : undefined,
+          studentId: (p.student_id as string | null) ?? undefined,
+        };
+      });
+
+      // Group timeline + comments by application
+      const timelineByApp = new Map<string, TimelineEvent[]>();
+      for (const t of tlRes.data ?? []) {
+        const tt = t as Row;
+        const list = timelineByApp.get(tt.application_id as string) ?? [];
+        list.push({
+          id: tt.id as string,
+          at: tt.created_at as string,
+          actor: (tt.actor_name as string) ?? "system",
+          action: tt.action as string,
+          detail: (tt.detail as string | null) ?? undefined,
+        });
+        timelineByApp.set(tt.application_id as string, list);
+      }
+      const commentsByApp = new Map<string, { author: string; at: string; text: string }[]>();
+      for (const c of commentsRes.data ?? []) {
+        const cc = c as Row;
+        const list = commentsByApp.get(cc.application_id as string) ?? [];
+        list.push({
+          author: (cc.author_name as string) ?? "anonymous",
+          at: cc.created_at as string,
+          text: cc.text as string,
+        });
+        commentsByApp.set(cc.application_id as string, list);
+      }
+
+      const applications: CredentialApplication[] = (appRes.data ?? []).map((r) => {
+        const rr = r as Row;
+        const tpl = templateById.get(rr.template_id as string);
+        const earnerProfile = profileById.get(rr.earner_id as string);
+        return {
+          id: rr.id as string,
+          earnerId: rr.earner_id as string,
+          earnerName:
+            (earnerProfile?.display_name as string) ||
+            ((earnerProfile?.email as string)?.split("@")[0] ?? "Earner"),
+          templateId: rr.template_id as string,
+          templateTitle: tpl?.title ?? "Unknown template",
+          issuerId: rr.issuer_id as string,
+          issuerName: orgName.get(rr.issuer_id as string) ?? "Unknown issuer",
+          status: rr.status as RequestStatus,
+          reviewerComments: commentsByApp.get(rr.id as string) ?? [],
+          timeline: timelineByApp.get(rr.id as string) ?? [],
+          createdAt: rr.created_at as string,
+          updatedAt: rr.updated_at as string,
+          resultingCredentialId: (rr.resulting_credential_id as string | null) ?? undefined,
+        };
+      });
+
+      const credentials = (credRes.data ?? []).map((r) => mapCredential(r as Row));
+      const notifications = (notifRes.data ?? []).map((r) => mapNotification(r as Row));
+      const registrations = (regRes.data ?? []).map((r) => mapRegistration(r as Row));
+      const audit = (auditRes.data ?? []).map((r) => mapAudit(r as Row));
+      const events = (eventRes.data ?? []).map((r) => mapEvent(r as Row));
+
+      setState({
+        templates,
+        credentials,
+        applications,
+        notifications,
+        organizations: orgs,
+        registrations,
+        audit,
+        events,
+        users,
+      });
+    } catch (e) {
+      console.error("[store] refetchAll failed", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial load + realtime
+  useEffect(() => {
+    refetchAll();
+
+    const channel = supabase
+      .channel("store-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "templates" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "applications" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "credentials" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "application_timeline" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "application_comments" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "registration_requests" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "organizations" }, () => refetchAll())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetchAll]);
+
+  // Refetch whenever the active user changes (RLS gives different rows)
+  useEffect(() => {
+    if (activeUser) refetchAll();
+  }, [activeUser, refetchAll]);
+
+  // ============ Mutations (fire-and-forget, realtime updates UI) ============
+
+  const createApplication: StoreCtx["createApplication"] = useCallback((templateId) => {
+    const earner = activeUserRef.current;
+    const tpl = state.templates.find((t) => t.id === templateId);
+    if (!earner || !tpl) return null;
+    (async () => {
+      const { data, error } = await supabase
+        .from("applications")
+        .insert({
+          template_id: tpl.id,
+          issuer_id: tpl.issuerId,
+          earner_id: earner.id,
+          status: "submitted",
+        })
+        .select()
+        .single();
+      if (error) {
+        console.error("[store] createApplication", error);
+        return;
+      }
+      await supabase.from("application_timeline").insert({
+        application_id: data.id,
+        actor_name: earner.name,
+        action: "Application submitted",
+      });
+      refetchAll();
+    })();
+    // Optimistic placeholder so caller can navigate
+    return {
+      id: "pending",
+      earnerId: earner.id,
+      earnerName: earner.name,
+      templateId: tpl.id,
+      templateTitle: tpl.title,
+      issuerId: tpl.issuerId,
+      issuerName: tpl.issuerName,
+      status: "submitted",
+      reviewerComments: [],
+      timeline: [],
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+    };
+  }, [state.templates, refetchAll]);
+
+  const updateSharing: StoreCtx["updateSharing"] = useCallback((credentialId, settings) => {
+    const patch: Record<string, unknown> = {};
+    if (settings.isPublic !== undefined) patch.share_is_public = settings.isPublic;
+    if (settings.showGrade !== undefined) patch.share_show_grade = settings.showGrade;
+    if (settings.showSource !== undefined) patch.share_show_source = settings.showSource;
+    if (settings.showExpiry !== undefined) patch.share_show_expiry = settings.showExpiry;
+    if (settings.showSkills !== undefined) patch.share_show_skills = settings.showSkills;
+    supabase.from("credentials").update(patch).eq("id", credentialId).then(({ error }) => {
+      if (error) console.error("[store] updateSharing", error);
+    });
+  }, []);
+
+  const buildCredentialInsert = useCallback(
     (
       tpl: MicroCredentialTemplate,
       earner: { id: string; name: string },
       grade?: string,
-      expiresAt?: string,
+      expiryDate?: string,
       issuedAt?: string,
-    ): IssuedCredential => {
-      const id = `cred-${uuid().slice(0, 6)}`;
-      return {
-        id,
-        templateId: tpl.id,
-        title: tpl.title,
-        earnerId: earner.id,
-        earnerName: earner.name,
-        issuerId: tpl.issuerId,
-        issuerName: tpl.issuerName,
-        issuedAt: issuedAt ?? nowISO(),
-        expiresAt,
-        status: "active" as CredentialStatus,
-        source: tpl.source,
-        subcategory: tpl.subcategory,
-        level: tpl.level,
-        ects: tpl.ects,
-        skills: tpl.skills,
-        grade,
-        verificationLink: `/verify/${id}`,
-        shareToken: `share-${uuid().slice(0, 8)}`,
-        sharing: defaultSharing,
-        blockchain: { ebsiStatus: "not_anchored" },
-      };
-    },
+    ): Record<string, unknown> => ({
+      template_id: tpl.id,
+      title: tpl.title,
+      earner_id: earner.id,
+      earner_name: earner.name,
+      issuer_id: tpl.issuerId,
+      issuer_name: tpl.issuerName,
+      issued_at: issuedAt ?? nowISO(),
+      expires_at: expiryDate ?? null,
+      status: "active",
+      source: tpl.source,
+      subcategory: tpl.subcategory ?? null,
+      level: tpl.level,
+      ects: tpl.ects ?? null,
+      skills: tpl.skills,
+      grade: grade ?? null,
+    }),
     [],
   );
 
-  const issueFromApplication: StoreCtx["issueFromApplication"] = useCallback(
-    (appId) => {
-      let issued: IssuedCredential | null = null;
-      setState((s) => {
-        const app = s.applications.find((a) => a.id === appId);
-        if (!app) return s;
-        const tpl = s.templates.find((t) => t.id === app.templateId);
-        if (!tpl) return s;
-        const cred = buildCredential(tpl, { id: app.earnerId, name: app.earnerName });
-        issued = cred;
-        const updatedApp = addTimeline(
-          { ...app, status: "issued", resultingCredentialId: cred.id },
-          { at: nowISO(), actor: activeUser?.name ?? "Issuer", action: "Credential issued" },
-        );
-        let next: State = {
-          ...s,
-          credentials: [cred, ...s.credentials],
-          applications: s.applications.map((a) => (a.id === appId ? updatedApp : a)),
-        };
-        next = pushNotification(next, {
-          forRole: "earner",
-          forUserId: app.earnerId,
-          title: "Credential issued",
-          body: `${tpl.title} is now in your wallet.`,
-          link: "/earner/credentials",
-        });
-        next = pushAudit(next, { actor: activeUser?.name ?? "Issuer", action: "issued credential", target: cred.id });
-        next = pushEvent(next, { type: "issuance", description: `Credential ${cred.id} issued to ${app.earnerName}` });
-        return next;
-      });
-      return issued;
-    },
-    [activeUser, buildCredential],
-  );
-
-  const advanceApplicationStatus: StoreCtx["advanceApplicationStatus"] = useCallback(
-    (appId) => {
-      let updated: CredentialApplication | null = null;
-      const app = state.applications.find((a) => a.id === appId);
-      if (!app) return null;
-      const idx = LIFECYCLE_STAGES.indexOf(app.status);
-      if (idx < 0 || idx >= LIFECYCLE_STAGES.length - 1) return null;
-      const next = LIFECYCLE_STAGES[idx + 1];
-      if (next === "issued") {
-        issueFromApplication(appId);
-        return state.applications.find((a) => a.id === appId) ?? null;
+  const issueFromApplication: StoreCtx["issueFromApplication"] = useCallback((appId) => {
+    const app = state.applications.find((a) => a.id === appId);
+    if (!app) return null;
+    const tpl = state.templates.find((t) => t.id === app.templateId);
+    if (!tpl) return null;
+    (async () => {
+      const { data: cred, error } = await supabase
+        .from("credentials")
+        .insert(buildCredentialInsert(tpl, { id: app.earnerId, name: app.earnerName }))
+        .select()
+        .single();
+      if (error) {
+        console.error("[store] issueFromApplication", error);
+        return;
       }
-      setState((s) => {
-        const a = s.applications.find((x) => x.id === appId);
-        if (!a) return s;
-        const u = addTimeline(
-          { ...a, status: next as RequestStatus },
-          { at: nowISO(), actor: activeUser?.name ?? "Issuer", action: `Moved to ${next.replace(/_/g, " ")}` },
-        );
-        updated = u;
-        return { ...s, applications: s.applications.map((x) => (x.id === appId ? u : x)) };
+      await supabase
+        .from("applications")
+        .update({ status: "issued", resulting_credential_id: cred.id })
+        .eq("id", appId);
+      await supabase.from("application_timeline").insert({
+        application_id: appId,
+        actor_name: activeUserRef.current?.name ?? "Issuer",
+        action: "Credential issued",
       });
-      return updated;
-    },
-    [state.applications, activeUser, issueFromApplication],
-  );
+      refetchAll();
+    })();
+    return null;
+  }, [state.applications, state.templates, buildCredentialInsert, refetchAll]);
+
+  const advanceApplicationStatus: StoreCtx["advanceApplicationStatus"] = useCallback((appId) => {
+    const app = state.applications.find((a) => a.id === appId);
+    if (!app) return null;
+    const idx = LIFECYCLE_STAGES.indexOf(app.status);
+    if (idx < 0 || idx >= LIFECYCLE_STAGES.length - 1) return null;
+    const next = LIFECYCLE_STAGES[idx + 1];
+    if (next === "issued") {
+      issueFromApplication(appId);
+      return app;
+    }
+    (async () => {
+      await supabase.from("applications").update({ status: next }).eq("id", appId);
+      await supabase.from("application_timeline").insert({
+        application_id: appId,
+        actor_name: activeUserRef.current?.name ?? "Issuer",
+        action: `Moved to ${next.replace(/_/g, " ")}`,
+      });
+      refetchAll();
+    })();
+    return { ...app, status: next };
+  }, [state.applications, issueFromApplication, refetchAll]);
 
   const rejectApplication: StoreCtx["rejectApplication"] = useCallback((appId, reason) => {
-    setState((s) => {
-      const app = s.applications.find((a) => a.id === appId);
-      if (!app) return s;
-      const updated = addTimeline(
-        { ...app, status: "rejected" },
-        { at: nowISO(), actor: activeUser?.name ?? "Issuer", action: "Application rejected", detail: reason },
-      );
-      let next: State = { ...s, applications: s.applications.map((a) => (a.id === appId ? updated : a)) };
-      next = pushNotification(next, {
-        forRole: "earner",
-        forUserId: app.earnerId,
-        title: "Application rejected",
-        body: `${app.templateTitle}: ${reason}`,
-        link: "/earner/applications",
+    (async () => {
+      await supabase.from("applications").update({ status: "rejected" }).eq("id", appId);
+      await supabase.from("application_timeline").insert({
+        application_id: appId,
+        actor_name: activeUserRef.current?.name ?? "Issuer",
+        action: "Application rejected",
+        detail: reason,
       });
-      return next;
-    });
-  }, [activeUser]);
+      refetchAll();
+    })();
+  }, [refetchAll]);
 
   const addReviewerComment: StoreCtx["addReviewerComment"] = useCallback((appId, text) => {
-    setState((s) => ({
-      ...s,
-      applications: s.applications.map((a) =>
-        a.id === appId
-          ? { ...a, reviewerComments: [...a.reviewerComments, { author: activeUser?.name ?? "Issuer", at: nowISO(), text }] }
-          : a,
-      ),
-    }));
-  }, [activeUser]);
-
-  const directIssue: StoreCtx["directIssue"] = useCallback(
-    (templateId, recipients, issueDate) => {
-      const issued: IssuedCredential[] = [];
-      setState((s) => {
-        const tpl = s.templates.find((t) => t.id === templateId);
-        if (!tpl) return s;
-        const newCreds = recipients
-          .map((r) => {
-            const u = s.users.find((x) => x.id === r.earnerId);
-            if (!u) return null;
-            return buildCredential(tpl, { id: u.id, name: u.name }, r.grade, r.expiryDate, issueDate);
-          })
-          .filter((c): c is IssuedCredential => !!c);
-        issued.push(...newCreds);
-        let next: State = { ...s, credentials: [...newCreds, ...s.credentials] };
-        for (const c of newCreds) {
-          next = pushNotification(next, {
-            forRole: "earner",
-            forUserId: c.earnerId,
-            title: "Credential issued",
-            body: `${c.title} is now in your wallet.`,
-            link: "/earner/credentials",
-          });
-        }
-        next = pushEvent(next, { type: "issuance", description: `${newCreds.length} credential(s) issued directly` });
-        return next;
+    (async () => {
+      await supabase.from("application_comments").insert({
+        application_id: appId,
+        author_id: activeUserRef.current?.id ?? null,
+        author_name: activeUserRef.current?.name ?? "Issuer",
+        text,
       });
-      return issued;
-    },
-    [buildCredential],
-  );
+      refetchAll();
+    })();
+  }, [refetchAll]);
 
-  const bulkIssue: StoreCtx["bulkIssue"] = useCallback(
-    (templateId, rows) => {
-      const issued: IssuedCredential[] = [];
-      setState((s) => {
-        const tpl = s.templates.find((t) => t.id === templateId);
-        if (!tpl) return s;
-        const newCreds = rows.map((r) => {
-          const earnerId = `u-bulk-${uuid().slice(0, 6)}`;
-          return buildCredential(tpl, { id: earnerId, name: `${r.firstName} ${r.lastName}` }, r.grade, r.expiryDate);
-        });
-        issued.push(...newCreds);
-        let next: State = { ...s, credentials: [...newCreds, ...s.credentials] };
-        next = pushEvent(next, { type: "issuance", description: `Bulk issuance: ${newCreds.length} credentials` });
-        return next;
-      });
-      return issued;
-    },
-    [buildCredential],
-  );
+  const directIssue: StoreCtx["directIssue"] = useCallback((templateId, recipients, issueDate) => {
+    const tpl = state.templates.find((t) => t.id === templateId);
+    if (!tpl) return [];
+    (async () => {
+      const rows = recipients
+        .map((r) => {
+          const u = state.users.find((x) => x.id === r.earnerId);
+          if (!u) return null;
+          return buildCredentialInsert(tpl, { id: u.id, name: u.name }, r.grade, r.expiryDate, issueDate);
+        })
+        .filter((x): x is Record<string, unknown> => !!x);
+      if (rows.length === 0) return;
+      const { error } = await supabase.from("credentials").insert(rows);
+      if (error) console.error("[store] directIssue", error);
+      refetchAll();
+    })();
+    return [];
+  }, [state.templates, state.users, buildCredentialInsert, refetchAll]);
+
+  const bulkIssue: StoreCtx["bulkIssue"] = useCallback((templateId, rows) => {
+    // Bulk issuance to non-existent earners is not supported with real auth.
+    // We attempt to match by email; unmatched rows are skipped.
+    const tpl = state.templates.find((t) => t.id === templateId);
+    if (!tpl) return [];
+    (async () => {
+      const inserts: Record<string, unknown>[] = [];
+      for (const r of rows) {
+        const u = state.users.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
+        if (!u) continue;
+        inserts.push(
+          buildCredentialInsert(
+            tpl,
+            { id: u.id, name: `${r.firstName} ${r.lastName}` },
+            r.grade,
+            r.expiryDate,
+          ),
+        );
+      }
+      if (inserts.length === 0) {
+        console.warn("[store] bulkIssue: no matching earners found by email");
+        return;
+      }
+      const { error } = await supabase.from("credentials").insert(inserts);
+      if (error) console.error("[store] bulkIssue", error);
+      refetchAll();
+    })();
+    return [];
+  }, [state.templates, state.users, buildCredentialInsert, refetchAll]);
 
   const revokeCredential: StoreCtx["revokeCredential"] = useCallback((id, reason) => {
-    setState((s) => {
-      let next: State = {
-        ...s,
-        credentials: s.credentials.map((c) =>
-          c.id === id ? { ...c, status: "revoked", revocationReason: reason } : c,
-        ),
-      };
-      const cred = s.credentials.find((c) => c.id === id);
-      if (cred) {
-        next = pushNotification(next, {
-          forRole: "earner",
-          forUserId: cred.earnerId,
-          title: "Credential revoked",
-          body: `${cred.title}: ${reason}`,
-          link: "/earner/credentials",
-        });
-        next = pushEvent(next, { type: "revocation", description: `Credential ${id} revoked` });
-      }
-      return next;
-    });
-  }, []);
+    (async () => {
+      await supabase
+        .from("credentials")
+        .update({ status: "revoked", revocation_reason: reason })
+        .eq("id", id);
+      refetchAll();
+    })();
+  }, [refetchAll]);
 
   const upsertTemplate: StoreCtx["upsertTemplate"] = useCallback((t) => {
-    setState((s) => {
-      const exists = s.templates.some((x) => x.id === t.id);
-      return {
-        ...s,
-        templates: exists ? s.templates.map((x) => (x.id === t.id ? t : x)) : [t, ...s.templates],
+    (async () => {
+      const row = {
+        id: t.id,
+        title: t.title,
+        description: t.description,
+        issuer_id: t.issuerId,
+        country: t.country,
+        source: t.source,
+        subcategory: t.subcategory ?? null,
+        outcomes: t.outcomes,
+        skills: t.skills,
+        ects: t.ects ?? null,
+        level: t.level,
+        assessment: t.assessment,
+        participation: t.participation,
+        quality_assurance: t.qualityAssurance,
+        prerequisites: t.prerequisites,
+        supervision: t.supervision,
+        stackability: t.stackability,
+        further_info: t.furtherInfo ?? null,
+        expiry_rule: t.expiryRule ?? null,
+        status: t.status,
+        version: t.version,
+        created_by: activeUserRef.current?.id ?? null,
       };
-    });
-  }, []);
+      const { error } = await supabase.from("templates").upsert(row);
+      if (error) console.error("[store] upsertTemplate", error);
+      refetchAll();
+    })();
+  }, [refetchAll]);
 
   const archiveTemplate: StoreCtx["archiveTemplate"] = useCallback((id) => {
-    setState((s) => ({
-      ...s,
-      templates: s.templates.map((t) => (t.id === id ? { ...t, status: "archived" } : t)),
-    }));
-  }, []);
+    (async () => {
+      await supabase.from("templates").update({ status: "archived" }).eq("id", id);
+      refetchAll();
+    })();
+  }, [refetchAll]);
 
   const approveRegistration: StoreCtx["approveRegistration"] = useCallback((id) => {
-    setState((s) => ({
-      ...s,
-      registrations: s.registrations.map((r) => (r.id === id ? { ...r, status: "approved" } : r)),
-    }));
-  }, []);
-  const rejectRegistration: StoreCtx["rejectRegistration"] = useCallback((id) => {
-    setState((s) => ({
-      ...s,
-      registrations: s.registrations.map((r) => (r.id === id ? { ...r, status: "rejected" } : r)),
-    }));
-  }, []);
+    (async () => {
+      await supabase
+        .from("registration_requests")
+        .update({
+          status: "approved",
+          reviewed_by: activeUserRef.current?.id ?? null,
+          reviewed_at: nowISO(),
+        })
+        .eq("id", id);
+      refetchAll();
+    })();
+  }, [refetchAll]);
 
-  const markAllRead: StoreCtx["markAllRead"] = useCallback((role, userId) => {
-    setState((s) => ({
-      ...s,
-      notifications: s.notifications.map((n) =>
-        n.forRole === role && (!n.forUserId || n.forUserId === userId) ? { ...n, read: true } : n,
-      ),
-    }));
-  }, []);
+  const rejectRegistration: StoreCtx["rejectRegistration"] = useCallback((id) => {
+    (async () => {
+      await supabase
+        .from("registration_requests")
+        .update({
+          status: "rejected",
+          reviewed_by: activeUserRef.current?.id ?? null,
+          reviewed_at: nowISO(),
+        })
+        .eq("id", id);
+      refetchAll();
+    })();
+  }, [refetchAll]);
+
+  const markAllRead: StoreCtx["markAllRead"] = useCallback((_role, userId) => {
+    (async () => {
+      const uid = userId ?? activeUserRef.current?.id;
+      if (!uid) return;
+      await supabase.from("notifications").update({ read: true }).eq("for_user_id", uid);
+      refetchAll();
+    })();
+  }, [refetchAll]);
 
   const reset = useCallback(() => {
-    if (typeof window !== "undefined") localStorage.removeItem(KEY);
-    setState(initialState);
-  }, []);
+    refetchAll();
+  }, [refetchAll]);
 
   const value = useMemo<StoreCtx>(
     () => ({
       ...state,
       activeUser,
       setActiveUser,
+      loading,
       createApplication,
       updateSharing,
       advanceApplicationStatus,
@@ -505,7 +752,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       reset,
     }),
     [
-      state, activeUser, setActiveUser, createApplication, updateSharing,
+      state, activeUser, setActiveUser, loading, createApplication, updateSharing,
       advanceApplicationStatus, rejectApplication, addReviewerComment,
       issueFromApplication, directIssue, bulkIssue, revokeCredential,
       upsertTemplate, archiveTemplate, approveRegistration, rejectRegistration,
@@ -521,5 +768,3 @@ export function useStore() {
   if (!ctx) throw new Error("useStore must be used within StoreProvider");
   return ctx;
 }
-
-export { mockUsers };
