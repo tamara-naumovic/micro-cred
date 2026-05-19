@@ -1,60 +1,44 @@
-## Analiza polja za izdavanje MK (Direct Issuance)
 
-EU standard nalaže 11 obaveznih + 5 opcionih elemenata na svakoj mikro-kredencijali. U trenutnom toku **issuer prvo bira Template** (koji nosi većinu metapodataka) i zatim **odabira primaoca**. Zato neka polja **dolaze iz Template-a**, a neka se moraju **uneti po izdavanju** (per-recipient).
+## Cilj
+Skloniti "Demo" tab sa login stranice i mock personas, i napraviti 4 prava korisnika u bazi — po jednog za svaku rolu.
 
-### Mandatory elements — mapiranje
+## Test nalozi
 
-| # | EU element | Izvor | Status u aplikaciji |
-|---|---|---|---|
-| 1 | Identification of the learner | Per-issuance (odabir earnera) | ✅ već postoji (checkbox lista earnera) |
-| 2 | Title of the micro-credential | Template (`title`) | ✅ |
-| 3 | Country/Region of the issuer | Template (`country`, naslijeđuje od organizacije) | ✅ |
-| 4 | Awarding body(ies) | Template (`issuerName` / `issuerId`) | ✅ |
-| 5 | Date of issuing | Auto na izdavanju (`issuedAt = now()`) | ✅ automatski |
-| 6 | Learning outcomes | Template (`outcomes[]`) | ✅ |
-| 7 | Notional workload (ECTS) | Template (`ects`) | ✅ |
-| 8 | Level (EQF/QF-EHEA) | Template (`level`) | ✅ |
-| 9 | Type of assessment | Template (`assessment`) | ✅ |
-| 10 | Form of participation | Template (`participation`) | ✅ |
-| 11 | Quality assurance | Template (`qualityAssurance`) | ✅ |
+Svi nalozi koriste lozinku: **`Test1234`**
 
-➡️ **Svih 11 obaveznih** je pokriveno — 10 dolazi iz Template-a, 1 (learner) + datum se postavljaju na izdavanju. **Ne treba dodavati nova obavezna polja u Direct Issuance formu.**
+| Rola | Email | Lozinka |
+|---|---|---|
+| Earner (student) | `earner@test.com` | `Test1234` |
+| Issuer (izdavalac) | `issuer@test.com` | `Test1234` |
+| Verifier (poslodavac) | `verifier@test.com` | `Test1234` |
+| Admin (platforma) | `admin@test.com` | `Test1234` |
 
-### Optional elements — mapiranje
+## Koraci
 
-| # | EU element | Izvor | Status |
-|---|---|---|---|
-| 1 | Prerequisites | Template (`prerequisites`) | ✅ |
-| 2 | Supervision & identity verification | Template (`supervision`) | ✅ |
-| 3 | **Grade achieved** | **Per-issuance** (po studentu) | ✅ već postoji u formi |
-| 4 | Stackability | Template (`stackability`) | ✅ |
-| 5 | Further information | Template (`furtherInfo`) | ✅ postoji u tipu, opciono |
+1. **Uključiti auto-confirm email** u Supabase auth podešavanjima — da se nalozi mogu prijaviti odmah, bez verifikacije.
+2. **Kreirati 4 naloga** preko Supabase admin API-ja (kroz migraciju koja koristi `auth.users` insert sa hash-ovanom lozinkom, ili kroz seed skriptu). Trigger `handle_new_user` automatski pravi profil i dodeljuje rolu `earner`.
+3. **Dodeliti prave role** u `user_roles` tabeli:
+   - `earner@test.com` → `earner` (već postavljeno triggerom)
+   - `issuer@test.com` → `issuer_admin` (vezano za organizaciju "Faculty of Organizational Sciences")
+   - `verifier@test.com` → `earner` (Verifier nema posebnu DB rolu — pristupa javnim verify linkovima; rola se mapira na frontend `verifier` preko ad-hoc rešenja ili dodajemo `verifier` u enum)
+   - `admin@test.com` → `platform_admin`
+4. **Verifier rola** — trenutno `app_role` enum u bazi nema `verifier`. Opcije:
+   - **(A)** Dodati `verifier` u enum i mapirati ga u `auth.tsx` (čistije).
+   - **(B)** Verifier ostaje običan ulogovan korisnik koji koristi `/issuers` i `/verify/$id` rute (one su javne ionako).
+   - Preporuka: **(A)** — dodati u enum radi pravilnog redirekta nakon logina.
+5. **Frontend izmene u `src/routes/login.tsx`**:
+   - Skloniti "Demo" tab i `DemoPersonas` komponentu.
+   - Tabovi ostaju samo "Sign in" i "Sign up".
+   - Nakon prijave, redirect ide na home rute prema roli (`/earner`, `/issuer`, `/issuers` za verifier, `/admin`) umesto fiksno `/earner`.
+6. **Skloniti mock korisnike iz `mock-data.ts`** (`mockUsers` array) i sve import-e koji ga koriste samo za demo prikaz. Mock organizacije, šabloni i kredencijali ostaju jer ih druge stranice još koriste kao fallback.
 
-### Ono što fali u Direct Issuance formi (per-recipient)
+## Tehnički detalji
 
-Trenutna forma (`/issuer/issue`) nudi samo: **Template, Recipients (multi), Grade**. Da bi forma bila kompletno usklađena sa EU standardom (jer su pojedina polja vezana za konkretno izdavanje a ne za šablon), preporučujem da se doda:
+- Migracija dodaje `verifier` u `app_role` enum.
+- Kreiranje auth korisnika ide kroz `supabase--insert` na `auth.users` sa `crypt('Test1234', gen_salt('bf'))` i `email_confirmed_at = now()`, plus eksplicitan `INSERT` u `user_roles` sa pravom rolom (jer `handle_new_user` trigger po defaultu dodeljuje samo `earner`).
+- `auth.tsx` `mapRole` proširuje se na `verifier`.
+- Login `onSubmit` čita aktivnu rolu iz bridge-ovanog `activeUser` i navigira na odgovarajući home.
 
-1. **Issue date** — input (default = danas), trenutno se postavlja samo automatski na `now()`. Korisno ako issuer izdaje retroaktivno za završen kurs.
-2. **Expiry date** — opciono, već postoji u `BulkRow` ali ne i u single-issue formi; treba dodati input.
-3. **Grade** — već postoji ✅ (per-recipient bi bilo idealno, sad je shared za sve odabrane — videti pitanje).
+## Šta korisnik dobija nakon implementacije
 
-### Otvoreno pitanje
-
-Trenutno se u Direct Issuance jedan "Grade" primenjuje na **sve** označene primaoce. Po EU standardu grade je per-learner.
-
-➡️ Predlog: kada se odabere više primaoca, prikazati tabelu sa kolonama **Recipient | Grade | Expiry** umesto jednog shared polja.
-
-### Šta NE menjam
-
-- Template forma (`/issuer/templates/new`) već pokriva sve mandatory metapodatke iz template-a; ne dodajem nova polja tamo.
-- Ne diram bulk CSV (već ima `grade`, `expiryDate` per-row).
-- Ne diram bazu — sva polja već postoje u `credentials` tabeli (`issued_at`, `expires_at`, `grade`).
-
-### Rezime izmena (samo Direct Issuance forma)
-
-1. Dodati **Issue date** input (default today).
-2. Dodati **Expiry date** input (opciono).
-3. Konvertovati listu primaoca u tabelu sa per-recipient **Grade** i **Expiry** kolonama (zamenjuje sadašnji shared "Grade" input).
-4. Update-ovati `directIssue` u `store.tsx` da prima per-recipient overrides.
-
-Reci da li ti odgovara, pa krećem u implementaciju.
+Login stranica sa 2 taba (Sign in / Sign up). Može odmah da se prijavi sa bilo kojim od 4 naloga gore i biće preusmeren u odgovarajući dashboard.
