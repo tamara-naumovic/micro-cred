@@ -20,6 +20,7 @@ const Ctx = createContext<AuthCtx | null>(null);
 function mapRole(dbRole: string): Role {
   if (dbRole === "earner") return "earner";
   if (dbRole === "issuer_admin") return "issuer";
+  if (dbRole === "verifier") return "verifier";
   if (dbRole === "platform_admin") return "admin";
   return "earner";
 }
