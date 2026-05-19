@@ -42,8 +42,12 @@ function Form() {
       toast.error("Title and description are required");
       return;
     }
+    if (!activeUser.organizationId) {
+      toast.error("Your account is not linked to an issuer organisation");
+      return;
+    }
     const tpl: MicroCredentialTemplate = {
-      id: `tpl-${Date.now().toString(36)}`,
+      id: crypto.randomUUID(),
       title,
       description,
       issuerId: activeUser.organizationId ?? "org-fos",
