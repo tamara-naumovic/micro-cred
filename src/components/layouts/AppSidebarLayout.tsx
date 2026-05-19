@@ -1,0 +1,288 @@
+import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  Award,
+  BadgeCheck,
+  Bell,
+  BookOpen,
+  Boxes,
+  Building2,
+  ClipboardCheck,
+  ClipboardList,
+  FileCheck2,
+  FilePlus2,
+  GraduationCap,
+  Hexagon,
+  History,
+  Inbox,
+  LayoutDashboard,
+  ListChecks,
+  LogOut,
+  Mail,
+  Send,
+  Settings,
+  ShieldCheck,
+  ShieldQuestion,
+  UploadCloud,
+  UserCircle,
+  Users,
+  XOctagon,
+} from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useStore } from "@/lib/store";
+import type { Role } from "@/lib/types";
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+}
+
+const NAV: Record<Role, { group: string; items: NavItem[] }[]> = {
+  earner: [
+    {
+      group: "Workspace",
+      items: [
+        { to: "/earner", label: "Dashboard", icon: LayoutDashboard },
+        { to: "/earner/credentials", label: "My Credentials", icon: Award },
+        { to: "/earner/applications", label: "Applications", icon: ClipboardList },
+        { to: "/earner/apply", label: "Apply for Credential", icon: FilePlus2 },
+      ],
+    },
+    {
+      group: "Sharing",
+      items: [
+        { to: "/earner/profile", label: "Public Profile", icon: UserCircle },
+        { to: "/earner/notifications", label: "Notifications", icon: Bell },
+        { to: "/earner/settings", label: "Settings", icon: Settings },
+      ],
+    },
+  ],
+  issuer: [
+    {
+      group: "Overview",
+      items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard }],
+    },
+    {
+      group: "Templates",
+      items: [
+        { to: "/issuer/templates", label: "Templates", icon: BookOpen },
+        { to: "/issuer/templates/new", label: "Create Template", icon: FilePlus2 },
+      ],
+    },
+    {
+      group: "Issuance",
+      items: [
+        { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox },
+        { to: "/issuer/issue", label: "Direct Issuance", icon: Send },
+        { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud },
+        { to: "/issuer/credentials", label: "Issued Credentials", icon: Award },
+        { to: "/issuer/revocations", label: "Revocations", icon: XOctagon },
+      ],
+    },
+    {
+      group: "Network",
+      items: [
+        { to: "/issuer/providers", label: "Course Providers", icon: Building2 },
+        { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck },
+        { to: "/issuer/ebsi", label: "EBSI Integration", icon: Hexagon },
+      ],
+    },
+  ],
+  admin: [
+    {
+      group: "Overview",
+      items: [{ to: "/admin", label: "Overview", icon: LayoutDashboard }],
+    },
+    {
+      group: "People & Orgs",
+      items: [
+        { to: "/admin/users", label: "Users", icon: Users },
+        { to: "/admin/organizations", label: "Organizations", icon: Building2 },
+        { to: "/admin/roles", label: "Roles & Permissions", icon: ShieldCheck },
+        { to: "/admin/registrations", label: "Registrations", icon: Mail },
+      ],
+    },
+    {
+      group: "Platform",
+      items: [
+        { to: "/admin/activity", label: "Activity", icon: ListChecks },
+        { to: "/admin/audit", label: "Audit Trail", icon: FileCheck2 },
+        { to: "/admin/settings", label: "Settings", icon: Settings },
+      ],
+    },
+  ],
+  verifier: [
+    { group: "Public", items: [{ to: "/", label: "Home", icon: LayoutDashboard }] },
+  ],
+};
+
+const ROLE_LABEL: Record<Role, string> = {
+  earner: "Earner",
+  issuer: "Issuer",
+  verifier: "Verifier",
+  admin: "System Admin",
+};
+
+const ROLE_ICON: Record<Role, typeof GraduationCap> = {
+  earner: GraduationCap,
+  issuer: Award,
+  verifier: ShieldQuestion,
+  admin: Boxes,
+};
+
+export function AppSidebarLayout() {
+  const { activeUser, setActiveUser, notifications } = useStore();
+  const navigate = useNavigate();
+  const currentPath = useRouterState({ select: (r) => r.location.pathname });
+
+  if (!activeUser) {
+    navigate({ to: "/login" });
+    return null;
+  }
+
+  const groups = NAV[activeUser.role] ?? [];
+  const RoleIcon = ROLE_ICON[activeUser.role];
+  const unread = notifications.filter(
+    (n) => !n.read && n.forRole === activeUser.role && (!n.forUserId || n.forUserId === activeUser.id),
+  ).length;
+
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <Sidebar collapsible="icon">
+          <SidebarContent>
+            <div className="px-3 py-4">
+              <Link to="/" className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <div className="leading-tight">
+                  <div className="text-sm font-semibold">MicroCred</div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {ROLE_LABEL[activeUser.role]}
+                  </div>
+                </div>
+              </Link>
+            </div>
+            {groups.map((g) => (
+              <SidebarGroup key={g.group}>
+                <SidebarGroupLabel>{g.group}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {g.items.map((item) => {
+                      const Icon = item.icon;
+                      const active =
+                        item.to === `/${activeUser.role}`
+                          ? currentPath === item.to
+                          : currentPath === item.to || currentPath.startsWith(item.to + "/");
+                      return (
+                        <SidebarMenuItem key={item.to}>
+                          <SidebarMenuButton asChild isActive={active}>
+                            <Link to={item.to} className="flex items-center gap-2">
+                              <Icon className="h-4 w-4" />
+                              <span>{item.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+          </SidebarContent>
+        </Sidebar>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/85 px-4 backdrop-blur md:px-6">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger />
+              <Badge variant="outline" className="hidden gap-1 capitalize sm:inline-flex">
+                <RoleIcon className="h-3 w-3" /> {ROLE_LABEL[activeUser.role]}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                onClick={() => {
+                  const map: Record<Role, string> = {
+                    earner: "/earner/notifications",
+                    issuer: "/issuer",
+                    admin: "/admin",
+                    verifier: "/",
+                  };
+                  navigate({ to: map[activeUser.role] });
+                }}
+                aria-label="Notifications"
+              >
+                <Bell className="h-4 w-4" />
+                {unread > 0 && (
+                  <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
+                    {unread}
+                  </span>
+                )}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <RoleIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{activeUser.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="text-sm font-medium">{activeUser.name}</div>
+                    <div className="text-xs text-muted-foreground">{activeUser.email}</div>
+                    {activeUser.organization && (
+                      <div className="text-xs text-muted-foreground">{activeUser.organization}</div>
+                    )}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate({ to: "/login" })}>
+                    Switch role
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      const { supabase } = await import("@/integrations/supabase/client");
+                      await supabase.auth.signOut().catch(() => {});
+                      setActiveUser(null);
+                      navigate({ to: "/" });
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" /> Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
+          <main className="flex-1">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}

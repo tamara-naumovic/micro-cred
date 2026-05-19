@@ -1,0 +1,75 @@
+import { supabase } from "@/integrations/supabase/client";
+import type { SharingSettings } from "./types";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isUuid = (s: string) => UUID_RE.test(s);
+
+export interface DbCredential {
+  id: string;
+  title: string;
+  earner_id: string;
+  earner_name: string;
+  issuer_id: string;
+  issuer_name: string;
+  issued_at: string;
+  expires_at: string | null;
+  status: string;
+  source: string;
+  subcategory: string | null;
+  level: string;
+  ects: number | null;
+  skills: string[];
+  grade: string | null;
+  share_token: string;
+  share_is_public: boolean;
+  share_show_grade: boolean;
+  share_show_source: boolean;
+  share_show_expiry: boolean;
+  share_show_skills: boolean;
+  ebsi_status: string;
+  ebsi_did: string | null;
+  ebsi_vc_id: string | null;
+  ebsi_tx_hash: string | null;
+  revocation_reason: string | null;
+}
+
+export async function fetchMyCredential(id: string): Promise<DbCredential | null> {
+  const { data, error } = await supabase
+    .from("credentials")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as DbCredential | null) ?? null;
+}
+
+const SHARE_KEYS: Record<keyof SharingSettings, string> = {
+  isPublic: "share_is_public",
+  showGrade: "share_show_grade",
+  showSource: "share_show_source",
+  showExpiry: "share_show_expiry",
+  showSkills: "share_show_skills",
+};
+
+export async function updateCredentialSharing(
+  credentialId: string,
+  patch: Partial<SharingSettings>,
+): Promise<void> {
+  const dbPatch: Record<string, boolean> = {};
+  for (const [k, v] of Object.entries(patch)) {
+    const col = SHARE_KEYS[k as keyof SharingSettings];
+    if (col && typeof v === "boolean") dbPatch[col] = v;
+  }
+  if (Object.keys(dbPatch).length === 0) return;
+  const { error } = await supabase
+    .from("credentials")
+    .update(dbPatch as never)
+    .eq("id", credentialId);
+  if (error) throw error;
+}
+
+export async function fetchPublicCredential(shareToken: string) {
+  const { data, error } = await supabase.rpc("get_public_credential", { _share_token: shareToken });
+  if (error) throw error;
+  return data?.[0] ?? null;
+}

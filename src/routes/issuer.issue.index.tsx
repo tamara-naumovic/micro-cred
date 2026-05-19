@@ -1,0 +1,175 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Send } from "lucide-react";
+import { toast } from "sonner";
+import { RoleGuard } from "@/components/RoleGuard";
+import { PageShell } from "@/components/PageShell";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useStore } from "@/lib/store";
+
+export const Route = createFileRoute("/issuer/issue/")({
+  head: () => ({ meta: [{ title: "Direct Issuance — MicroCred" }] }),
+  component: () => (
+    <RoleGuard role="issuer">
+      <Direct />
+    </RoleGuard>
+  ),
+});
+
+type RecipientOverride = { grade: string; expiryDate: string };
+
+function Direct() {
+  const { activeUser, templates, users, directIssue } = useStore();
+  const navigate = useNavigate();
+  const myTemplates = useMemo(
+    () => templates.filter((t) => t.issuerId === activeUser?.organizationId && t.status === "active"),
+    [templates, activeUser],
+  );
+  const earners = users.filter((u) => u.role === "earner");
+  const [templateId, setTemplateId] = useState(myTemplates[0]?.id ?? "");
+  const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [defaultGrade, setDefaultGrade] = useState("");
+  const [overrides, setOverrides] = useState<Record<string, RecipientOverride>>({});
+
+  const selectedIds = Object.keys(overrides);
+
+  const toggle = (id: string) => {
+    setOverrides((prev) => {
+      const next = { ...prev };
+      if (next[id]) delete next[id];
+      else next[id] = { grade: "", expiryDate: "" };
+      return next;
+    });
+  };
+
+  const updateField = (id: string, key: keyof RecipientOverride, value: string) => {
+    setOverrides((prev) => ({ ...prev, [id]: { ...prev[id], [key]: value } }));
+  };
+
+  const submit = () => {
+    if (!templateId || selectedIds.length === 0) {
+      toast.error("Pick a template and at least one earner");
+      return;
+    }
+    const recipients = selectedIds.map((id) => ({
+      earnerId: id,
+      grade: overrides[id].grade || defaultGrade || undefined,
+      expiryDate: overrides[id].expiryDate ? new Date(overrides[id].expiryDate).toISOString() : undefined,
+    }));
+    const issued = directIssue(templateId, recipients, new Date(issueDate).toISOString());
+    toast.success(`Issued ${issued.length} credential(s)`);
+    navigate({ to: "/issuer/credentials" });
+  };
+
+  return (
+    <PageShell
+      title="Direct Issuance"
+      description="Issue micro-credentials directly to one or more earners. Most metadata comes from the template; per-recipient fields are entered below."
+    >
+      <Card>
+        <CardContent className="space-y-5 p-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <Label>Template</Label>
+              <Select value={templateId} onValueChange={setTemplateId}>
+                <SelectTrigger><SelectValue placeholder="Select a template" /></SelectTrigger>
+                <SelectContent>
+                  {myTemplates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.title} (v{t.version})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Date of issuing</Label>
+              <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
+            </div>
+            <div>
+              <Label>Grade <span className="text-muted-foreground">(optional)</span></Label>
+              <Input
+                value={defaultGrade}
+                onChange={(e) => setDefaultGrade(e.target.value)}
+                placeholder="e.g. Pass"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Applied to all recipients unless overridden below.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Label>Recipients ({selectedIds.length} selected)</Label>
+            <div className="mt-2 grid max-h-72 gap-2 overflow-auto rounded-md border border-border p-2 sm:grid-cols-2">
+              {earners.map((e) => (
+                <label key={e.id} className="flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm hover:bg-muted">
+                  <Checkbox checked={!!overrides[e.id]} onCheckedChange={() => toggle(e.id)} />
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{e.name}</div>
+                    <div className="text-xs text-muted-foreground">{e.studentId} · {e.email}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {selectedIds.length > 0 && (
+            <div>
+              <Label>Per-recipient details</Label>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Grade and expiry date are optional and set per learner.
+              </p>
+              <div className="overflow-auto rounded-md border border-border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="px-3 py-2 text-left">Recipient</th>
+                      <th className="px-3 py-2 text-left">Grade</th>
+                      <th className="px-3 py-2 text-left">Expiry date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedIds.map((id) => {
+                      const u = earners.find((x) => x.id === id);
+                      if (!u) return null;
+                      return (
+                        <tr key={id} className="border-t border-border">
+                          <td className="px-3 py-2">
+                            <div className="font-medium">{u.name}</div>
+                            <div className="text-xs text-muted-foreground">{u.studentId}</div>
+                          </td>
+                          <td className="px-3 py-2">
+                            <Input
+                              value={overrides[id].grade}
+                              onChange={(ev) => updateField(id, "grade", ev.target.value)}
+                              placeholder="e.g. Pass"
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <Input
+                              type="date"
+                              value={overrides[id].expiryDate}
+                              onChange={(ev) => updateField(id, "expiryDate", ev.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button onClick={submit}><Send className="mr-2 h-4 w-4" />Issue credentials</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </PageShell>
+  );
+}

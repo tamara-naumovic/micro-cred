@@ -1,0 +1,105 @@
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { ArrowLeft, BadgeCheck, ExternalLink, Globe2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useStore } from "@/lib/store";
+
+export const Route = createFileRoute("/issuers/$id")({
+  head: ({ params }) => ({
+    meta: [
+      { title: `Issuer profile — MicroCred` },
+      { name: "description", content: `Public issuer profile ${params.id}` },
+    ],
+  }),
+  component: IssuerProfile,
+});
+
+function IssuerProfile() {
+  const { id } = Route.useParams();
+  const { organizations, templates, credentials } = useStore();
+  const issuer = organizations.find((o) => o.id === id && o.type === "issuer");
+  if (!issuer) throw notFound();
+  const tpls = templates.filter((t) => t.issuerId === id && t.status !== "archived");
+  const issuedCount = credentials.filter((c) => c.issuerId === id).length;
+
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-10 md:px-8">
+      <Button variant="ghost" size="sm" asChild className="mb-4">
+        <Link to="/issuers">
+          <ArrowLeft className="mr-1 h-4 w-4" /> Back to directory
+        </Link>
+      </Button>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <BadgeCheck className="h-7 w-7" />
+              </div>
+              <div>
+                <h1 className="font-display text-2xl font-semibold leading-tight">{issuer.name}</h1>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <Globe2 className="h-3.5 w-3.5" /> {issuer.country}
+                  {issuer.website && (
+                    <a
+                      href={issuer.website}
+                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Website <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">{tpls.length} active templates</Badge>
+              <Badge variant="secondary">{issuedCount} credentials issued</Badge>
+            </div>
+          </div>
+
+          {issuer.about && <p className="mt-5 text-sm leading-relaxed text-muted-foreground">{issuer.about}</p>}
+
+          {issuer.accreditations && issuer.accreditations.length > 0 && (
+            <div className="mt-5">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Accreditations</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {issuer.accreditations.map((a) => (
+                  <Badge key={a} variant="outline">{a}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <h2 className="mt-10 mb-4 font-display text-xl font-semibold">Micro-credentials this issuer can award</h2>
+      <div className="grid gap-3 md:grid-cols-2">
+        {tpls.map((t) => (
+          <Card key={t.id}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">{t.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p className="line-clamp-3 text-muted-foreground">{t.description}</p>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant="secondary" className="capitalize">
+                  {t.source === "formal" ? "Formal" : "Non-formal"}
+                </Badge>
+                {t.level !== "N/A" && <Badge variant="outline">{t.level}</Badge>}
+                {t.ects && <Badge variant="outline">{t.ects} ECTS</Badge>}
+                <Badge variant="outline" className="capitalize">{t.participation.replace(/_/g, " ")}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {tpls.length === 0 && (
+          <p className="text-sm text-muted-foreground">No active templates.</p>
+        )}
+      </div>
+    </main>
+  );
+}
