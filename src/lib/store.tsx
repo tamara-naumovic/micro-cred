@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LIFECYCLE_STAGES,
@@ -677,7 +678,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         created_by: activeUserRef.current?.id ?? null,
       };
       const { error } = await supabase.from("templates").upsert(row);
-      if (error) console.error("[store] upsertTemplate", error);
+      if (error) {
+        console.error("[store] upsertTemplate", error);
+        toast.error(`Failed to save template: ${error.message}`);
+        return;
+      }
       refetchAll();
     })();
   }, [refetchAll]);
