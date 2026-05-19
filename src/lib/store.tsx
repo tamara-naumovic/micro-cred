@@ -522,7 +522,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (async () => {
       const { data: cred, error } = await supabase
         .from("credentials")
-        .insert(buildCredentialInsert(tpl, { id: app.earnerId, name: app.earnerName }) as never)
+        .insert(buildCredentialInsert(tpl, { id: app.earnerId, name: app.earnerName }) as unknown as never)
         .select()
         .single();
       if (error) {
