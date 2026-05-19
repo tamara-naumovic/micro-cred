@@ -603,7 +603,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })
         .filter((x): x is Record<string, unknown> => !!x);
       if (rows.length === 0) return;
-      const { error } = await supabase.from("credentials").insert(rows);
+      const { error } = await (supabase.from("credentials") as unknown as { insert: (r: Record<string, unknown>[]) => Promise<{ error: unknown }> }).insert(rows);
       if (error) console.error("[store] directIssue", error);
       refetchAll();
     })();
