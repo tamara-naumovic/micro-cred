@@ -1,15 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Award, Boxes, GraduationCap, Loader2, ShieldQuestion } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { mockUsers, useStore } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import type { Role } from "@/lib/types";
 
@@ -17,18 +16,37 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in — MicroCred" },
-      { name: "description", content: "Sign in or continue as a demo persona." },
+      { name: "description", content: "Sign in or create a MicroCred account." },
     ],
   }),
   component: LoginPage,
 });
 
-const ROLE_META: Record<Role, { label: string; icon: typeof GraduationCap; tint: string; home: string }> = {
-  earner: { label: "Earner / Student", icon: GraduationCap, tint: "bg-info/15 text-info-foreground", home: "/earner" },
-  issuer: { label: "Issuer / Awarding Body", icon: Award, tint: "bg-primary/10 text-primary", home: "/issuer" },
-  verifier: { label: "Verifier / Employer", icon: ShieldQuestion, tint: "bg-success/15 text-success-foreground", home: "/issuers" },
-  admin: { label: "System Admin", icon: Boxes, tint: "bg-warning/20 text-warning-foreground", home: "/admin" },
+const ROLE_HOME: Record<Role, string> = {
+  earner: "/earner",
+  issuer: "/issuer",
+  verifier: "/issuers",
+  admin: "/admin",
 };
+
+async function redirectByRole(userId: string, navigate: ReturnType<typeof useNavigate>) {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle();
+  const dbRole = data?.role ?? "earner";
+  const role: Role =
+    dbRole === "issuer_admin"
+      ? "issuer"
+      : dbRole === "platform_admin"
+        ? "admin"
+        : dbRole === "verifier"
+          ? "verifier"
+          : "earner";
+  navigate({ to: ROLE_HOME[role] });
+}
 
 function LoginPage() {
   return (
@@ -38,15 +56,14 @@ function LoginPage() {
           Welcome to MicroCred
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Sign in to your account, create one, or explore the demo personas.
+          Sign in to your account or create a new one.
         </p>
       </div>
 
       <Tabs defaultValue="signin" className="mx-auto max-w-md">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="signin">Sign in</TabsTrigger>
           <TabsTrigger value="signup">Sign up</TabsTrigger>
-          <TabsTrigger value="demo">Demo</TabsTrigger>
         </TabsList>
 
         <TabsContent value="signin" className="mt-6">
@@ -55,10 +72,17 @@ function LoginPage() {
         <TabsContent value="signup" className="mt-6">
           <SignUpForm />
         </TabsContent>
-        <TabsContent value="demo" className="mt-6">
-          <DemoPersonas />
-        </TabsContent>
       </Tabs>
+
+      <Card className="mx-auto mt-6 max-w-md p-4 text-xs text-muted-foreground">
+        <p className="mb-2 font-medium text-foreground">Test accounts (password: Test1234)</p>
+        <ul className="space-y-1 font-mono">
+          <li>earner@test.com — Earner</li>
+          <li>issuer@test.com — Issuer</li>
+          <li>verifier@test.com — Verifier</li>
+          <li>admin@test.com — Admin</li>
+        </ul>
+      </Card>
     </main>
   );
 }
@@ -74,13 +98,16 @@ function SignInForm() {
     e.preventDefault();
     setBusy(true);
     const { error } = await signIn(email, password);
-    setBusy(false);
     if (error) {
+      setBusy(false);
       toast.error(error);
       return;
     }
     toast.success("Signed in");
-    navigate({ to: "/earner" });
+    const { data } = await supabase.auth.getUser();
+    if (data.user) await redirectByRole(data.user.id, navigate);
+    else navigate({ to: "/" });
+    setBusy(false);
   }
 
   return (
@@ -157,63 +184,8 @@ function SignUpForm() {
         Continue with Google
       </Button>
       <p className="mt-3 text-center text-xs text-muted-foreground">
-        New accounts start as <span className="font-medium">Earner</span>. Organizations can be added by admins.
+        New accounts start as <span className="font-medium">Earner</span>.
       </p>
     </Card>
-  );
-}
-
-function DemoPersonas() {
-  const { setActiveUser } = useStore();
-  const navigate = useNavigate();
-
-  const grouped = (["earner", "issuer", "verifier", "admin"] as Role[]).map((r) => ({
-    role: r,
-    users: mockUsers.filter((u) => u.role === r),
-  }));
-
-  return (
-    <div className="space-y-8">
-      <p className="text-center text-xs text-muted-foreground">
-        Demo mode — these personas use mock data without authentication.
-      </p>
-      {grouped.map(({ role, users }) => {
-        const meta = ROLE_META[role];
-        const Icon = meta.icon;
-        return (
-          <section key={role}>
-            <div className="mb-3 flex items-center gap-2">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-md ${meta.tint}`}>
-                <Icon className="h-4 w-4" />
-              </div>
-              <h2 className="font-display text-sm font-semibold">{meta.label}</h2>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {users.map((u) => (
-                <Card
-                  key={u.id}
-                  className="cursor-pointer p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow"
-                  onClick={() => {
-                    setActiveUser(u);
-                    navigate({ to: meta.home });
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{u.name}</div>
-                      <div className="truncate text-xs text-muted-foreground">{u.email}</div>
-                      {u.organization && (
-                        <div className="mt-1 truncate text-xs text-muted-foreground">{u.organization}</div>
-                      )}
-                    </div>
-                    <Badge variant="secondary" className="capitalize">{role}</Badge>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-        );
-      })}
-    </div>
   );
 }
