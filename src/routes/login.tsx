@@ -49,6 +49,17 @@ async function redirectByRole(userId: string, navigate: ReturnType<typeof useNav
 }
 
 function LoginPage() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!cancelled && data.user) redirectByRole(data.user.id, navigate);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-14">
       <div className="mb-8 text-center">
