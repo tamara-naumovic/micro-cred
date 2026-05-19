@@ -482,7 +482,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (settings.showSource !== undefined) patch.share_show_source = settings.showSource;
     if (settings.showExpiry !== undefined) patch.share_show_expiry = settings.showExpiry;
     if (settings.showSkills !== undefined) patch.share_show_skills = settings.showSkills;
-    supabase.from("credentials").update(patch).eq("id", credentialId).then(({ error }) => {
+    (supabase.from("credentials") as unknown as { update: (p: Record<string, unknown>) => { eq: (k: string, v: string) => Promise<{ error: unknown }> } })
+      .update(patch).eq("id", credentialId).then(({ error }) => {
       if (error) console.error("[store] updateSharing", error);
     });
   }, []);
