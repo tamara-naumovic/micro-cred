@@ -18,9 +18,7 @@ const Ctx = createContext<AuthCtx | null>(null);
 
 // Map DB app_role -> frontend Role
 function mapRole(dbRole: string): Role {
-  if (dbRole === "earner") return "earner";
   if (dbRole === "issuer_admin") return "issuer";
-  if (dbRole === "verifier") return "verifier";
   if (dbRole === "platform_admin") return "admin";
   return "earner";
 }

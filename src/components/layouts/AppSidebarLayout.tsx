@@ -21,7 +21,7 @@ import {
   Send,
   Settings,
   ShieldCheck,
-  ShieldQuestion,
+  
   UploadCloud,
   UserCircle,
   Users,
@@ -132,22 +132,17 @@ const NAV: Record<Role, { group: string; items: NavItem[] }[]> = {
       ],
     },
   ],
-  verifier: [
-    { group: "Public", items: [{ to: "/", label: "Home", icon: LayoutDashboard }] },
-  ],
 };
 
 const ROLE_LABEL: Record<Role, string> = {
   earner: "Earner",
   issuer: "Issuer",
-  verifier: "Verifier",
   admin: "System Admin",
 };
 
 const ROLE_ICON: Record<Role, typeof GraduationCap> = {
   earner: GraduationCap,
   issuer: Award,
-  verifier: ShieldQuestion,
   admin: Boxes,
 };
 
@@ -157,7 +152,6 @@ export function AppSidebarLayout() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
   if (!activeUser) {
-    navigate({ to: "/login" });
     return null;
   }
 
@@ -232,7 +226,6 @@ export function AppSidebarLayout() {
                     earner: "/earner/notifications",
                     issuer: "/issuer",
                     admin: "/admin",
-                    verifier: "/",
                   };
                   navigate({ to: map[activeUser.role] });
                 }}

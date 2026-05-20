@@ -1,7 +1,7 @@
 // Domain model for Micro-Credential Platform v3
 // Single-issuer flow: no Course Provider role, no learner-uploaded evidence.
 
-export type Role = "earner" | "issuer" | "verifier" | "admin";
+export type Role = "earner" | "issuer" | "admin";
 
 export interface MockUser {
   id: string;
