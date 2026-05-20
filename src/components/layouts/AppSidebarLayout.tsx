@@ -152,7 +152,6 @@ export function AppSidebarLayout() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
   if (!activeUser) {
-    navigate({ to: "/login" });
     return null;
   }
 
