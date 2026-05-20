@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useStore } from "@/lib/store";
 import type { Role } from "@/lib/types";
 
 export const Route = createFileRoute("/login")({
@@ -25,40 +25,20 @@ export const Route = createFileRoute("/login")({
 const ROLE_HOME: Record<Role, string> = {
   earner: "/earner",
   issuer: "/issuer",
-  verifier: "/issuers",
   admin: "/admin",
 };
 
-async function redirectByRole(userId: string, navigate: ReturnType<typeof useNavigate>) {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle();
-  const dbRole = data?.role ?? "earner";
-  const role: Role =
-    dbRole === "issuer_admin"
-      ? "issuer"
-      : dbRole === "platform_admin"
-        ? "admin"
-        : dbRole === "verifier"
-          ? "verifier"
-          : "earner";
-  navigate({ to: ROLE_HOME[role] });
-}
-
 function LoginPage() {
   const navigate = useNavigate();
+  const { activeUser } = useStore();
+  const [submitted, setSubmitted] = useState(false);
+
+  // Redirect any time activeUser becomes available (handles existing session + post-login)
   useEffect(() => {
-    let cancelled = false;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!cancelled && data.user) redirectByRole(data.user.id, navigate);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [navigate]);
+    if (activeUser) {
+      navigate({ to: ROLE_HOME[activeUser.role] ?? "/earner" });
+    }
+  }, [activeUser, navigate]);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-14">
@@ -78,7 +58,7 @@ function LoginPage() {
         </TabsList>
 
         <TabsContent value="signin" className="mt-6">
-          <SignInForm />
+          <SignInForm onSubmitted={() => setSubmitted(true)} waiting={submitted && !activeUser} />
         </TabsContent>
         <TabsContent value="signup" className="mt-6">
           <SignUpForm />
@@ -90,7 +70,6 @@ function LoginPage() {
         <ul className="space-y-1 font-mono">
           <li>earner@test.com — Earner</li>
           <li>issuer@test.com — Issuer</li>
-          <li>verifier@test.com — Verifier</li>
           <li>admin@test.com — Admin</li>
         </ul>
       </Card>
@@ -98,9 +77,8 @@ function LoginPage() {
   );
 }
 
-function SignInForm() {
+function SignInForm({ onSubmitted, waiting }: { onSubmitted: () => void; waiting: boolean }) {
   const { signIn, signInWithGoogle } = useAuth();
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -109,18 +87,17 @@ function SignInForm() {
     e.preventDefault();
     setBusy(true);
     const { error } = await signIn(email, password);
+    setBusy(false);
     if (error) {
-      setBusy(false);
       toast.error(error);
       return;
     }
     toast.success("Signed in");
-    const { data } = await supabase.auth.getUser();
-    if (data.user) await redirectByRole(data.user.id, navigate);
-    else navigate({ to: "/" });
-    setBusy(false);
+    onSubmitted();
+    // Redirect happens via useEffect in LoginPage when activeUser is populated
   }
 
+  const disabled = busy || waiting;
   return (
     <Card className="p-6">
       <form onSubmit={onSubmit} className="space-y-4">
@@ -132,8 +109,8 @@ function SignInForm() {
           <Label htmlFor="si-pw">Password</Label>
           <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        <Button type="submit" className="w-full" disabled={busy}>
-          {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" className="w-full" disabled={disabled}>
+          {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Sign in
         </Button>
       </form>
@@ -147,7 +124,6 @@ function SignInForm() {
 
 function SignUpForm() {
   const { signUp, signInWithGoogle } = useAuth();
-  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -167,7 +143,7 @@ function SignUpForm() {
       return;
     }
     toast.success("Account created");
-    navigate({ to: "/earner" });
+    // Redirect handled by LoginPage useEffect once session + activeUser bridge complete
   }
 
   return (
