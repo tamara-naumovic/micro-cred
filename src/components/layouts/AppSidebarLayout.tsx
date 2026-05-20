@@ -227,7 +227,6 @@ export function AppSidebarLayout() {
                     earner: "/earner/notifications",
                     issuer: "/issuer",
                     admin: "/admin",
-                    verifier: "/",
                   };
                   navigate({ to: map[activeUser.role] });
                 }}
