@@ -19,7 +19,7 @@ export const Route = createFileRoute("/earner/apply")({
 });
 
 function Apply() {
-  const { templates, createApplication } = useStore();
+  const { templates, createApplication, applications, credentials, activeUser } = useStore();
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2>(1);
   const [templateId, setTemplateId] = useState<string | null>(null);
@@ -27,8 +27,33 @@ function Apply() {
   const tpl = templates.find((t) => t.id === templateId);
   const active = templates.filter((t) => t.status === "active");
 
+  const appliedTemplateIds = new Set(
+    activeUser
+      ? applications
+          .filter((a) => a.earnerId === activeUser.id && a.status !== "issued" && a.status !== "rejected")
+          .map((a) => a.templateId)
+      : [],
+  );
+  const issuedTemplateIds = new Set(
+    activeUser
+      ? credentials
+          .filter((c) => c.earnerId === activeUser.id && c.status === "active")
+          .map((c) => c.templateId)
+      : [],
+  );
+
+  function blockedReason(id: string): "applied" | "issued" | null {
+    if (issuedTemplateIds.has(id)) return "issued";
+    if (appliedTemplateIds.has(id)) return "applied";
+    return null;
+  }
+
   function submit() {
     if (!tpl) return;
+    if (blockedReason(tpl.id)) {
+      toast.error("You already have an active application or credential for this template.");
+      return;
+    }
     const app = createApplication(tpl.id);
     if (app) {
       toast.success("Application submitted");
@@ -61,28 +86,44 @@ function Apply() {
 
       {step === 1 && (
         <div className="grid gap-3 md:grid-cols-2">
-          {active.map((t) => (
-            <Card
-              key={t.id}
-              className={`cursor-pointer ${templateId === t.id ? "border-primary ring-2 ring-primary/20" : ""}`}
-              onClick={() => setTemplateId(t.id)}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{t.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <p className="line-clamp-2 text-muted-foreground">{t.description}</p>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="capitalize">
-                    {t.source === "formal" ? "Formal" : "Non-formal"}
-                  </Badge>
-                  {t.level !== "N/A" && <Badge variant="outline">{t.level}</Badge>}
-                  {t.ects && <Badge variant="outline">{t.ects} ECTS</Badge>}
-                </div>
-                <div className="text-xs text-muted-foreground">Issued by {t.issuerName}</div>
-              </CardContent>
-            </Card>
-          ))}
+          {active.map((t) => {
+            const blocked = blockedReason(t.id);
+            return (
+              <Card
+                key={t.id}
+                className={`${blocked ? "cursor-not-allowed opacity-60" : "cursor-pointer"} ${templateId === t.id ? "border-primary ring-2 ring-primary/20" : ""}`}
+                onClick={() => {
+                  if (blocked) return;
+                  setTemplateId(t.id);
+                }}
+              >
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{t.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <p className="line-clamp-2 text-muted-foreground">{t.description}</p>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="capitalize">
+                      {t.source === "formal" ? "Formal" : "Non-formal"}
+                    </Badge>
+                    {t.level !== "N/A" && <Badge variant="outline">{t.level}</Badge>}
+                    {t.ects && <Badge variant="outline">{t.ects} ECTS</Badge>}
+                    {blocked === "applied" && (
+                      <Badge variant="outline" className="border-warning/40 text-warning-foreground">
+                        Already applied
+                      </Badge>
+                    )}
+                    {blocked === "issued" && (
+                      <Badge variant="outline" className="border-success/40 text-success-foreground">
+                        Already issued
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Issued by {t.issuerName}</div>
+                </CardContent>
+              </Card>
+            );
+          })}
           {active.length === 0 && (
             <p className="text-sm text-muted-foreground">No active credential templates available.</p>
           )}
