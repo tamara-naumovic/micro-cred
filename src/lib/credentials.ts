@@ -73,3 +73,9 @@ export async function fetchPublicCredential(shareToken: string) {
   if (error) throw error;
   return data?.[0] ?? null;
 }
+
+export async function fetchPublicProfile(shareToken: string) {
+  const { data, error } = await supabase.rpc("get_public_profile", { _share_token: shareToken });
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
