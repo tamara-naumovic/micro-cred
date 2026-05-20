@@ -132,23 +132,17 @@ const NAV: Record<Role, { group: string; items: NavItem[] }[]> = {
       ],
     },
   ],
-  verifier: [
-    { group: "Public", items: [{ to: "/", label: "Home", icon: LayoutDashboard }] },
-  ],
 };
-delete (NAV as Record<string, unknown>).verifier;
 
 const ROLE_LABEL: Record<Role, string> = {
   earner: "Earner",
   issuer: "Issuer",
-  verifier: "Verifier",
   admin: "System Admin",
 };
 
 const ROLE_ICON: Record<Role, typeof GraduationCap> = {
   earner: GraduationCap,
   issuer: Award,
-  verifier: ShieldQuestion,
   admin: Boxes,
 };
 
