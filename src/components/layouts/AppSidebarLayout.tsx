@@ -136,6 +136,7 @@ const NAV: Record<Role, { group: string; items: NavItem[] }[]> = {
     { group: "Public", items: [{ to: "/", label: "Home", icon: LayoutDashboard }] },
   ],
 };
+delete (NAV as Record<string, unknown>).verifier;
 
 const ROLE_LABEL: Record<Role, string> = {
   earner: "Earner",
