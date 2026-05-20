@@ -21,7 +21,7 @@ import {
   Send,
   Settings,
   ShieldCheck,
-  ShieldQuestion,
+  
   UploadCloud,
   UserCircle,
   Users,
