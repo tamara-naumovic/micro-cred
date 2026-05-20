@@ -165,7 +165,7 @@ function mapCredential(r: Row): IssuedCredential {
     ects: (r.ects as number | null) ?? undefined,
     skills: (r.skills as string[]) ?? [],
     grade: (r.grade as string | null) ?? undefined,
-    verificationLink: `/verify/${r.id as string}`,
+    verificationLink: `/verify/${(r.share_token as string | null) ?? (r.id as string)}`,
     shareToken: (r.share_token as string | null) ?? undefined,
     sharing: {
       isPublic: (r.share_is_public as boolean) ?? true,

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import { Copy, Download, Linkedin, Mail, Twitter } from "lucide-react";
+import { Copy, Download, Linkedin } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -59,8 +59,6 @@ export function ShareDialog({ url, title, summary, trigger, qrId = "share-qr", c
     return `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(absoluteUrl)}&title=${encodeURIComponent(title)}${summary ? `&summary=${encodeURIComponent(summary)}` : ""}&source=MicroCred`;
   }, [absoluteUrl, certification, title, summary]);
 
-  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(absoluteUrl)}`;
-  const mailUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent((summary ? summary + "\n\n" : "") + absoluteUrl)}`;
 
   const copy = async () => {
     try {
@@ -99,18 +97,14 @@ export function ShareDialog({ url, title, summary, trigger, qrId = "share-qr", c
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div>
             <a
               href={linkedInUrl}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => {
-                // Belt-and-braces: if the anchor is intercepted by the dialog or
-                // the iframe sandbox blocks the new tab, fall back to window.open
-                // and finally to copying the link.
                 if (e.defaultPrevented) return;
                 setTimeout(() => {
-                  // best effort — if nothing happened, popup may be blocked
                   const w = window.open(linkedInUrl, "_blank", "noopener,noreferrer");
                   if (!w) {
                     navigator.clipboard.writeText(linkedInUrl).then(() =>
@@ -121,23 +115,9 @@ export function ShareDialog({ url, title, summary, trigger, qrId = "share-qr", c
                   }
                 }, 0);
               }}
-              className="inline-flex h-9 items-center justify-center gap-1 rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              <Linkedin className="h-4 w-4" /> {certification ? "Add to LinkedIn" : "LinkedIn"}
-            </a>
-            <a
-              href={twitterUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-9 items-center justify-center gap-1 rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <Twitter className="h-4 w-4" /> X
-            </a>
-            <a
-              href={mailUrl}
-              className="inline-flex h-9 items-center justify-center gap-1 rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <Mail className="h-4 w-4" /> Email
+              <Linkedin className="h-4 w-4" /> {certification ? "Add to LinkedIn" : "Share on LinkedIn"}
             </a>
           </div>
 
