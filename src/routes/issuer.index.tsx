@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Award, BookOpen, Inbox, Send, ShieldCheck, XOctagon } from "lucide-react";
+import { Award, BookOpen, Inbox, Send, ShieldCheck, ClipboardList } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { MetricCard } from "@/components/MetricCard";
@@ -25,7 +25,7 @@ function Overview() {
   const myCreds = credentials.filter((c) => c.issuerId === orgId);
   const myApps = applications.filter((a) => a.issuerId === orgId);
   const ready = myApps.filter((a) => a.status === "verified_by_provider");
-  const revoked = myCreds.filter((c) => c.status === "revoked").length;
+  const activeRequests = myApps.filter((a) => a.status !== "issued" && a.status !== "rejected").length;
 
   return (
     <PageShell
@@ -39,10 +39,10 @@ function Overview() {
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Active templates" value={myTemplates.filter((t) => t.status === "active").length} icon={<BookOpen className="h-5 w-5" />} tone="primary" />
+        <MetricCard label="Active Micro-credentials" value={myTemplates.filter((t) => t.status === "active").length} icon={<BookOpen className="h-5 w-5" />} tone="primary" />
         <MetricCard label="Issued credentials" value={myCreds.length} icon={<Award className="h-5 w-5" />} tone="success" />
         <MetricCard label="Awaiting signature" value={ready.length} icon={<Inbox className="h-5 w-5" />} tone="warning" />
-        <MetricCard label="Revoked" value={revoked} icon={<XOctagon className="h-5 w-5" />} tone="destructive" />
+        <MetricCard label="Active requests" value={activeRequests} icon={<ClipboardList className="h-5 w-5" />} tone="primary" />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
