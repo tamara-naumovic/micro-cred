@@ -32,7 +32,7 @@ export function PublicLayout() {
             {activeUser ? (
               <Button
                 size="sm"
-                onClick={() => navigate({ to: `/${activeUser.role === "verifier" ? "" : activeUser.role}` as never })}
+                onClick={() => navigate({ to: `/${activeUser.role}` as never })}
               >
                 Open dashboard
               </Button>
