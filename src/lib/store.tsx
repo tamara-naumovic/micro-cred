@@ -114,7 +114,6 @@ function loadUser(): MockUser | null {
 function mapDbRoleToRole(dbRole: string): Role {
   if (dbRole === "issuer_admin") return "issuer";
   if (dbRole === "platform_admin") return "admin";
-  if (dbRole === "verifier") return "verifier";
   return "earner";
 }
 
