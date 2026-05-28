@@ -623,7 +623,6 @@ export type Database = {
           issued_at: string
           issuer_name: string
           level: Database["public"]["Enums"]["cred_level"]
-          provider_name: string
           skills: string[]
           source: Database["public"]["Enums"]["learning_source"]
           status: Database["public"]["Enums"]["credential_status"]
