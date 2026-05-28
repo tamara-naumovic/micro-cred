@@ -46,6 +46,7 @@ function Profile() {
 
   const profileUrl = profileToken ? `/profile/${profileToken}` : null;
 
+  if (!activeUser) return null;
 
   return (
     <PageShell
