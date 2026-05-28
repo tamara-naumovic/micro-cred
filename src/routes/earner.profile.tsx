@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, GraduationCap, Share2, UserCircle } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ShareDialog } from "@/components/ShareDialog";
 import { CredentialCard } from "@/components/CredentialCard";
 import { useStore } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/earner/profile")({
   head: () => ({ meta: [{ title: "Public profile — MicroCred" }] }),
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/earner/profile")({
 
 function Profile() {
   const { activeUser, credentials } = useStore();
+  const [profileToken, setProfileToken] = useState<string | null>(null);
 
   const mine = useMemo(
     () => credentials.filter((c) => c.earnerId === activeUser?.id),
@@ -28,8 +30,20 @@ function Profile() {
   );
   const publicCreds = mine.filter((c) => c.sharing.isPublic && c.status !== "revoked");
 
-  // derive a stable share token from any credential the earner owns
-  const profileToken = mine.find((c) => c.shareToken)?.shareToken;
+  useEffect(() => {
+    if (!activeUser?.id) return;
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("share_token")
+      .eq("id", activeUser.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setProfileToken((data?.share_token as string | null) ?? null);
+      });
+    return () => { cancelled = true; };
+  }, [activeUser?.id]);
+
   const profileUrl = profileToken ? `/profile/${profileToken}` : null;
 
   if (!activeUser) return null;
