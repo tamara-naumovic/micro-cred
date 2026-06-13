@@ -166,9 +166,7 @@ function Form() {
         supervision: supervisionType ? SUPERVISION_OPTIONS.find((o) => o.value === supervisionType)?.label ?? "" : "",
         supervisionType: supervisionType || undefined,
         stackability: stackabilityType
-          ? stackabilityType === "stand_alone"
-            ? "Stand-alone, independent micro-credential"
-            : "Integrated, stackable towards another credential"
+          ? STACKABILITY_OPTIONS.find((o) => o.value === stackabilityType)?.label ?? ""
           : "",
         stackabilityType: stackabilityType || undefined,
         expiryMode,
