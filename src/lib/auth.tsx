@@ -45,6 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.from("profiles").select("display_name, email, student_id").eq("id", u.id).maybeSingle(),
         supabase.from("user_roles").select("role, organization_id").eq("user_id", u.id),
       ]);
+      // If neither profile nor roles exist yet (e.g. invite session before
+      // server-side provisioning finished), don't fall back to "earner" —
+      // that would briefly route the user to the wrong dashboard.
+      if (!profile && (!roles || roles.length === 0)) {
+        setActiveUser(null);
+        return;
+      }
       const sorted = [...(roles ?? [])].sort(
         (a, b) => (ROLE_PRIORITY[b.role as string] ?? 0) - (ROLE_PRIORITY[a.role as string] ?? 0),
       );
@@ -64,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("[auth] bridge failed", e);
     }
   }
+
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {

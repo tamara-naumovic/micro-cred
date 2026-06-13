@@ -46,17 +46,28 @@ function SetPasswordPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const isResetFlow = flowType === "invite" || flowType === "recovery";
     (async () => {
       // Supabase client auto-detects session from URL hash on load.
-      // Give it a tick, then check.
       const { data } = await supabase.auth.getSession();
       if (cancelled) return;
       if (data.session) {
-        setHasSession(true);
+        // Already signed in. Only allow staying if this is a real invite /
+        // recovery flow — otherwise the password is already set, send them on.
+        if (isResetFlow) {
+          setHasSession(true);
+          setReady(true);
+        } else {
+          navigate({ to: "/" });
+        }
+        return;
+      }
+      // No session yet — for a real reset flow, wait briefly for the hash
+      // tokens to be parsed into a session.
+      if (!isResetFlow) {
         setReady(true);
         return;
       }
-      // Fall back: listen briefly for SIGNED_IN from URL parsing.
       const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
         if (session) {
           setHasSession(true);
@@ -73,7 +84,8 @@ function SetPasswordPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [flowType, navigate]);
+
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
