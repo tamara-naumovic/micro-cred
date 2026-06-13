@@ -2,7 +2,9 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import type { User } from "@/lib/types";
+import type { MockUser } from "@/lib/types";
+
+type User = MockUser;
 
 interface StaffPickerProps {
   staff: User[];
