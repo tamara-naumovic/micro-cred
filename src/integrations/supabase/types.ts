@@ -550,6 +550,8 @@ export type Database = {
           created_by: string | null
           description: string
           ects: number | null
+          expiry_date: string | null
+          expiry_mode: string
           expiry_rule: string | null
           further_info: string | null
           id: string
@@ -579,6 +581,8 @@ export type Database = {
           created_by?: string | null
           description?: string
           ects?: number | null
+          expiry_date?: string | null
+          expiry_mode?: string
           expiry_rule?: string | null
           further_info?: string | null
           id?: string
@@ -608,6 +612,8 @@ export type Database = {
           created_by?: string | null
           description?: string
           ects?: number | null
+          expiry_date?: string | null
+          expiry_mode?: string
           expiry_rule?: string | null
           further_info?: string | null
           id?: string
