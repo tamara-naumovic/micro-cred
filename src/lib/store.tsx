@@ -815,6 +815,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       revokeCredential,
       upsertTemplate,
       archiveTemplate,
+      assignTemplateUsers,
       approveRegistration,
       rejectRegistration,
       markAllRead,
