@@ -12,9 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { StaffPicker } from "@/components/StaffPicker";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import type { Level, LearningSource, MicroCredentialTemplate, Participation, TemplateStatus } from "@/lib/types";
@@ -74,8 +74,6 @@ function EditForm() {
     (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === activeUser.organizationId,
   );
 
-  const toggleStaff = (uid: string) =>
-    setAssignedStaff((prev) => (prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid]));
 
   const save = async () => {
     if (!title.trim() || !description.trim()) {
@@ -219,17 +217,7 @@ function EditForm() {
               {staffUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No staff yet for your institution.</p>
               ) : (
-                <div className="grid gap-1 sm:grid-cols-2">
-                  {staffUsers.map((u) => (
-                    <label key={u.id} className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-muted">
-                      <Checkbox checked={assignedStaff.includes(u.id)} onCheckedChange={() => toggleStaff(u.id)} />
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">{u.name}</div>
-                        <div className="truncate text-xs text-muted-foreground">{u.email}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+                <StaffPicker staff={staffUsers} selected={assignedStaff} onChange={setAssignedStaff} />
               )}
             </div>
           </div>
