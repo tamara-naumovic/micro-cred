@@ -24,6 +24,7 @@ import {
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
 import { useStore } from "@/lib/store";
 import { adminCreateInstitution } from "@/lib/admin-users.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin/organizations")({
   head: () => ({ meta: [{ title: "Organisations — MicroCred Admin" }] }),
@@ -80,18 +81,33 @@ function AddInstitutionDialog() {
   const [country, setCountry] = useState("");
   const [website, setWebsite] = useState("");
   const [about, setAbout] = useState("");
+  const [accreditationFile, setAccreditationFile] = useState<File | null>(null);
   const [admin, setAdmin, resetAdmin] = useProvisionState();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
+      let accreditationDocumentPath: string | undefined;
+      if (accreditationFile) {
+        const ext = accreditationFile.name.split(".").pop() || "bin";
+        const path = `${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("accreditation-docs")
+          .upload(path, accreditationFile, {
+            contentType: accreditationFile.type || undefined,
+            upsert: false,
+          });
+        if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+        accreditationDocumentPath = path;
+      }
       await create({
         data: {
           name,
           country,
           website: website || undefined,
           about: about || undefined,
+          accreditationDocumentPath,
           adminEmail: admin.email,
           adminDisplayName: admin.displayName,
           mode: admin.mode,
@@ -100,7 +116,7 @@ function AddInstitutionDialog() {
         },
       });
       toast.success("Institution created");
-      setName(""); setCountry(""); setWebsite(""); setAbout("");
+      setName(""); setCountry(""); setWebsite(""); setAbout(""); setAccreditationFile(null);
       resetAdmin();
       setOpen(false);
     } catch (e: any) {
@@ -140,6 +156,18 @@ function AddInstitutionDialog() {
           <div>
             <Label htmlFor="i-about">About</Label>
             <Textarea id="i-about" rows={2} value={about} onChange={(e) => setAbout(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="i-accreditation">Accreditation document</Label>
+            <Input
+              id="i-accreditation"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+              onChange={(e) => setAccreditationFile(e.target.files?.[0] ?? null)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Optional. PDF or image proof of accreditation (max ~10 MB).
+            </p>
           </div>
           <Separator />
           <div>

@@ -233,6 +233,7 @@ export const adminCreateInstitution = createServerFn({ method: "POST" })
       country: string;
       website?: string;
       about?: string;
+      accreditationDocumentPath?: string;
       adminEmail: string;
       adminDisplayName: string;
       mode: "password" | "invite";
@@ -252,6 +253,7 @@ export const adminCreateInstitution = createServerFn({ method: "POST" })
         country: data.country,
         website: data.website ?? null,
         about: data.about ?? null,
+        accreditation_document_url: data.accreditationDocumentPath ?? null,
       })
       .select("id")
       .single();
