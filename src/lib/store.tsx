@@ -448,6 +448,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "application_comments" }, () => refetchAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "registration_requests" }, () => refetchAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "organizations" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "template_assignees" }, () => refetchAll())
       .subscribe();
 
     return () => {
