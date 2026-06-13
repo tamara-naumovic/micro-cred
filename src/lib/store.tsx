@@ -29,6 +29,7 @@ import {
   type RequestStatus,
   type Role,
   type SharingSettings,
+  type TemplateAssignment,
   type TemplateStatus,
   type TimelineEvent,
 } from "./types";
@@ -45,6 +46,7 @@ interface State {
   audit: AuditEvent[];
   events: PlatformEvent[];
   users: MockUser[];
+  templateAssignees: TemplateAssignment[];
 }
 
 const emptyState: State = {
@@ -57,6 +59,7 @@ const emptyState: State = {
   audit: [],
   events: [],
   users: [],
+  templateAssignees: [],
 };
 
 export interface BulkRow {
@@ -91,6 +94,7 @@ interface StoreCtx extends State {
   revokeCredential: (credentialId: string, reason: string) => void;
   upsertTemplate: (t: MicroCredentialTemplate) => void;
   archiveTemplate: (id: string) => void;
+  assignTemplateUsers: (templateId: string, userIds: string[]) => Promise<void>;
 
   approveRegistration: (id: string) => void;
   rejectRegistration: (id: string) => void;
@@ -112,10 +116,24 @@ function loadUser(): MockUser | null {
 }
 
 function mapDbRoleToRole(dbRole: string): Role {
-  if (dbRole === "issuer_admin") return "issuer";
+  if (dbRole === "issuer_admin" || dbRole === "issuer_staff") return "issuer";
   if (dbRole === "platform_admin") return "admin";
   return "earner";
 }
+
+function mapDbRoleToSubRole(dbRole: string): "admin" | "staff" | undefined {
+  if (dbRole === "issuer_admin") return "admin";
+  if (dbRole === "issuer_staff") return "staff";
+  return undefined;
+}
+
+const ROLE_PRIORITY: Record<string, number> = {
+  platform_admin: 4,
+  issuer_admin: 3,
+  issuer_staff: 2,
+  earner: 1,
+  verifier: 0,
+};
 
 // ============ Row mappers ============
 type Row = Record<string, unknown>;
@@ -284,6 +302,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         rolesRes,
         tlRes,
         commentsRes,
+        taRes,
       ] = await Promise.all([
         supabase.from("templates").select("*"),
         supabase.from("applications").select("*"),
@@ -297,7 +316,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         supabase.from("user_roles").select("*"),
         supabase.from("application_timeline").select("*").order("created_at", { ascending: true }),
         supabase.from("application_comments").select("*").order("created_at", { ascending: true }),
+        supabase.from("template_assignees").select("template_id, user_id"),
       ]);
+
 
       const orgs = (orgRes.data ?? []).map(mapOrg);
       const orgName = new Map(orgs.map((o) => [o.id, o.name]));
@@ -317,12 +338,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       const users: MockUser[] = profiles.map((p) => {
         const userRoles = rolesByUser.get(p.id as string) ?? [];
-        const primary = userRoles[0];
+        const sorted = [...userRoles].sort(
+          (a, b) => (ROLE_PRIORITY[b.role as string] ?? 0) - (ROLE_PRIORITY[a.role as string] ?? 0),
+        );
+        const primary = sorted[0];
+        const primaryRole = (primary?.role as string | undefined) ?? "earner";
         return {
           id: p.id as string,
           name: (p.display_name as string) || ((p.email as string)?.split("@")[0] ?? "User"),
           email: (p.email as string) ?? "",
-          role: primary ? mapDbRoleToRole(primary.role as string) : "earner",
+          role: mapDbRoleToRole(primaryRole),
+          subRole: mapDbRoleToSubRole(primaryRole),
           organizationId: (primary?.organization_id as string | undefined) ?? undefined,
           organization: primary?.organization_id
             ? orgName.get(primary.organization_id as string)
@@ -385,6 +411,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const registrations = (regRes.data ?? []).map((r) => mapRegistration(r as Row));
       const audit = (auditRes.data ?? []).map((r) => mapAudit(r as Row));
       const events = (eventRes.data ?? []).map((r) => mapEvent(r as Row));
+      const templateAssignees: TemplateAssignment[] = (taRes.data ?? []).map((r) => ({
+        templateId: (r as Row).template_id as string,
+        userId: (r as Row).user_id as string,
+      }));
 
       setState({
         templates,
@@ -396,6 +426,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         audit,
         events,
         users,
+        templateAssignees,
       });
     } catch (e) {
       console.error("[store] refetchAll failed", e);
@@ -418,6 +449,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "application_comments" }, () => refetchAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "registration_requests" }, () => refetchAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "organizations" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "template_assignees" }, () => refetchAll())
       .subscribe();
 
     return () => {
@@ -693,6 +725,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })();
   }, [refetchAll]);
 
+  const assignTemplateUsers: StoreCtx["assignTemplateUsers"] = useCallback(async (templateId, userIds) => {
+    const actor = activeUserRef.current;
+    const { data: existing } = await supabase
+      .from("template_assignees")
+      .select("user_id")
+      .eq("template_id", templateId);
+    const existingIds = new Set((existing ?? []).map((r) => r.user_id as string));
+    const toAdd = userIds.filter((id) => !existingIds.has(id));
+    const toRemove = [...existingIds].filter((id) => !userIds.includes(id));
+    if (toAdd.length > 0) {
+      const rows = toAdd.map((uid) => ({
+        template_id: templateId,
+        user_id: uid,
+        assigned_by: actor?.id ?? null,
+      }));
+      const { error } = await (supabase.from("template_assignees") as unknown as {
+        insert: (r: Record<string, unknown>[]) => Promise<{ error: unknown }>;
+      }).insert(rows);
+      if (error) console.error("[store] assignTemplateUsers insert", error);
+    }
+    if (toRemove.length > 0) {
+      const { error } = await supabase
+        .from("template_assignees")
+        .delete()
+        .eq("template_id", templateId)
+        .in("user_id", toRemove);
+      if (error) console.error("[store] assignTemplateUsers delete", error);
+    }
+    await refetchAll();
+  }, [refetchAll]);
+
+
   const approveRegistration: StoreCtx["approveRegistration"] = useCallback((id) => {
     (async () => {
       await supabase
@@ -751,6 +815,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       revokeCredential,
       upsertTemplate,
       archiveTemplate,
+      assignTemplateUsers,
       approveRegistration,
       rejectRegistration,
       markAllRead,
@@ -760,7 +825,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       state, activeUser, setActiveUser, loading, createApplication, updateSharing,
       advanceApplicationStatus, rejectApplication, addReviewerComment,
       issueFromApplication, directIssue, bulkIssue, revokeCredential,
-      upsertTemplate, archiveTemplate, approveRegistration, rejectRegistration,
+      upsertTemplate, archiveTemplate, assignTemplateUsers, approveRegistration, rejectRegistration,
       markAllRead, reset,
     ],
   );

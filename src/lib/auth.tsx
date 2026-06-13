@@ -16,12 +16,22 @@ interface AuthCtx {
 
 const Ctx = createContext<AuthCtx | null>(null);
 
-// Map DB app_role -> frontend Role
-function mapRole(dbRole: string): Role {
-  if (dbRole === "issuer_admin") return "issuer";
-  if (dbRole === "platform_admin") return "admin";
-  return "earner";
+// Map DB app_role -> frontend Role + subRole
+function mapDbRole(dbRole: string): { role: Role; subRole?: "admin" | "staff" } {
+  if (dbRole === "platform_admin") return { role: "admin" };
+  if (dbRole === "issuer_admin") return { role: "issuer", subRole: "admin" };
+  if (dbRole === "issuer_staff") return { role: "issuer", subRole: "staff" };
+  return { role: "earner" };
 }
+
+// Higher priority wins when a user has several roles.
+const ROLE_PRIORITY: Record<string, number> = {
+  platform_admin: 4,
+  issuer_admin: 3,
+  issuer_staff: 2,
+  earner: 1,
+  verifier: 0,
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -40,12 +50,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.from("profiles").select("display_name, email, student_id").eq("id", u.id).maybeSingle(),
         supabase.from("user_roles").select("role, organization_id").eq("user_id", u.id),
       ]);
-      const primary = roles?.[0];
+      const sorted = [...(roles ?? [])].sort(
+        (a, b) => (ROLE_PRIORITY[b.role as string] ?? 0) - (ROLE_PRIORITY[a.role as string] ?? 0),
+      );
+      const primary = sorted[0];
+      const mapped = primary ? mapDbRole(primary.role as string) : { role: "earner" as Role };
       const mock: MockUser = {
         id: u.id,
         name: profile?.display_name || u.email?.split("@")[0] || "User",
         email: profile?.email || u.email || "",
-        role: primary ? mapRole(primary.role as string) : "earner",
+        role: mapped.role,
+        subRole: mapped.subRole,
         organizationId: primary?.organization_id ?? undefined,
         studentId: profile?.student_id ?? undefined,
       };
