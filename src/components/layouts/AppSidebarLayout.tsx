@@ -177,7 +177,7 @@ export function AppSidebarLayout() {
     return null;
   }
 
-  const groups = NAV[activeUser.role] ?? [];
+  const groups = getNav(activeUser);
   const RoleIcon = ROLE_ICON[activeUser.role];
   const unread = notifications.filter(
     (n) => !n.read && n.forRole === activeUser.role && (!n.forUserId || n.forUserId === activeUser.id),
