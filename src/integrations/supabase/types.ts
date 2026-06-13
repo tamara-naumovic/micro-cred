@@ -711,9 +711,15 @@ export type Database = {
           issued_at: string
           issuer_name: string
           level: Database["public"]["Enums"]["cred_level"]
+          prerequisites: string
+          prerequisites_none: boolean
+          qa_document_path: string
+          qa_type: string
           skills: string[]
           source: Database["public"]["Enums"]["learning_source"]
+          stackability_type: string
           status: Database["public"]["Enums"]["credential_status"]
+          supervision_type: string
           title: string
         }[]
       }

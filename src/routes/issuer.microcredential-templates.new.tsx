@@ -66,6 +66,12 @@ const SUPERVISION_OPTIONS: { value: SupervisionType; label: string }[] = [
   { value: "supervised_onsite_with_id", label: "Supervised onsite with identity verification" },
 ];
 
+const STACKABILITY_OPTIONS: { value: StackabilityType; label: string }[] = [
+  { value: "stand_alone", label: "Stand-alone" },
+  { value: "independent_integrated", label: "Independent micro-credential / integrated" },
+  { value: "stackable", label: "Stackable towards another credential" },
+];
+
 function Form() {
   const { activeUser, upsertTemplate, organizations, users, assignTemplateUsers } = useStore();
   const navigate = useNavigate();
@@ -114,7 +120,7 @@ function Form() {
     if (!outcomes.trim()) requiredErrors.push("Learning outcomes");
     if (!assessment.trim()) requiredErrors.push("Assessment");
     if (!qaType) requiredErrors.push("Quality assurance type");
-    if (!qaFile) requiredErrors.push("Quality assurance document");
+    if (qaType && qaType !== "not_specified" && !qaFile) requiredErrors.push("Quality assurance document");
     if (expiryMode === "fixed_date" && !expiryDate) requiredErrors.push("Expiration date");
     if (requiredErrors.length > 0) {
       toast.error(`Required: ${requiredErrors.join(", ")}`);
@@ -160,9 +166,7 @@ function Form() {
         supervision: supervisionType ? SUPERVISION_OPTIONS.find((o) => o.value === supervisionType)?.label ?? "" : "",
         supervisionType: supervisionType || undefined,
         stackability: stackabilityType
-          ? stackabilityType === "stand_alone"
-            ? "Stand-alone, independent micro-credential"
-            : "Integrated, stackable towards another credential"
+          ? STACKABILITY_OPTIONS.find((o) => o.value === stackabilityType)?.label ?? ""
           : "",
         stackabilityType: stackabilityType || undefined,
         expiryMode,
@@ -258,18 +262,20 @@ function Form() {
                   ))}
                 </SelectContent>
               </Select>
-              <div>
-                <Label className="text-sm">QA confirmation document *</Label>
-                <div className="mt-1 flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept="application/pdf,image/*"
-                    onChange={(e) => setQaFile(e.target.files?.[0] ?? null)}
-                  />
-                  {qaFile && <span className="text-xs text-muted-foreground"><Upload className="inline h-3 w-3 mr-1" />{qaFile.name}</span>}
+              {qaType && qaType !== "not_specified" && (
+                <div>
+                  <Label className="text-sm">QA confirmation document *</Label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      onChange={(e) => setQaFile(e.target.files?.[0] ?? null)}
+                    />
+                    {qaFile && <span className="text-xs text-muted-foreground"><Upload className="inline h-3 w-3 mr-1" />{qaFile.name}</span>}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">PDF or image, max 10 MB.</p>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">PDF or image, max 10 MB.</p>
-              </div>
+              )}
             </div>
 
             {/* Prerequisites */}
@@ -309,16 +315,14 @@ function Form() {
             {/* Stackability */}
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
               <Label>Integration / Stackability (optional)</Label>
-              <RadioGroup value={stackabilityType} onValueChange={(v) => setStackabilityType(v as StackabilityType)}>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="stand_alone" id="st-stand" />
-                  <Label htmlFor="st-stand" className="font-normal cursor-pointer">Stand-alone, independent micro-credential</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="stackable" id="st-stackable" />
-                  <Label htmlFor="st-stackable" className="font-normal cursor-pointer">Integrated, stackable towards another credential</Label>
-                </div>
-              </RadioGroup>
+              <Select value={stackabilityType} onValueChange={(v) => setStackabilityType(v as StackabilityType)}>
+                <SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger>
+                <SelectContent>
+                  {STACKABILITY_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
