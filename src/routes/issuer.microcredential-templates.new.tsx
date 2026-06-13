@@ -262,18 +262,20 @@ function Form() {
                   ))}
                 </SelectContent>
               </Select>
-              <div>
-                <Label className="text-sm">QA confirmation document *</Label>
-                <div className="mt-1 flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept="application/pdf,image/*"
-                    onChange={(e) => setQaFile(e.target.files?.[0] ?? null)}
-                  />
-                  {qaFile && <span className="text-xs text-muted-foreground"><Upload className="inline h-3 w-3 mr-1" />{qaFile.name}</span>}
+              {qaType && qaType !== "not_specified" && (
+                <div>
+                  <Label className="text-sm">QA confirmation document *</Label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      onChange={(e) => setQaFile(e.target.files?.[0] ?? null)}
+                    />
+                    {qaFile && <span className="text-xs text-muted-foreground"><Upload className="inline h-3 w-3 mr-1" />{qaFile.name}</span>}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">PDF or image, max 10 MB.</p>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">PDF or image, max 10 MB.</p>
-              </div>
+              )}
             </div>
 
             {/* Prerequisites */}
