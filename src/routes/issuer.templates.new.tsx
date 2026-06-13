@@ -57,8 +57,6 @@ function Form() {
     (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === activeUser.organizationId,
   );
 
-  const toggleStaff = (id: string) =>
-    setAssignedStaff((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const submit = async (status: "draft" | "active") => {
     if (!title.trim() || !description.trim()) {
