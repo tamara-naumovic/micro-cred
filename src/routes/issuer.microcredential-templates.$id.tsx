@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { StaffPicker } from "@/components/StaffPicker";
 import { useStore } from "@/lib/store";
 
-export const Route = createFileRoute("/issuer/templates/$id")({
+export const Route = createFileRoute("/issuer/microcredential-templates/$id")({
   head: () => ({ meta: [{ title: "Micro-credential — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
