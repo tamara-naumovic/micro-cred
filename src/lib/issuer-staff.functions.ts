@@ -51,25 +51,71 @@ export const listIssuerStaff = createServerFn({ method: "POST" })
 
 export const addIssuerStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string; organizationId: string }) => d)
+  .inputValidator(
+    (d: {
+      email: string;
+      organizationId: string;
+      displayName?: string;
+      mode?: "existing" | "password" | "invite";
+      password?: string;
+      redirectTo?: string;
+    }) => d,
+  )
   .handler(async ({ data, context }) => {
     await assertOrgAdmin(context.supabase, context.userId, data.organizationId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.trim().toLowerCase();
-    const { data: prof, error: pErr } = await supabaseAdmin
+    const mode = data.mode ?? "existing";
+
+    const { data: prof } = await supabaseAdmin
       .from("profiles")
       .select("id, email")
       .ilike("email", email)
       .maybeSingle();
-    if (pErr) throw new Error(pErr.message);
-    if (!prof) throw new Error("No user found with that email. Ask them to sign up first.");
+
+    let userId: string | null = prof?.id ?? null;
+
+    if (!userId) {
+      if (mode === "existing") {
+        throw new Error("No user found with that email. Switch to 'Create new account' to provision one.");
+      }
+      if (mode === "password") {
+        if (!data.password || data.password.length < 6) {
+          throw new Error("Password must be at least 6 characters");
+        }
+        const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password: data.password,
+          email_confirm: true,
+          user_metadata: { display_name: data.displayName ?? "" },
+        });
+        if (error || !created?.user) throw new Error(error?.message ?? "Failed to create user");
+        userId = created.user.id;
+      } else {
+        const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+          data: { display_name: data.displayName ?? "" },
+          redirectTo: data.redirectTo,
+        });
+        if (error || !invited?.user) throw new Error(error?.message ?? "Failed to invite user");
+        userId = invited.user.id;
+      }
+
+      // Trigger inserted a default earner role — staff accounts don't need it
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "earner")
+        .is("organization_id", null);
+    }
+
     const { error: insErr } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: prof.id, role: "issuer_staff", organization_id: data.organizationId });
+      .insert({ user_id: userId, role: "issuer_staff", organization_id: data.organizationId });
     if (insErr && !String(insErr.message).toLowerCase().includes("duplicate")) {
       throw new Error(insErr.message);
     }
-    return { ok: true, userId: prof.id };
+    return { ok: true, userId };
   });
 
 export const removeIssuerStaff = createServerFn({ method: "POST" })

@@ -9,14 +9,11 @@ interface AuthCtx {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string, displayName: string) => Promise<{ error: string | null }>;
-  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
 
-// Map DB app_role -> frontend Role + subRole
 function mapDbRole(dbRole: string): { role: Role; subRole?: "admin" | "staff" } {
   if (dbRole === "platform_admin") return { role: "admin" };
   if (dbRole === "issuer_admin") return { role: "issuer", subRole: "admin" };
@@ -24,7 +21,6 @@ function mapDbRole(dbRole: string): { role: Role; subRole?: "admin" | "staff" } 
   return { role: "earner" };
 }
 
-// Higher priority wins when a user has several roles.
 const ROLE_PRIORITY: Record<string, number> = {
   platform_admin: 4,
   issuer_admin: 3,
@@ -39,7 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { setActiveUser } = useStore();
 
-  // Bridge: when Supabase user changes, sync to mock activeUser
   async function bridgeToActiveUser(u: User | null) {
     if (!u) {
       setActiveUser(null);
@@ -74,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
-      // defer to avoid deadlock per Supabase docs
       setTimeout(() => bridgeToActiveUser(s?.user ?? null), 0);
     });
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -94,23 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn: async (email, password) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         return { error: error?.message ?? null };
-      },
-      signUp: async (email, password, displayName) => {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: { display_name: displayName },
-          },
-        });
-        return { error: error?.message ?? null };
-      },
-      signInWithGoogle: async () => {
-        await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo: `${window.location.origin}/` },
-        });
       },
       signOut: async () => {
         await supabase.auth.signOut();
