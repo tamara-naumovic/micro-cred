@@ -26,11 +26,15 @@ function nextLabel(status: RequestStatus): string | null {
 }
 
 function Queue() {
-  const { activeUser, applications, advanceApplicationStatus, rejectApplication } = useStore();
+  const { activeUser, applications, templateAssignees, advanceApplicationStatus, rejectApplication } = useStore();
   if (!activeUser) return null;
-  const queue = applications.filter(
-    (a) => a.issuerId === activeUser.organizationId && a.status !== "issued" && a.status !== "rejected",
+  const isStaff = activeUser.subRole === "staff";
+  const assignedIds = new Set(
+    templateAssignees.filter((a) => a.userId === activeUser.id).map((a) => a.templateId),
   );
+  const queue = applications
+    .filter((a) => a.issuerId === activeUser.organizationId && a.status !== "issued" && a.status !== "rejected")
+    .filter((a) => (isStaff ? assignedIds.has(a.templateId) : true));
 
   return (
     <PageShell

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -13,13 +13,20 @@ import { useStore } from "@/lib/store";
 import type { Level, LearningSource, MicroCredentialTemplate, Participation } from "@/lib/types";
 
 export const Route = createFileRoute("/issuer/templates/new")({
-  head: () => ({ meta: [{ title: "Create Template — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Create Micro-credential — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
-      <Form />
+      <Guarded />
     </RoleGuard>
   ),
 });
+
+function Guarded() {
+  const { activeUser } = useStore();
+  if (!activeUser) return null;
+  if (activeUser.subRole !== "admin") return <Navigate to="/issuer/templates" />;
+  return <Form />;
+}
 
 function Form() {
   const { activeUser, upsertTemplate, organizations } = useStore();
@@ -68,12 +75,12 @@ function Form() {
       version: "1.0",
     };
     upsertTemplate(tpl);
-    toast.success(`Template ${status === "draft" ? "saved as draft" : "published"}`);
+    toast.success(`Micro-credential ${status === "draft" ? "saved as draft" : "published"}`);
     navigate({ to: "/issuer/templates" });
   };
 
   return (
-    <PageShell title="Create Template" description="Define a new micro-credential offered by your organisation.">
+    <PageShell title="Create Micro-credential" description="Define a new micro-credential offered by your organisation.">
       <Card>
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 md:grid-cols-2">
@@ -136,7 +143,7 @@ function Form() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => submit("draft")}>Save as draft</Button>
-            <Button onClick={() => submit("active")}>Publish template</Button>
+            <Button onClick={() => submit("active")}>Publish micro-credential</Button>
           </div>
         </CardContent>
       </Card>

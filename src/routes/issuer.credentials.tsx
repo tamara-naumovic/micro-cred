@@ -19,11 +19,16 @@ export const Route = createFileRoute("/issuer/credentials")({
 });
 
 function List() {
-  const { activeUser, credentials } = useStore();
+  const { activeUser, credentials, templateAssignees } = useStore();
   const [q, setQ] = useState("");
   if (!activeUser) return null;
+  const isStaff = activeUser.subRole === "staff";
+  const assignedIds = new Set(
+    templateAssignees.filter((a) => a.userId === activeUser.id).map((a) => a.templateId),
+  );
   const mine = credentials
     .filter((c) => c.issuerId === activeUser.organizationId)
+    .filter((c) => (isStaff ? (c.templateId ? assignedIds.has(c.templateId) : false) : true))
     .filter((c) =>
       !q ||
       c.title.toLowerCase().includes(q.toLowerCase()) ||

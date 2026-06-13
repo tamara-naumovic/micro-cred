@@ -24,11 +24,20 @@ export const Route = createFileRoute("/issuer/issue/")({
 type RecipientOverride = { grade: string; expiryDate: string };
 
 function Direct() {
-  const { activeUser, templates, users, directIssue } = useStore();
+  const { activeUser, templates, users, templateAssignees, directIssue } = useStore();
   const navigate = useNavigate();
+  const isStaff = activeUser?.subRole === "staff";
+  const assignedIds = useMemo(
+    () => new Set(templateAssignees.filter((a) => a.userId === activeUser?.id).map((a) => a.templateId)),
+    [templateAssignees, activeUser?.id],
+  );
   const myTemplates = useMemo(
-    () => templates.filter((t) => t.issuerId === activeUser?.organizationId && t.status === "active"),
-    [templates, activeUser],
+    () => templates.filter(
+      (t) => t.issuerId === activeUser?.organizationId
+        && t.status === "active"
+        && (!isStaff || assignedIds.has(t.id)),
+    ),
+    [templates, activeUser, isStaff, assignedIds],
   );
   const earners = users.filter((u) => u.role === "earner");
   const [templateId, setTemplateId] = useState(myTemplates[0]?.id ?? "");
@@ -53,7 +62,7 @@ function Direct() {
 
   const submit = () => {
     if (!templateId || selectedIds.length === 0) {
-      toast.error("Pick a template and at least one earner");
+      toast.error("Pick a micro-credential and at least one earner");
       return;
     }
     const recipients = selectedIds.map((id) => ({
@@ -75,9 +84,9 @@ function Direct() {
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <Label>Template</Label>
+              <Label>Micro-credential</Label>
               <Select value={templateId} onValueChange={setTemplateId}>
-                <SelectTrigger><SelectValue placeholder="Select a template" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select a micro-credential" /></SelectTrigger>
                 <SelectContent>
                   {myTemplates.map((t) => (
                     <SelectItem key={t.id} value={t.id}>{t.title} (v{t.version})</SelectItem>

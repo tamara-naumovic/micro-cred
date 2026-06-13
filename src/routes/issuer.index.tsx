@@ -18,23 +18,30 @@ export const Route = createFileRoute("/issuer/")({
 });
 
 function Overview() {
-  const { activeUser, templates, credentials, applications } = useStore();
+  const { activeUser, templates, credentials, applications, templateAssignees } = useStore();
   if (!activeUser) return null;
   const orgId = activeUser.organizationId;
-  const myTemplates = templates.filter((t) => t.issuerId === orgId);
-  const myCreds = credentials.filter((c) => c.issuerId === orgId);
-  const myApps = applications.filter((a) => a.issuerId === orgId);
+  const isStaff = activeUser.subRole === "staff";
+  const assignedIds = new Set(
+    templateAssignees.filter((a) => a.userId === activeUser.id).map((a) => a.templateId),
+  );
+  const filterT = (id: string) => !isStaff || assignedIds.has(id);
+  const myTemplates = templates.filter((t) => t.issuerId === orgId && filterT(t.id));
+  const myCreds = credentials.filter((c) => c.issuerId === orgId && filterT(c.templateId));
+  const myApps = applications.filter((a) => a.issuerId === orgId && filterT(a.templateId));
   const ready = myApps.filter((a) => a.status === "verified_by_provider");
   const activeRequests = myApps.filter((a) => a.status !== "issued" && a.status !== "rejected").length;
 
   return (
     <PageShell
       title="Issuer Overview"
-      description={`${activeUser.organization ?? "Issuer"} — manage templates, issuance and revocations.`}
+      description={`${activeUser.organization ?? "Issuer"} — ${isStaff ? "your assigned micro-credentials and issuance queue." : "manage micro-credentials, issuance and revocations."}`}
       actions={
         <>
           <Button asChild><Link to="/issuer/issue"><Send className="mr-2 h-4 w-4" />Direct issue</Link></Button>
-          <Button variant="outline" asChild><Link to="/issuer/templates/new"><BookOpen className="mr-2 h-4 w-4" />New template</Link></Button>
+          {!isStaff && (
+            <Button variant="outline" asChild><Link to="/issuer/templates/new"><BookOpen className="mr-2 h-4 w-4" />New micro-credential</Link></Button>
+          )}
         </>
       }
     >

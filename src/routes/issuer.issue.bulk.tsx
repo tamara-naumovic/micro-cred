@@ -45,18 +45,27 @@ function parseCsv(input: string): BulkRow[] {
 }
 
 function Bulk() {
-  const { activeUser, templates, bulkIssue } = useStore();
+  const { activeUser, templates, templateAssignees, bulkIssue } = useStore();
   const navigate = useNavigate();
+  const isStaff = activeUser?.subRole === "staff";
+  const assignedIds = useMemo(
+    () => new Set(templateAssignees.filter((a) => a.userId === activeUser?.id).map((a) => a.templateId)),
+    [templateAssignees, activeUser?.id],
+  );
   const myTemplates = useMemo(
-    () => templates.filter((t) => t.issuerId === activeUser?.organizationId && t.status === "active"),
-    [templates, activeUser],
+    () => templates.filter(
+      (t) => t.issuerId === activeUser?.organizationId
+        && t.status === "active"
+        && (!isStaff || assignedIds.has(t.id)),
+    ),
+    [templates, activeUser, isStaff, assignedIds],
   );
   const [templateId, setTemplateId] = useState(myTemplates[0]?.id ?? "");
   const [csv, setCsv] = useState(SAMPLE);
   const rows = useMemo(() => parseCsv(csv), [csv]);
 
   const submit = () => {
-    if (!templateId) return toast.error("Pick a template");
+    if (!templateId) return toast.error("Pick a micro-credential");
     if (rows.length === 0) return toast.error("CSV is empty or malformed");
     const issued = bulkIssue(templateId, rows);
     toast.success(`Bulk issued ${issued.length} credential(s)`);
@@ -71,9 +80,9 @@ function Bulk() {
       <Card>
         <CardContent className="space-y-5 p-6">
           <div>
-            <Label>Template</Label>
+            <Label>Micro-credential</Label>
             <Select value={templateId} onValueChange={setTemplateId}>
-              <SelectTrigger><SelectValue placeholder="Select a template" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select a micro-credential" /></SelectTrigger>
               <SelectContent>
                 {myTemplates.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>

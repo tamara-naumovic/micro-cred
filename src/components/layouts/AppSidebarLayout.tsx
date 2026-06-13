@@ -50,7 +50,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
-import type { Role } from "@/lib/types";
+import type { MockUser, Role } from "@/lib/types";
 
 interface NavItem {
   to: string;
@@ -58,81 +58,103 @@ interface NavItem {
   icon: typeof LayoutDashboard;
 }
 
-const NAV: Record<Role, { group: string; items: NavItem[] }[]> = {
-  earner: [
-    {
-      group: "Workspace",
-      items: [
-        { to: "/earner", label: "Dashboard", icon: LayoutDashboard },
-        { to: "/earner/credentials", label: "My Credentials", icon: Award },
-        { to: "/earner/applications", label: "Applications", icon: ClipboardList },
-        { to: "/earner/apply", label: "Apply for Credential", icon: FilePlus2 },
-      ],
-    },
-    {
-      group: "Sharing",
-      items: [
-        { to: "/earner/profile", label: "Public Profile", icon: UserCircle },
-        { to: "/earner/notifications", label: "Notifications", icon: Bell },
-        { to: "/earner/settings", label: "Settings", icon: Settings },
-      ],
-    },
-  ],
-  issuer: [
-    {
-      group: "Overview",
-      items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard }],
-    },
-    {
-      group: "Templates",
-      items: [
-        { to: "/issuer/templates", label: "Templates", icon: BookOpen },
-        { to: "/issuer/templates/new", label: "Create Template", icon: FilePlus2 },
-      ],
-    },
-    {
-      group: "Issuance",
-      items: [
-        { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox },
-        { to: "/issuer/issue", label: "Direct Issuance", icon: Send },
-        { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud },
-        { to: "/issuer/credentials", label: "Issued Credentials", icon: Award },
-        { to: "/issuer/revocations", label: "Revocations", icon: XOctagon },
-      ],
-    },
-    {
-      group: "Network",
-      items: [
-        { to: "/issuer/providers", label: "Course Providers", icon: Building2 },
-        { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck },
-        { to: "/issuer/ebsi", label: "EBSI Integration", icon: Hexagon },
-      ],
-    },
-  ],
-  admin: [
-    {
-      group: "Overview",
-      items: [{ to: "/admin", label: "Overview", icon: LayoutDashboard }],
-    },
-    {
-      group: "People & Orgs",
-      items: [
-        { to: "/admin/users", label: "Users", icon: Users },
-        { to: "/admin/organizations", label: "Organizations", icon: Building2 },
-        { to: "/admin/roles", label: "Roles & Permissions", icon: ShieldCheck },
-        { to: "/admin/registrations", label: "Registrations", icon: Mail },
-      ],
-    },
-    {
-      group: "Platform",
-      items: [
-        { to: "/admin/activity", label: "Activity", icon: ListChecks },
-        { to: "/admin/audit", label: "Audit Trail", icon: FileCheck2 },
-        { to: "/admin/settings", label: "Settings", icon: Settings },
-      ],
-    },
-  ],
-};
+type NavGroups = { group: string; items: NavItem[] }[];
+
+const EARNER_NAV: NavGroups = [
+  {
+    group: "Workspace",
+    items: [
+      { to: "/earner", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/earner/credentials", label: "My Credentials", icon: Award },
+      { to: "/earner/applications", label: "Applications", icon: ClipboardList },
+      { to: "/earner/apply", label: "Apply for Credential", icon: FilePlus2 },
+    ],
+  },
+  {
+    group: "Sharing",
+    items: [
+      { to: "/earner/profile", label: "Public Profile", icon: UserCircle },
+      { to: "/earner/notifications", label: "Notifications", icon: Bell },
+      { to: "/earner/settings", label: "Settings", icon: Settings },
+    ],
+  },
+];
+
+const ISSUER_ADMIN_NAV: NavGroups = [
+  { group: "Overview", items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard }] },
+  {
+    group: "Micro-credentials",
+    items: [
+      { to: "/issuer/templates", label: "Micro-credentials", icon: BookOpen },
+      { to: "/issuer/templates/new", label: "Create Micro-credential", icon: FilePlus2 },
+      { to: "/issuer/staff", label: "Staff", icon: Users },
+    ],
+  },
+  {
+    group: "Issuance",
+    items: [
+      { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox },
+      { to: "/issuer/issue", label: "Direct Issuance", icon: Send },
+      { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud },
+      { to: "/issuer/credentials", label: "Issued Credentials", icon: Award },
+      { to: "/issuer/revocations", label: "Revocations", icon: XOctagon },
+    ],
+  },
+  {
+    group: "Network",
+    items: [
+      { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck },
+      { to: "/issuer/ebsi", label: "EBSI Integration", icon: Hexagon },
+    ],
+  },
+];
+
+const ISSUER_STAFF_NAV: NavGroups = [
+  { group: "Overview", items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard }] },
+  {
+    group: "Micro-credentials",
+    items: [
+      { to: "/issuer/templates", label: "My Micro-credentials", icon: BookOpen },
+    ],
+  },
+  {
+    group: "Issuance",
+    items: [
+      { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox },
+      { to: "/issuer/issue", label: "Direct Issuance", icon: Send },
+      { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud },
+      { to: "/issuer/credentials", label: "Issued Credentials", icon: Award },
+    ],
+  },
+];
+
+const ADMIN_NAV: NavGroups = [
+  { group: "Overview", items: [{ to: "/admin", label: "Overview", icon: LayoutDashboard }] },
+  {
+    group: "People & Orgs",
+    items: [
+      { to: "/admin/users", label: "Users", icon: Users },
+      { to: "/admin/organizations", label: "Organizations", icon: Building2 },
+      { to: "/admin/roles", label: "Roles & Permissions", icon: ShieldCheck },
+      { to: "/admin/registrations", label: "Registrations", icon: Mail },
+    ],
+  },
+  {
+    group: "Platform",
+    items: [
+      { to: "/admin/activity", label: "Activity", icon: ListChecks },
+      { to: "/admin/audit", label: "Audit Trail", icon: FileCheck2 },
+      { to: "/admin/settings", label: "Settings", icon: Settings },
+    ],
+  },
+];
+
+function getNav(user: MockUser): NavGroups {
+  if (user.role === "earner") return EARNER_NAV;
+  if (user.role === "admin") return ADMIN_NAV;
+  if (user.role === "issuer") return user.subRole === "staff" ? ISSUER_STAFF_NAV : ISSUER_ADMIN_NAV;
+  return [];
+}
 
 const ROLE_LABEL: Record<Role, string> = {
   earner: "Earner",
@@ -155,7 +177,7 @@ export function AppSidebarLayout() {
     return null;
   }
 
-  const groups = NAV[activeUser.role] ?? [];
+  const groups = getNav(activeUser);
   const RoleIcon = ROLE_ICON[activeUser.role];
   const unread = notifications.filter(
     (n) => !n.read && n.forRole === activeUser.role && (!n.forUserId || n.forUserId === activeUser.id),
