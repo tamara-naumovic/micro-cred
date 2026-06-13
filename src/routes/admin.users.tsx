@@ -311,3 +311,148 @@ function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; ea
     </Dialog>
   );
 }
+
+function EditUserDialog({ user }: { user: MockUser }) {
+  const { organizations, reset } = useStore();
+  const update = useServerFn(adminUpdateUser);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [displayName, setDisplayName] = useState(user.name);
+  const [email, setEmail] = useState(user.email);
+  const [role, setRole] = useState<AppRole>(mockUserToAppRole(user));
+  const [orgId, setOrgId] = useState<string>(user.organizationId ?? "");
+
+  const needsOrg = role === "issuer_admin" || role === "issuer_staff";
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (needsOrg && !orgId) {
+      toast.error("Pick an institution for this role");
+      return;
+    }
+    setBusy(true);
+    try {
+      await update({
+        data: {
+          userId: user.id,
+          email: email !== user.email ? email : undefined,
+          displayName: displayName !== user.name ? displayName : undefined,
+          role,
+          organizationId: needsOrg ? orgId : null,
+        },
+      });
+      toast.success("User updated");
+      setOpen(false);
+      reset();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to update");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" aria-label="Edit user">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Edit user</DialogTitle>
+          <DialogDescription>Update profile and role for this user.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <Label>Display name</Label>
+              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Email</Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div>
+              <Label>Role</Label>
+              <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="earner">Earner (student)</SelectItem>
+                  <SelectItem value="issuer_staff">Issuer staff</SelectItem>
+                  <SelectItem value="issuer_admin">Issuer admin</SelectItem>
+                  <SelectItem value="platform_admin">Platform admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {needsOrg && (
+              <div>
+                <Label>Institution</Label>
+                <Select value={orgId} onValueChange={setOrgId}>
+                  <SelectTrigger><SelectValue placeholder="Select institution" /></SelectTrigger>
+                  <SelectContent>
+                    {organizations.map((o) => (
+                      <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DeleteUserDialog({ user }: { user: MockUser }) {
+  const { reset } = useStore();
+  const del = useServerFn(adminDeleteUser);
+  const [busy, setBusy] = useState(false);
+
+  async function onConfirm() {
+    setBusy(true);
+    try {
+      await del({ data: { userId: user.id } });
+      toast.success("User deleted");
+      reset();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to delete");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="icon" variant="ghost" aria-label="Delete user">
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete {user.name}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This permanently removes the account, profile, and role assignments. This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={busy}
+            onClick={(e) => {
+              e.preventDefault();
+              onConfirm();
+            }}
+          >
+            {busy ? "Deleting…" : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
