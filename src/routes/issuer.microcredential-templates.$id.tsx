@@ -51,17 +51,11 @@ function Detail() {
       title={tpl.title}
       description={tpl.description}
       actions={
-        <>
-          <Button variant="outline" asChild>
-            <Link to="/issuer/microcredential-templates"><ArrowLeft className="mr-2 h-4 w-4" />All micro-credentials</Link>
-          </Button>
-          {!isStaff && (
-            <Button variant="outline" asChild>
-              <Link to="/issuer/microcredential-templates/$id/edit" params={{ id: tpl.id }}><Pencil className="mr-2 h-4 w-4" />Edit</Link>
-            </Button>
-          )}
-        </>
+        <Button variant="outline" asChild>
+          <Link to="/issuer/microcredential-templates"><ArrowLeft className="mr-2 h-4 w-4" />All micro-credentials</Link>
+        </Button>
       }
+
     >
       <div className="mb-4 flex flex-wrap gap-2">
         <StatusBadge status={tpl.status} />
