@@ -301,6 +301,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         rolesRes,
         tlRes,
         commentsRes,
+        taRes,
       ] = await Promise.all([
         supabase.from("templates").select("*"),
         supabase.from("applications").select("*"),
@@ -317,7 +318,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         supabase.from("template_assignees").select("template_id, user_id"),
       ]);
 
-      const taRes = arguments_taRes_unused: void 0;
 
       const orgs = (orgRes.data ?? []).map(mapOrg);
       const orgName = new Map(orgs.map((o) => [o.id, o.name]));
