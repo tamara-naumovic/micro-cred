@@ -287,7 +287,7 @@ function AddUserDialog() {
 }
 
 function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; earnerName: string }) {
-  const { organizations, earnerInstitutions } = useStore();
+  const { organizations, earnerInstitutions, reset: storeReset } = useStore();
   const assign = useServerFn(assignEarnerInstitution);
   const remove = useServerFn(removeEarnerInstitution);
   const [open, setOpen] = useState(false);
@@ -305,6 +305,7 @@ function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; ea
       } else {
         await assign({ data: { earnerId, organizationId: orgId } });
       }
+      storeReset();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed");
     } finally {
