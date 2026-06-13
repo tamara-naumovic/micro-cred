@@ -143,7 +143,7 @@ function Form() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => submit("draft")}>Save as draft</Button>
-            <Button onClick={() => submit("active")}>Publish template</Button>
+            <Button onClick={() => submit("active")}>Publish micro-credential</Button>
           </div>
         </CardContent>
       </Card>
