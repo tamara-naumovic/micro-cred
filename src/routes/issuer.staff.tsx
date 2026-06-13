@@ -82,7 +82,7 @@ function StaffPage() {
             displayName: form.displayName,
             mode: form.mode,
             password: form.password,
-            redirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
+            redirectTo: typeof window !== "undefined" ? `${window.location.origin}/set-password` : undefined,
           },
         });
         reset();

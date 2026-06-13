@@ -96,7 +96,7 @@ function AddInstitutionDialog() {
           adminDisplayName: admin.displayName,
           mode: admin.mode,
           adminPassword: admin.password,
-          redirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
+          redirectTo: typeof window !== "undefined" ? `${window.location.origin}/set-password` : undefined,
         },
       });
       toast.success("Institution created");
