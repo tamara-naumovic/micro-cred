@@ -157,6 +157,17 @@ function AddInstitutionDialog() {
             <Label htmlFor="i-about">About</Label>
             <Textarea id="i-about" rows={2} value={about} onChange={(e) => setAbout(e.target.value)} />
           </div>
+          <div>
+            <Label htmlFor="i-accreditation">Accreditation document</Label>
+            <Input
+              id="i-accreditation"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+              onChange={(e) => setAccreditationFile(e.target.files?.[0] ?? null)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Optional. PDF or image proof of accreditation (max ~10 MB).
+            </p>
           <Separator />
           <div>
             <p className="mb-2 text-sm font-medium">Institution admin</p>
