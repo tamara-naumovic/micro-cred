@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
-import { ArrowLeft, Pencil, Users } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
