@@ -70,6 +70,21 @@ export type CredentialStatus =
 
 export type Level = "Foundation" | "Intermediate" | "Advanced" | "Expert" | "N/A";
 
+export type QaType =
+  | "internal"
+  | "external"
+  | "internal_and_external"
+  | "other"
+  | "not_specified";
+
+export type SupervisionType =
+  | "unsupervised_no_id"
+  | "supervised_no_id"
+  | "supervised_online_with_id"
+  | "supervised_onsite_with_id";
+
+export type StackabilityType = "stand_alone" | "stackable";
+
 export interface Organization {
   id: string;
   name: string;
@@ -97,9 +112,14 @@ export interface MicroCredentialTemplate {
   assessment: string;
   participation: Participation;
   qualityAssurance: string;
+  qaType: QaType;
+  qaDocumentPath?: string;
   prerequisites: string;
+  prerequisitesNone: boolean;
   supervision: string;
+  supervisionType?: SupervisionType;
   stackability: string;
+  stackabilityType?: StackabilityType;
   furtherInfo?: string;
   expiryMode: "never" | "fixed_date";
   expiryDate?: string;

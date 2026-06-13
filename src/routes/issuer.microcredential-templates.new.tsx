@@ -2,7 +2,7 @@ import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Upload } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,14 +10,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { StaffPicker } from "@/components/StaffPicker";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
-import type { Level, LearningSource, MicroCredentialTemplate, Participation } from "@/lib/types";
+import { supabase } from "@/integrations/supabase/client";
+import type {
+  Level,
+  LearningSource,
+  MicroCredentialTemplate,
+  Participation,
+  QaType,
+  StackabilityType,
+  SupervisionType,
+} from "@/lib/types";
 
 export const Route = createFileRoute("/issuer/microcredential-templates/new")({
   head: () => ({ meta: [{ title: "Create Micro-credential — MicroCred" }] }),
@@ -35,6 +51,21 @@ function Guarded() {
   return <Form />;
 }
 
+const QA_OPTIONS: { value: QaType; label: string }[] = [
+  { value: "internal", label: "Internal" },
+  { value: "external", label: "External" },
+  { value: "internal_and_external", label: "Internal and external" },
+  { value: "other", label: "Other" },
+  { value: "not_specified", label: "Not specified" },
+];
+
+const SUPERVISION_OPTIONS: { value: SupervisionType; label: string }[] = [
+  { value: "unsupervised_no_id", label: "Unsupervised with no identity verification" },
+  { value: "supervised_no_id", label: "Supervised with no identity verification" },
+  { value: "supervised_online_with_id", label: "Supervised online with identity verification" },
+  { value: "supervised_onsite_with_id", label: "Supervised onsite with identity verification" },
+];
+
 function Form() {
   const { activeUser, upsertTemplate, organizations, users, assignTemplateUsers } = useStore();
   const navigate = useNavigate();
@@ -51,60 +82,107 @@ function Form() {
   const [expiryDate, setExpiryDate] = useState<Date | undefined>(undefined);
   const [assignedStaff, setAssignedStaff] = useState<string[]>([]);
 
+  // QA
+  const [qaType, setQaType] = useState<QaType | "">("");
+  const [qaFile, setQaFile] = useState<File | null>(null);
+
+  // Optional new fields
+  const [prereqNone, setPrereqNone] = useState(true);
+  const [prereqText, setPrereqText] = useState("");
+  const [supervisionType, setSupervisionType] = useState<SupervisionType | "">("");
+  const [stackabilityType, setStackabilityType] = useState<StackabilityType | "">("");
+
+  const [submitting, setSubmitting] = useState(false);
+
   if (!activeUser) return null;
   const issuerOrg = organizations.find((o) => o.id === activeUser.organizationId);
   const staffUsers = users.filter(
     (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === activeUser.organizationId,
   );
 
-
   const submit = async (status: "draft" | "active") => {
-    if (!title.trim() || !description.trim()) {
-      toast.error("Title and description are required");
-      return;
-    }
     if (!activeUser.organizationId) {
       toast.error("Your account is not linked to an issuer organisation");
       return;
     }
-    if (expiryMode === "fixed_date" && !expiryDate) {
-      toast.error("Please pick an expiration date");
+    // Required fields
+    const requiredErrors: string[] = [];
+    if (!title.trim()) requiredErrors.push("Title");
+    if (!description.trim()) requiredErrors.push("Description");
+    if (!ects.trim()) requiredErrors.push("ECTS");
+    if (!skills.trim()) requiredErrors.push("Skills");
+    if (!outcomes.trim()) requiredErrors.push("Learning outcomes");
+    if (!assessment.trim()) requiredErrors.push("Assessment");
+    if (!qaType) requiredErrors.push("Quality assurance type");
+    if (!qaFile) requiredErrors.push("Quality assurance document");
+    if (expiryMode === "fixed_date" && !expiryDate) requiredErrors.push("Expiration date");
+    if (requiredErrors.length > 0) {
+      toast.error(`Required: ${requiredErrors.join(", ")}`);
       return;
     }
+
+    setSubmitting(true);
     const id = crypto.randomUUID();
-    const tpl: MicroCredentialTemplate = {
-      id,
-      title,
-      description,
-      issuerId: activeUser.organizationId,
-      issuerName: issuerOrg?.name ?? activeUser.organization ?? "Issuer",
-      country: issuerOrg?.country ?? "Serbia",
-      source,
-      outcomes: outcomes.split("\n").map((s) => s.trim()).filter(Boolean),
-      skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-      ects: ects ? Number(ects) : undefined,
-      level,
-      assessment: assessment || "Defined per cohort",
-      participation,
-      qualityAssurance: "Internal QA",
-      prerequisites: "—",
-      supervision: "—",
-      stackability: "—",
-      expiryMode,
-      expiryDate: expiryMode === "fixed_date" && expiryDate ? expiryDate.toISOString() : undefined,
-      status,
-      version: "1.0",
-    };
-    upsertTemplate(tpl);
-    if (assignedStaff.length > 0) {
-      try {
-        await assignTemplateUsers(id, assignedStaff);
-      } catch (e: any) {
-        toast.error(e?.message ?? "Failed to assign staff");
+    let qaPath: string | undefined;
+    try {
+      if (qaFile) {
+        const safeName = qaFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        qaPath = `${activeUser.organizationId}/${id}/${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from("qa-documents")
+          .upload(qaPath, qaFile, { upsert: false, contentType: qaFile.type || undefined });
+        if (upErr) {
+          toast.error(`Failed to upload QA document: ${upErr.message}`);
+          setSubmitting(false);
+          return;
+        }
       }
+
+      const tpl: MicroCredentialTemplate = {
+        id,
+        title,
+        description,
+        issuerId: activeUser.organizationId,
+        issuerName: issuerOrg?.name ?? activeUser.organization ?? "Issuer",
+        country: issuerOrg?.country ?? "Serbia",
+        source,
+        outcomes: outcomes.split("\n").map((s) => s.trim()).filter(Boolean),
+        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        ects: Number(ects),
+        level,
+        assessment,
+        participation,
+        qualityAssurance: QA_OPTIONS.find((o) => o.value === qaType)?.label ?? "",
+        qaType: qaType as QaType,
+        qaDocumentPath: qaPath,
+        prerequisites: prereqNone ? "" : prereqText.trim(),
+        prerequisitesNone: prereqNone,
+        supervision: supervisionType ? SUPERVISION_OPTIONS.find((o) => o.value === supervisionType)?.label ?? "" : "",
+        supervisionType: supervisionType || undefined,
+        stackability: stackabilityType
+          ? stackabilityType === "stand_alone"
+            ? "Stand-alone, independent micro-credential"
+            : "Integrated, stackable towards another credential"
+          : "",
+        stackabilityType: stackabilityType || undefined,
+        expiryMode,
+        expiryDate: expiryMode === "fixed_date" && expiryDate ? expiryDate.toISOString() : undefined,
+        status,
+        version: "1.0",
+      };
+      upsertTemplate(tpl);
+      if (assignedStaff.length > 0) {
+        try {
+          await assignTemplateUsers(id, assignedStaff);
+        } catch (e: any) {
+          toast.error(e?.message ?? "Failed to assign staff");
+        }
+      }
+      toast.success(`Micro-credential ${status === "draft" ? "saved as draft" : "published"}`);
+      navigate({ to: "/issuer/microcredential-templates" });
+    } finally {
+      setSubmitting(false);
     }
-    toast.success(`Micro-credential ${status === "draft" ? "saved as draft" : "published"}`);
-    navigate({ to: "/issuer/microcredential-templates" });
   };
 
   return (
@@ -113,15 +191,15 @@ function Form() {
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <Label>Title</Label>
+              <Label>Title *</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Data Visualization Essentials" />
             </div>
             <div className="md:col-span-2">
-              <Label>Description</Label>
+              <Label>Description *</Label>
               <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
             <div>
-              <Label>Source</Label>
+              <Label>Source *</Label>
               <Select value={source} onValueChange={(v) => setSource(v as LearningSource)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -131,7 +209,7 @@ function Form() {
               </Select>
             </div>
             <div>
-              <Label>Level</Label>
+              <Label>Level *</Label>
               <Select value={level} onValueChange={(v) => setLevel(v as Level)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -142,7 +220,7 @@ function Form() {
               </Select>
             </div>
             <div>
-              <Label>Participation</Label>
+              <Label>Participation *</Label>
               <Select value={participation} onValueChange={(v) => setParticipation(v as Participation)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -153,20 +231,94 @@ function Form() {
               </Select>
             </div>
             <div>
-              <Label>ECTS (optional)</Label>
+              <Label>ECTS *</Label>
               <Input value={ects} onChange={(e) => setEcts(e.target.value)} type="number" min={0} max={60} />
             </div>
             <div className="md:col-span-2">
-              <Label>Skills (comma-separated)</Label>
+              <Label>Skills * (comma-separated)</Label>
               <Input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="Data analysis, Tableau, Storytelling" />
             </div>
             <div className="md:col-span-2">
-              <Label>Learning outcomes (one per line)</Label>
+              <Label>Learning outcomes * (one per line)</Label>
               <Textarea rows={3} value={outcomes} onChange={(e) => setOutcomes(e.target.value)} />
             </div>
             <div className="md:col-span-2">
-              <Label>Assessment</Label>
+              <Label>Assessment *</Label>
               <Input value={assessment} onChange={(e) => setAssessment(e.target.value)} placeholder="Final project + oral defence" />
+            </div>
+
+            {/* Quality Assurance */}
+            <div className="md:col-span-2 space-y-3 rounded-md border p-4">
+              <Label>Type of Quality Assurance *</Label>
+              <Select value={qaType} onValueChange={(v) => setQaType(v as QaType)}>
+                <SelectTrigger><SelectValue placeholder="Select QA type" /></SelectTrigger>
+                <SelectContent>
+                  {QA_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div>
+                <Label className="text-sm">QA confirmation document *</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="application/pdf,image/*"
+                    onChange={(e) => setQaFile(e.target.files?.[0] ?? null)}
+                  />
+                  {qaFile && <span className="text-xs text-muted-foreground"><Upload className="inline h-3 w-3 mr-1" />{qaFile.name}</span>}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">PDF or image, max 10 MB.</p>
+              </div>
+            </div>
+
+            {/* Prerequisites */}
+            <div className="md:col-span-2 space-y-2 rounded-md border p-4">
+              <Label>Prerequisites (optional)</Label>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="prereq-none"
+                  checked={prereqNone}
+                  onCheckedChange={(c) => setPrereqNone(!!c)}
+                />
+                <Label htmlFor="prereq-none" className="font-normal cursor-pointer">No prerequisites</Label>
+              </div>
+              {!prereqNone && (
+                <Textarea
+                  rows={3}
+                  value={prereqText}
+                  onChange={(e) => setPrereqText(e.target.value)}
+                  placeholder="Describe the prerequisites"
+                />
+              )}
+            </div>
+
+            {/* Supervision */}
+            <div className="md:col-span-2 space-y-2 rounded-md border p-4">
+              <Label>Supervision and identity verification (optional)</Label>
+              <Select value={supervisionType} onValueChange={(v) => setSupervisionType(v as SupervisionType)}>
+                <SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger>
+                <SelectContent>
+                  {SUPERVISION_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Stackability */}
+            <div className="md:col-span-2 space-y-2 rounded-md border p-4">
+              <Label>Integration / Stackability (optional)</Label>
+              <RadioGroup value={stackabilityType} onValueChange={(v) => setStackabilityType(v as StackabilityType)}>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="stand_alone" id="st-stand" />
+                  <Label htmlFor="st-stand" className="font-normal cursor-pointer">Stand-alone, independent micro-credential</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="stackable" id="st-stackable" />
+                  <Label htmlFor="st-stackable" className="font-normal cursor-pointer">Integrated, stackable towards another credential</Label>
+                </div>
+              </RadioGroup>
             </div>
 
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
@@ -209,8 +361,8 @@ function Form() {
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => submit("draft")}>Save as draft</Button>
-            <Button onClick={() => submit("active")}>Publish micro-credential</Button>
+            <Button variant="outline" disabled={submitting} onClick={() => submit("draft")}>Save as draft</Button>
+            <Button disabled={submitting} onClick={() => submit("active")}>Publish micro-credential</Button>
           </div>
         </CardContent>
       </Card>
