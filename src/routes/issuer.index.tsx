@@ -40,7 +40,7 @@ function Overview() {
         <>
           <Button asChild><Link to="/issuer/issue"><Send className="mr-2 h-4 w-4" />Direct issue</Link></Button>
           {!isStaff && (
-            <Button variant="outline" asChild><Link to="/issuer/templates/new"><BookOpen className="mr-2 h-4 w-4" />New micro-credential</Link></Button>
+            <Button variant="outline" asChild><Link to="/issuer/microcredential_templates/new"><BookOpen className="mr-2 h-4 w-4" />New micro-credential</Link></Button>
           )}
         </>
       }
