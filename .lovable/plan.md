@@ -1,84 +1,56 @@
-
 ## Cilj
 
-Restruktuirati Issuer ulogu na dva nivoa unutar jedne institucije:
+Ukloniti samostalnu registraciju (Sign Up + Google) i prebaciti kreiranje korisnika na administratore. Studenti se vezuju za 0+ institucija preko nove tabele.
 
-- **Issuer Admin** — upravlja institucijom, kreira/edituje Mikrokredencijale (MK), dodaje zaposlene, dodeljuje MK zaposlenima na upravljanje.
-- **Issuer Staff (zaposleni)** — vidi samo MK koji su mu dodeljeni, izdaje ih earnerima (i pojedinačno i bulk), obrađuje prijave za te MK. Ne može da kreira nove MK niti da vidi tuđe.
+## Promene
 
-Uz to: u celom Issuer UI-u zameniti termin "Template" sa "Micro-credential" (MK).
+### 1. Baza
+- **Nova tabela `earner_institutions`** (m2m): `earner_id`, `organization_id`, `assigned_by`, `created_at`, UNIQUE(earner_id, organization_id).
+  - GRANT za authenticated/service_role.
+  - RLS: earner vidi svoje veze; issuer_admin vidi veze za svoju instituciju; issuer_staff vidi veze za svoju instituciju (read-only); platform_admin sve.
+  - Pisanje: platform_admin (bilo koja), issuer_admin (samo za svoju instituciju).
+- **`handle_new_user`** ostaje (Google ionako ide, OAuth invite-only kreira nalog kroz Supabase admin API i trigger pravi profile + earner role po defaultu — to ćemo override-ovati prema izabranoj ulozi pri kreiranju).
+- Helper `is_earner_of_org(_user_id, _org_id)` (security definer) za RLS na drugim tabelama ako bude potrebno.
 
-## Promene u bazi
+### 2. Server funkcije (`src/lib/admin-users.functions.ts`, novo)
+Sve sa `requireSupabaseAuth` + provera uloge pozivaoca.
 
-1. Nova vrednost u `app_role` enum-u: `issuer_staff`.
-2. Nova tabela `template_assignees` (junction):
-   - `template_id` → templates, `user_id` → auth.users, `assigned_by`, `created_at`
-   - UNIQUE (template_id, user_id)
-   - GRANT za authenticated/service_role
-   - RLS: SELECT za issuer_admin te institucije, dodeljenog korisnika i platform_admin; INSERT/DELETE samo issuer_admin te institucije ili platform_admin.
-3. Security-definer helper `is_template_assignee(_user_id, _template_id)` da izbegne rekurziju u RLS.
-4. Update RLS polisa (sve preko helper funkcija):
-   - `applications` SELECT: dodati granu da issuer_staff vidi prijavu samo ako je `is_template_assignee(auth.uid(), template_id)`. UPDATE isto.
-   - `credentials` SELECT: issuer_staff vidi svoje izdate + one za dodeljene MK. INSERT: dozvoljen issuer_admin-u institucije ILI issuer_staff-u koji je `is_template_assignee` za taj template.
-5. `handle_new_user` ostaje (default earner). Promocija u issuer_staff ide kroz server fn (admin-only).
+- `createUserWithPassword({ email, password, displayName, role, organizationId? })` — platform_admin može sve role; issuer_admin može samo `issuer_staff` u svojoj instituciji (već postoji `addIssuerStaff` — proširićemo da podržava i kreiranje novog naloga, ne samo postojećeg).
+- `inviteUserByEmail({ email, displayName, role, organizationId? })` — koristi `supabaseAdmin.auth.admin.inviteUserByEmail` (Supabase šalje magic invite link).
+- `createInstitution({ name, slug, domain, adminEmail, adminDisplayName, mode: "password"|"invite", adminPassword? })` — platform_admin only. Pravi `organizations` red + pravi/poziva korisnika sa rolom `issuer_admin` vezanom za novu org.
+- `assignEarnerToInstitution({ earnerId, organizationId })` / `removeEarnerFromInstitution(...)` — platform_admin ili issuer_admin svoje institucije.
+- `listEarners()` / `listEarnersForOrg(orgId)` za UI liste.
 
-## Promene u kodu (tipovi i auth)
+Posle kreiranja naloga, server fn upisuje pravu rolu u `user_roles` (i briše default `earner` ako je kreiran kao staff/admin), a za studente upisuje veze u `earner_institutions`.
 
-- `Role` ostaje `"earner" | "issuer" | "admin"`. Dodajemo `subRole?: "admin" | "staff"` na `MockUser`.
-- `mapRole` u `src/lib/auth.tsx`: `issuer_admin → issuer (subRole admin)`, `issuer_staff → issuer (subRole staff)`.
-- `bridgeToActiveUser` čita sve role i bira prioritet: platform_admin > issuer_admin > issuer_staff > earner.
+### 3. UI
 
-## Server funkcije (`src/lib/issuer-staff.functions.ts`)
+- **`/login`**: ukloniti Tabs (Sign in / Sign up), ukloniti "Continue with Google", ukloniti SignUpForm i napomenu "New accounts start as Earner". Ostaviti samo email/password sign-in + link "Forgot password?" (bez promena toka resetovanja).
+- **Header/PublicLayout**: bez promena (već nema CTA-ova za registraciju).
 
-Sve sa `requireSupabaseAuth` + provera da je caller issuer_admin te institucije (preko `has_role_in_org`).
+#### Platform admin
+- **`/admin/users`**: dugme "Add user" → dialog sa poljima: email, display name, role (earner / issuer_admin / issuer_staff / platform_admin), organization (ako role traži), mode: "Set password" (sa input poljem) ili "Send invite email". Lista filtere po roli.
+- **`/admin/organizations`**: dugme "Add institution" → dialog: institution name, slug, domain, + sekcija "Institution admin" (email, ime, mode password/invite). Submit poziva `createInstitution`.
+- **`/admin/users` (earner detail)** ili nova kolona: prikaz povezanih institucija + dugme "Manage institutions" → multi-select organizations, čuva u `earner_institutions`.
 
-- `addIssuerStaff({ email, organizationId })` — nalazi korisnika po emailu u `profiles`, dodaje `issuer_staff` ulogu za instituciju (preko `supabaseAdmin` unutar handlera). Ako korisnik ne postoji, jasna greška.
-- `removeIssuerStaff({ userId, organizationId })`
-- `listIssuerStaff({ organizationId })`
-- `assignTemplateUsers({ templateId, userIds })` — sinhronizuje `template_assignees`.
-- `listTemplateAssignees({ templateId })`
+#### Issuer admin
+- **`/issuer/staff`**: postojeći "Add staff by email" proširiti — dva moda: "Existing user (by email)" i "Create new account" (email + name + password ili invite). Backend bira granu.
+- **Nova `/issuer/earners`** (admin only): lista studenata povezanih sa institucijom + "Add earner" (postojeći earner po emailu, ili kreiraj novi nalog/invite, automatski upisuje u `earner_institutions` sa org = sopstvena institucija).
 
-## UI promene
+### 4. Auth/Store
+- `auth.tsx`: ukloniti `signUp` i `signInWithGoogle` iz konteksta (ili ostaviti `signUp` neeksportovan; čistije je obrisati).
+- Store: dodati `earnerInstitutions` u state + realtime subscription, koristi se za "moji studenti" liste i prikaz veza.
 
-### Sidebar (`AppSidebarLayout.tsx`)
-Issuer navigacija postaje uslovna na `subRole`:
+### 5. Supabase config
+- Pozvati `configure_auth` sa `disable_signup: true` (i `external_anonymous_users_enabled: false`), da i direktni API signup bude blokiran. `auto_confirm_email` ostaje isključen (invite tok već šalje confirm link); za "Set password" mod admin API kreira već potvrđenog korisnika.
 
-- **Admin**: Overview · Micro-credentials · Create Micro-credential · Staff (NOVO) · Issuance Requests · Direct Issuance · Bulk Issuance · Issued Credentials · Revocations · Public Profile · EBSI.
-- **Staff**: Overview · My Micro-credentials · Issuance Requests · Direct Issuance · Bulk Issuance · Issued Credentials.
+## Tehnički detalji
 
-Group label "Templates" → "Micro-credentials".
+- `supabaseAdmin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { display_name } })` za "password" mod.
+- `supabaseAdmin.auth.admin.inviteUserByEmail(email, { data: { display_name }, redirectTo: <app origin>/reset-password })` za "invite" mod.
+- Posle kreiranja, trigger `handle_new_user` upisuje profile + default `earner` role. Server fn potom: za ne-earner role izbriše tu default rolu i upiše pravu rolu (sa `organization_id` gde treba); za earner, ako je izabrana institucija, upiše red u `earner_institutions`.
+- Autorizacija u server fn: `has_role(userId, 'platform_admin')` ili za issuer admin akcije `has_role_in_org(userId, 'issuer_admin', orgId)`.
 
-### Rute
-
-- `/issuer/templates` — naslov i tekstovi → "Micro-credentials". Lista:
-  - admin: svi MK institucije.
-  - staff: samo MK iz `template_assignees` za tog korisnika.
-- `/issuer/templates/new` — pristup samo admin (RoleGuard + subRole check → redirect ako nije).
-- `/issuer/templates/$id` — dodati sekciju **Assigned staff** (multiselect zaposlenih, samo admin može da menja; staff vidi read-only).
-- Nova **`/issuer/staff`** (admin only) — tabela zaposlenih + "Add by email" forma + remove dugme.
-- `/issuer/issue` i `/issuer/issue/bulk` — dropdown MK filtriran po assignment-u za staff; bulk ostaje dostupan i staff-u.
-- `/issuer/requests` — admin: sve prijave institucije; staff: samo za dodeljene MK.
-- `/issuer/credentials` — isti filter.
-- `/issuer/` Overview — metrike po istoj logici.
-
-### Termin "Template" → "Micro-credential"
-Pretraga i zamena samo u UI stringovima:
-- `src/routes/issuer.*.tsx` (naslovi, opisi, dugmad, toast poruke)
-- sidebar labele
-- `MetricCard` labele
-
-Tipovi u `src/lib/types.ts` (`MicroCredentialTemplate`, `TemplateStatus`) i nazivi tabela ostaju — samo UI tekst se menja.
-
-## Redosled implementacije
-
-1. Migracija: enum vrednost `issuer_staff`, tabela `template_assignees` (GRANT + RLS + helper fn), update RLS na `applications`/`credentials`.
-2. Update `src/lib/auth.tsx` (subRole + prioritet rola).
-3. Nove server fn-e (staff CRUD + assignment).
-4. Sidebar uslovno renderovanje + nova `/issuer/staff` ruta.
-5. Update `/issuer/templates*` (filter po assignment-u, admin-only create, assignee sekcija).
-6. Update `/issuer/requests`, `/issuer/credentials`, `/issuer/issue*` i Overview.
-7. Globalna UI zamena "Template" → "Micro-credential" u issuer prikazima.
-
-## Otvoreno
-
-- Add staff radi samo za korisnike koji već imaju nalog (po email-u). Pravi tok pozivnica emailom ide kao zasebna iteracija ako bude trebao.
+## Otvorena pitanja koja preuzimam kao default
+- Brisanje korisnika nije u opsegu ove iteracije (samo dodavanje + dodela institucija).
+- Studentu prikazujemo listu institucija sa kojima je povezan u njegovom profilu (read-only); ne ulazi u ovaj milestone osim ako brzo dodam panel.
