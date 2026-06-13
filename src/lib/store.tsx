@@ -721,7 +721,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         version: t.version,
         created_by: activeUserRef.current?.id ?? null,
       };
-      const { error } = await supabase.from("templates").upsert(row);
+      const { error } = await (supabase.from("templates") as unknown as { upsert: (r: Record<string, unknown>) => Promise<{ error: unknown }> }).upsert(row);
       if (error) {
         console.error("[store] upsertTemplate", error);
         toast.error(`Failed to save template: ${error.message}`);
