@@ -112,9 +112,14 @@ export interface MicroCredentialTemplate {
   assessment: string;
   participation: Participation;
   qualityAssurance: string;
+  qaType: QaType;
+  qaDocumentPath?: string;
   prerequisites: string;
+  prerequisitesNone: boolean;
   supervision: string;
+  supervisionType?: SupervisionType;
   stackability: string;
+  stackabilityType?: StackabilityType;
   furtherInfo?: string;
   expiryMode: "never" | "fixed_date";
   expiryDate?: string;
