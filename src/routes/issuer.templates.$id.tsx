@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
-import { ArrowLeft, Pencil, Send, Users } from "lucide-react";
+import { ArrowLeft, Pencil, Users } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -60,9 +60,6 @@ function Detail() {
               <Link to="/issuer/templates/$id/edit" params={{ id: tpl.id }}><Pencil className="mr-2 h-4 w-4" />Edit</Link>
             </Button>
           )}
-          <Button asChild>
-            <Link to="/issuer/issue"><Send className="mr-2 h-4 w-4" />Issue this micro-credential</Link>
-          </Button>
         </>
       }
     >
