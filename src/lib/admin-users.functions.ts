@@ -172,7 +172,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     }
 
     // Update profile row
-    const profilePatch: Record<string, unknown> = {};
+    const profilePatch: { email?: string; display_name?: string } = {};
     if (email) profilePatch.email = email;
     if (data.displayName) profilePatch.display_name = data.displayName;
     if (Object.keys(profilePatch).length > 0) {
