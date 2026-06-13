@@ -1,43 +1,74 @@
-## 1. Staff assignment when creating / editing a micro-credential
+## Restructured Micro-credential Template
 
-Today the assignment UI lives only on the template detail page (`issuer.templates.$id.tsx` → `AssigneesCard`). The create form (`issuer.templates.new.tsx`) has no staff picker, and there is no edit form at all — admins land on the read-only detail page after creating.
+### New mandatory fields (in addition to existing Title, Description, Source, Level, Participation, Skills, Outcomes, Assessment, Expiration)
 
-Changes:
-- **Create form (`issuer.templates.new.tsx`)**: add an "Assign staff" checkbox list (same shape as `AssigneesCard`), filtered to `users` where `role === "issuer" && subRole === "staff" && organizationId === activeUser.organizationId`. On submit, after `upsertTemplate`, call `assignTemplateUsers(tpl.id, selectedIds)` before navigating.
-- **Edit form**: create `src/routes/issuer.templates.$id.edit.tsx` (admin-only, mirrors the create form fields prefilled from the existing template) including the same staff picker prefilled from current assignees. "Save" calls `upsertTemplate` + `assignTemplateUsers`.
-- **Detail page**: add an "Edit" button (admin-only) linking to the new edit route. Keep the existing `AssigneesCard` so quick reassignments still work from detail.
+**Type of Quality Assurance** (required, dropdown):
+- Internal
+- External
+- Internal and external
+- Other
+- Not specified
 
-## 2. Earner can only see / apply to MCs from their linked institutions
+When any option is selected, the issuer **must upload a QA confirmation document** (PDF/image). Stored in a new private storage bucket `qa-documents`, with file path saved on the template row.
 
-`earner_institutions` already links earners ↔ orgs. Today `earner.apply.tsx` shows every `active` template.
+All previously existing fields become required (Title, Description, Source, Level, Participation, ECTS, Skills, Outcomes, Assessment, Expiration). The form will block submit until all are filled.
 
-Changes:
-- In `earner.apply.tsx`, compute `myOrgIds = earnerInstitutions.filter(ei => ei.earnerId === activeUser.id).map(ei => ei.organizationId)` and filter `active` to `t => myOrgIds.includes(t.issuerId)`.
-- Empty-state copy: "You are not linked to any institution yet. Contact the platform admin."
-- Apply the same filter to the earner's templates listing wherever active templates are surfaced to earners (verify `earner.index.tsx` does not bypass it; adjust if it does).
+### New optional structured fields
 
-## 3. Required expiration choice on a micro-credential
+**Prerequisites** — choice between:
+- Checkbox: "No prerequisites"
+- Text area for free-form description (shown when checkbox unchecked)
 
-Current `MicroCredentialTemplate.expiryRule` is an optional free-text string. Replace with a required structured choice.
+**Supervision and identity verification** — single-select dropdown (optional):
+- Unsupervised with no identity verification
+- Supervised with no identity verification
+- Supervised online with identity verification
+- Supervised onsite with identity verification
 
-Changes:
-- **Types (`src/lib/types.ts`)**: replace `expiryRule?: string` with
-  ```ts
-  expiryMode: "never" | "fixed_date";
-  expiryDate?: string; // ISO, required when expiryMode === "fixed_date"
-  ```
-- **DB migration**: add `expiry_mode text not null default 'never'` and `expiry_date timestamptz` to `templates`. Backfill existing rows: rows with non-null `expiry_rule` that parses as a date → `fixed_date` + date; everything else → `never`. Keep `expiry_rule` column for now (unused) to avoid breaking older clients.
-- **Store mapping (`store.tsx`)**: map new columns on read; write them on upsert.
-- **Create + Edit forms**: required radio group "Does not expire" / "Expires on" + date picker (shadcn DatePicker). Validate: if `fixed_date`, date must be set and in the future on create.
-- **Credential issuance**: when issuing from a template with `fixed_date`, default the credential's `expiresAt` to the template's date (issuer can still override per-recipient where the existing bulk/direct flows already allow it).
+**Integration / Stackability** — single-select (optional):
+- Stand-alone, independent micro-credential
+- Integrated, stackable towards another credential
 
-## Technical details
+### Database changes (migration)
 
-- Files edited: `src/lib/types.ts`, `src/lib/store.tsx`, `src/routes/issuer.templates.new.tsx`, `src/routes/issuer.templates.$id.tsx`, `src/routes/earner.apply.tsx`, possibly `src/routes/earner.index.tsx`.
-- Files created: `src/routes/issuer.templates.$id.edit.tsx`.
-- One migration: add `expiry_mode`, `expiry_date` columns + backfill.
-- No new RLS needed — existing `templates_update_issuer` and `ta_insert_admin` policies already cover admin edits and assignment writes.
+`public.templates`:
+- Add `qa_type text` (enum-checked: internal | external | internal_and_external | other | not_specified) — NOT NULL with default `'not_specified'` for backfill, then enforce.
+- Add `qa_document_path text` (nullable; required at app-level when qa_type set).
+- Add `prerequisites_none boolean NOT NULL default true`.
+- Keep existing `prerequisites text` for the free-text variant.
+- Replace free-text `supervision` usage by adding `supervision_type text` (nullable) constrained to the 4 options above. Keep `supervision` column for backward compat.
+- Add `stackability_type text` (nullable) constrained to `stand_alone | stackable`.
 
-## Open question
+New storage bucket `qa-documents` (private). RLS on `storage.objects`:
+- Issuer admins of the org can insert/select/delete files under path `{issuer_org_id}/...`.
+- Platform admins full access.
 
-For #2: should an earner be allowed to **see** (browse) MCs from non-linked institutions but only apply to linked ones, or hide them entirely from the apply page? Plan above hides them entirely. Tell me if you want browse-but-not-apply instead.
+### Frontend changes
+
+`src/lib/types.ts` — extend `MicroCredentialTemplate` with new fields and union types.
+
+`src/routes/issuer.microcredential-templates.new.tsx`:
+- Add QA Type select + file upload (uploaded to `qa-documents` bucket before insert; path saved).
+- Add Prerequisites group (checkbox + conditional textarea).
+- Add Supervision dropdown.
+- Add Stackability radio/select.
+- Mark all previously-optional fields required; client-side validation via zod with toast errors.
+
+`src/routes/issuer.microcredential-templates.$id.tsx`:
+- Render new fields with labels; provide signed-URL download link for the QA document.
+
+`src/lib/store.tsx` — extend `upsertTemplate` mapping (insert/select) for new columns.
+
+`src/integrations/supabase/types.ts` — regenerated after migration.
+
+### Technical details
+
+- File upload uses `supabase.storage.from('qa-documents').upload(\`${orgId}/${templateId}/${file.name}\`, file)`.
+- Download in detail view uses `createSignedUrl(path, 3600)`.
+- Max size 10 MB, accept `application/pdf,image/*`.
+- Migration uses CHECK constraints (not enums) for the new text fields so future options are easy to add.
+
+### Out of scope
+
+- Editing existing templates (edit route was removed earlier).
+- Backfilling QA documents for templates that already exist — they'll show `not_specified` until recreated.
