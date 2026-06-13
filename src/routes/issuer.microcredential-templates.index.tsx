@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
 
-export const Route = createFileRoute("/issuer/templates/")({
+export const Route = createFileRoute("/issuer/microcredential-templates/")({
   head: () => ({ meta: [{ title: "Micro-credentials — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
@@ -41,7 +41,7 @@ function List() {
       actions={
         !isStaff && (
           <Button asChild>
-            <Link to="/issuer/templates/new"><FilePlus2 className="mr-2 h-4 w-4" />Create micro-credential</Link>
+            <Link to="/issuer/microcredential-templates/new"><FilePlus2 className="mr-2 h-4 w-4" />Create micro-credential</Link>
           </Button>
         )
       }
@@ -74,7 +74,7 @@ function List() {
               </div>
               <div className="mt-auto flex gap-2">
                 <Button size="sm" variant="outline" asChild>
-                  <Link to="/issuer/templates/$id" params={{ id: t.id }}>Open</Link>
+                  <Link to="/issuer/microcredential-templates/$id" params={{ id: t.id }}>Open</Link>
                 </Button>
                 {!isStaff && t.status !== "archived" && (
                   <Button size="sm" variant="ghost" onClick={() => archiveTemplate(t.id)}>Archive</Button>
