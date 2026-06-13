@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, Users, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -11,6 +11,36 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StaffPicker } from "@/components/StaffPicker";
 import { useStore } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+
+const QA_LABEL: Record<string, string> = {
+  internal: "Internal",
+  external: "External",
+  internal_and_external: "Internal and external",
+  other: "Other",
+  not_specified: "Not specified",
+};
+const SUPERVISION_LABEL: Record<string, string> = {
+  unsupervised_no_id: "Unsupervised with no identity verification",
+  supervised_no_id: "Supervised with no identity verification",
+  supervised_online_with_id: "Supervised online with identity verification",
+  supervised_onsite_with_id: "Supervised onsite with identity verification",
+};
+const STACKABILITY_LABEL: Record<string, string> = {
+  stand_alone: "Stand-alone, independent micro-credential",
+  stackable: "Integrated, stackable towards another credential",
+};
+
+async function openQaDocument(path: string) {
+  const { data, error } = await supabase.storage
+    .from("qa-documents")
+    .createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl) {
+    toast.error(error?.message ?? "Could not open document");
+    return;
+  }
+  window.open(data.signedUrl, "_blank");
+}
 
 export const Route = createFileRoute("/issuer/microcredential-templates/$id")({
   head: () => ({ meta: [{ title: "Micro-credential — MicroCred" }] }),
