@@ -201,22 +201,14 @@ function Form() {
               </RadioGroup>
             </div>
 
-            {staffUsers.length > 0 && (
-              <div className="md:col-span-2 space-y-2 rounded-md border p-4">
-                <Label>Assign staff (optional)</Label>
-                <div className="grid gap-1 sm:grid-cols-2">
-                  {staffUsers.map((u) => (
-                    <label key={u.id} className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-muted">
-                      <Checkbox checked={assignedStaff.includes(u.id)} onCheckedChange={() => toggleStaff(u.id)} />
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">{u.name}</div>
-                        <div className="truncate text-xs text-muted-foreground">{u.email}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="md:col-span-2 space-y-2 rounded-md border p-4">
+              <Label>Assign staff (optional)</Label>
+              {staffUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No staff yet for your institution.</p>
+              ) : (
+                <StaffPicker staff={staffUsers} selected={assignedStaff} onChange={setAssignedStaff} />
+              )}
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => submit("draft")}>Save as draft</Button>
