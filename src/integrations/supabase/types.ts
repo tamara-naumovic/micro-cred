@@ -369,6 +369,7 @@ export type Database = {
       organizations: {
         Row: {
           about: string | null
+          accreditation_document_url: string | null
           accreditations: string[]
           country: string
           created_at: string
@@ -380,6 +381,7 @@ export type Database = {
         }
         Insert: {
           about?: string | null
+          accreditation_document_url?: string | null
           accreditations?: string[]
           country: string
           created_at?: string
@@ -391,6 +393,7 @@ export type Database = {
         }
         Update: {
           about?: string | null
+          accreditation_document_url?: string | null
           accreditations?: string[]
           country?: string
           created_at?: string
