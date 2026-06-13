@@ -152,9 +152,6 @@ function AssigneesCard({
     );
   }
 
-  const toggle = (id: string) =>
-    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-
   const save = async () => {
     setBusy(true);
     try {
@@ -176,15 +173,14 @@ function AssigneesCard({
             No staff yet. <Link to="/issuer/staff" className="text-primary underline">Add staff</Link>.
           </p>
         )}
-        {staffUsers.map((u) => (
-          <label key={u.id} className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-muted">
-            <Checkbox checked={selected.includes(u.id)} onCheckedChange={() => toggle(u.id)} />
-            <div className="min-w-0">
-              <div className="truncate font-medium">{u.name}</div>
-              <div className="text-xs text-muted-foreground">{u.email}</div>
-            </div>
-          </label>
-        ))}
+        {staffUsers.length > 0 && (
+          <StaffPicker
+            staff={staffUsers}
+            selected={selected}
+            onChange={setSelected}
+            placeholder="Search staff by name or email"
+          />
+        )}
         {staffUsers.length > 0 && (
           <Button size="sm" disabled={!dirty || busy} onClick={save}>Save assignments</Button>
         )}
