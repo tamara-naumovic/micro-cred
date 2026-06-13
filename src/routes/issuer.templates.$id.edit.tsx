@@ -74,8 +74,6 @@ function EditForm() {
     (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === activeUser.organizationId,
   );
 
-  const toggleStaff = (uid: string) =>
-    setAssignedStaff((prev) => (prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid]));
 
   const save = async () => {
     if (!title.trim() || !description.trim()) {
