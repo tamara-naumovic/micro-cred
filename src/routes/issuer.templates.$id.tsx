@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
-import { ArrowLeft, Pencil, Send, Users } from "lucide-react";
+import { ArrowLeft, Pencil, Users } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -9,7 +9,7 @@ import { EbsiPlaceholderCard } from "@/components/EbsiPlaceholderCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { StaffPicker } from "@/components/StaffPicker";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/issuer/templates/$id")({
@@ -60,9 +60,6 @@ function Detail() {
               <Link to="/issuer/templates/$id/edit" params={{ id: tpl.id }}><Pencil className="mr-2 h-4 w-4" />Edit</Link>
             </Button>
           )}
-          <Button asChild>
-            <Link to="/issuer/issue"><Send className="mr-2 h-4 w-4" />Issue this micro-credential</Link>
-          </Button>
         </>
       }
     >
@@ -152,9 +149,6 @@ function AssigneesCard({
     );
   }
 
-  const toggle = (id: string) =>
-    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-
   const save = async () => {
     setBusy(true);
     try {
@@ -176,15 +170,14 @@ function AssigneesCard({
             No staff yet. <Link to="/issuer/staff" className="text-primary underline">Add staff</Link>.
           </p>
         )}
-        {staffUsers.map((u) => (
-          <label key={u.id} className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-muted">
-            <Checkbox checked={selected.includes(u.id)} onCheckedChange={() => toggle(u.id)} />
-            <div className="min-w-0">
-              <div className="truncate font-medium">{u.name}</div>
-              <div className="text-xs text-muted-foreground">{u.email}</div>
-            </div>
-          </label>
-        ))}
+        {staffUsers.length > 0 && (
+          <StaffPicker
+            staff={staffUsers}
+            selected={selected}
+            onChange={setSelected}
+            placeholder="Search staff by name or email"
+          />
+        )}
         {staffUsers.length > 0 && (
           <Button size="sm" disabled={!dirty || busy} onClick={save}>Save assignments</Button>
         )}
