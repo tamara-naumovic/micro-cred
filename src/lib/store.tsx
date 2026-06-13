@@ -410,6 +410,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const registrations = (regRes.data ?? []).map((r) => mapRegistration(r as Row));
       const audit = (auditRes.data ?? []).map((r) => mapAudit(r as Row));
       const events = (eventRes.data ?? []).map((r) => mapEvent(r as Row));
+      const templateAssignees: TemplateAssignment[] = (taRes.data ?? []).map((r) => ({
+        templateId: (r as Row).template_id as string,
+        userId: (r as Row).user_id as string,
+      }));
 
       setState({
         templates,
@@ -421,6 +425,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         audit,
         events,
         users,
+        templateAssignees,
       });
     } catch (e) {
       console.error("[store] refetchAll failed", e);
