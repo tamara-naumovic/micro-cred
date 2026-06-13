@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useStore } from "@/lib/store";
 
-export const Route = createFileRoute("/issuer/templates/$id")({
+export const Route = createFileRoute("/issuer/microcredential_templates/$id")({
   head: () => ({ meta: [{ title: "Micro-credential — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
@@ -34,12 +34,12 @@ function Detail() {
 
   if (!activeUser) return null;
   // Staff may only open templates assigned to them
-  if (isStaff && tpl && !assignedToMe) return <Navigate to="/issuer/templates" />;
+  if (isStaff && tpl && !assignedToMe) return <Navigate to="/issuer/microcredential_templates" />;
 
   if (!tpl) {
     return (
       <PageShell title="Micro-credential not found">
-        <Button variant="outline" onClick={() => navigate({ to: "/issuer/templates" })}>
+        <Button variant="outline" onClick={() => navigate({ to: "/issuer/microcredential_templates" })}>
           <ArrowLeft className="mr-2 h-4 w-4" />Back
         </Button>
       </PageShell>
@@ -53,11 +53,11 @@ function Detail() {
       actions={
         <>
           <Button variant="outline" asChild>
-            <Link to="/issuer/templates"><ArrowLeft className="mr-2 h-4 w-4" />All micro-credentials</Link>
+            <Link to="/issuer/microcredential_templates"><ArrowLeft className="mr-2 h-4 w-4" />All micro-credentials</Link>
           </Button>
           {!isStaff && (
             <Button variant="outline" asChild>
-              <Link to="/issuer/templates/$id/edit" params={{ id: tpl.id }}><Pencil className="mr-2 h-4 w-4" />Edit</Link>
+              <Link to="/issuer/microcredential_templates/$id/edit" params={{ id: tpl.id }}><Pencil className="mr-2 h-4 w-4" />Edit</Link>
             </Button>
           )}
           <Button asChild>

@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import type { Level, LearningSource, MicroCredentialTemplate, Participation } from "@/lib/types";
 
-export const Route = createFileRoute("/issuer/templates/new")({
+export const Route = createFileRoute("/issuer/microcredential_templates/new")({
   head: () => ({ meta: [{ title: "Create Micro-credential — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/issuer/templates/new")({
 function Guarded() {
   const { activeUser } = useStore();
   if (!activeUser) return null;
-  if (activeUser.subRole !== "admin") return <Navigate to="/issuer/templates" />;
+  if (activeUser.subRole !== "admin") return <Navigate to="/issuer/microcredential_templates" />;
   return <Form />;
 }
 
@@ -104,7 +104,7 @@ function Form() {
       }
     }
     toast.success(`Micro-credential ${status === "draft" ? "saved as draft" : "published"}`);
-    navigate({ to: "/issuer/templates" });
+    navigate({ to: "/issuer/microcredential_templates" });
   };
 
   return (
