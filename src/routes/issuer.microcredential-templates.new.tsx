@@ -315,16 +315,14 @@ function Form() {
             {/* Stackability */}
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
               <Label>Integration / Stackability (optional)</Label>
-              <RadioGroup value={stackabilityType} onValueChange={(v) => setStackabilityType(v as StackabilityType)}>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="stand_alone" id="st-stand" />
-                  <Label htmlFor="st-stand" className="font-normal cursor-pointer">Stand-alone, independent micro-credential</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="stackable" id="st-stackable" />
-                  <Label htmlFor="st-stackable" className="font-normal cursor-pointer">Integrated, stackable towards another credential</Label>
-                </div>
-              </RadioGroup>
+              <Select value={stackabilityType} onValueChange={(v) => setStackabilityType(v as StackabilityType)}>
+                <SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger>
+                <SelectContent>
+                  {STACKABILITY_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
