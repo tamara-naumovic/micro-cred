@@ -115,10 +115,24 @@ function loadUser(): MockUser | null {
 }
 
 function mapDbRoleToRole(dbRole: string): Role {
-  if (dbRole === "issuer_admin") return "issuer";
+  if (dbRole === "issuer_admin" || dbRole === "issuer_staff") return "issuer";
   if (dbRole === "platform_admin") return "admin";
   return "earner";
 }
+
+function mapDbRoleToSubRole(dbRole: string): "admin" | "staff" | undefined {
+  if (dbRole === "issuer_admin") return "admin";
+  if (dbRole === "issuer_staff") return "staff";
+  return undefined;
+}
+
+const ROLE_PRIORITY: Record<string, number> = {
+  platform_admin: 4,
+  issuer_admin: 3,
+  issuer_staff: 2,
+  earner: 1,
+  verifier: 0,
+};
 
 // ============ Row mappers ============
 type Row = Record<string, unknown>;
