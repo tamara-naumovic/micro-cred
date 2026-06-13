@@ -475,6 +475,38 @@ export type Database = {
         }
         Relationships: []
       }
+      template_assignees: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          id: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_assignees_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates: {
         Row: {
           assessment: string
@@ -659,6 +691,11 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_template_assignee: {
+        Args: { _template_id: string; _user_id: string }
+        Returns: boolean
+      }
+      template_issuer_org: { Args: { _template_id: string }; Returns: string }
     }
     Enums: {
       app_role:
