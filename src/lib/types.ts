@@ -101,7 +101,8 @@ export interface MicroCredentialTemplate {
   supervision: string;
   stackability: string;
   furtherInfo?: string;
-  expiryRule?: string;
+  expiryMode: "never" | "fixed_date";
+  expiryDate?: string;
   status: TemplateStatus;
   version: string;
 }
