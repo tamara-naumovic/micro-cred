@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -21,6 +21,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -29,9 +40,24 @@ import {
 } from "@/components/ui/select";
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
 import { useStore } from "@/lib/store";
-import { adminCreateUser, assignEarnerInstitution, removeEarnerInstitution } from "@/lib/admin-users.functions";
+import {
+  adminCreateUser,
+  adminDeleteUser,
+  adminUpdateUser,
+  assignEarnerInstitution,
+  removeEarnerInstitution,
+} from "@/lib/admin-users.functions";
+import type { MockUser } from "@/lib/types";
 
 type AppRole = "earner" | "issuer_admin" | "issuer_staff" | "platform_admin";
+
+function mockUserToAppRole(u: MockUser): AppRole {
+  if (u.role === "admin") return "platform_admin";
+  if (u.role === "issuer") return u.subRole === "staff" ? "issuer_staff" : "issuer_admin";
+  return "earner";
+}
+
+
 
 export const Route = createFileRoute("/admin/users")({
   head: () => ({ meta: [{ title: "Users — MicroCred Admin" }] }),
