@@ -94,6 +94,7 @@ interface StoreCtx extends State {
   revokeCredential: (credentialId: string, reason: string) => void;
   upsertTemplate: (t: MicroCredentialTemplate) => void;
   archiveTemplate: (id: string) => void;
+  assignTemplateUsers: (templateId: string, userIds: string[]) => Promise<void>;
 
   approveRegistration: (id: string) => void;
   rejectRegistration: (id: string) => void;
