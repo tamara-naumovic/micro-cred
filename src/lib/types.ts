@@ -20,6 +20,11 @@ export interface TemplateAssignment {
   userId: string;
 }
 
+export interface EarnerInstitution {
+  earnerId: string;
+  organizationId: string;
+}
+
 export type LearningSource = "formal" | "non_formal";
 
 export type NonFormalSubcategory =

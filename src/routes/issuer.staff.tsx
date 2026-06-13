@@ -10,12 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
 import { useStore } from "@/lib/store";
-import {
-  addIssuerStaff,
-  listIssuerStaff,
-  removeIssuerStaff,
-} from "@/lib/issuer-staff.functions";
+import { addIssuerStaff, listIssuerStaff, removeIssuerStaff } from "@/lib/issuer-staff.functions";
 
 export const Route = createFileRoute("/issuer/staff")({
   head: () => ({ meta: [{ title: "Staff — MicroCred" }] }),
@@ -35,11 +33,13 @@ function StaffPage() {
   const add = useServerFn(addIssuerStaff);
   const remove = useServerFn(removeIssuerStaff);
   const [rows, setRows] = useState<Row[]>([]);
-  const [email, setEmail] = useState("");
+  const [tab, setTab] = useState<"existing" | "new">("existing");
+  const [existingEmail, setExistingEmail] = useState("");
+  const [form, setForm, reset] = useProvisionState();
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const orgId = activeUser?.organizationId;
+  const orgId = activeUser?.organizationId ?? "";
 
   async function refresh() {
     if (!orgId) return;
@@ -66,13 +66,28 @@ function StaffPage() {
     );
   }
 
-  const onAdd = async () => {
-    if (!email.trim()) return;
+  async function onAdd(e: React.FormEvent) {
+    e.preventDefault();
     setBusy(true);
     try {
-      await add({ data: { email, organizationId: orgId } });
+      if (tab === "existing") {
+        if (!existingEmail.trim()) return;
+        await add({ data: { email: existingEmail, organizationId: orgId, mode: "existing" } });
+        setExistingEmail("");
+      } else {
+        await add({
+          data: {
+            email: form.email,
+            organizationId: orgId,
+            displayName: form.displayName,
+            mode: form.mode,
+            password: form.password,
+            redirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
+          },
+        });
+        reset();
+      }
       toast.success("Staff added");
-      setEmail("");
       await refresh();
       router.invalidate();
     } catch (e: any) {
@@ -80,7 +95,7 @@ function StaffPage() {
     } finally {
       setBusy(false);
     }
-  };
+  }
 
   const onRemove = async (userId: string) => {
     setBusy(true);
@@ -103,24 +118,35 @@ function StaffPage() {
     >
       <Card className="mb-6">
         <CardContent className="p-5">
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div>
-              <Label htmlFor="staff-email">Add staff by email</Label>
-              <Input
-                id="staff-email"
-                type="email"
-                placeholder="employee@institution.org"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                The person must already have an account on the platform.
-              </p>
+          <form onSubmit={onAdd} className="space-y-4">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as "existing" | "new")}>
+              <TabsList className="grid w-full grid-cols-2 sm:w-auto">
+                <TabsTrigger value="existing">Existing user</TabsTrigger>
+                <TabsTrigger value="new">Create new account</TabsTrigger>
+              </TabsList>
+              <TabsContent value="existing" className="mt-4">
+                <Label htmlFor="staff-email">Email of existing user</Label>
+                <Input
+                  id="staff-email"
+                  type="email"
+                  placeholder="employee@institution.org"
+                  value={existingEmail}
+                  onChange={(e) => setExistingEmail(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  The person must already have an account on the platform.
+                </p>
+              </TabsContent>
+              <TabsContent value="new" className="mt-4">
+                <ProvisionFields value={form} onChange={setForm} disabled={busy} />
+              </TabsContent>
+            </Tabs>
+            <div className="flex justify-end">
+              <SubmitButton busy={busy}>
+                <UserPlus className="mr-2 h-4 w-4" />Add staff
+              </SubmitButton>
             </div>
-            <Button onClick={onAdd} disabled={busy || !email.trim()}>
-              <UserPlus className="mr-2 h-4 w-4" />Add staff
-            </Button>
-          </div>
+          </form>
         </CardContent>
       </Card>
 

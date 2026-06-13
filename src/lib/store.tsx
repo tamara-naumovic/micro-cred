@@ -16,6 +16,7 @@ import {
   type AuditEvent,
   type CredentialApplication,
   type CredentialStatus,
+  type EarnerInstitution,
   type IssuedCredential,
   type Level,
   type LearningSource,
@@ -47,6 +48,7 @@ interface State {
   events: PlatformEvent[];
   users: MockUser[];
   templateAssignees: TemplateAssignment[];
+  earnerInstitutions: EarnerInstitution[];
 }
 
 const emptyState: State = {
@@ -60,6 +62,7 @@ const emptyState: State = {
   events: [],
   users: [],
   templateAssignees: [],
+  earnerInstitutions: [],
 };
 
 export interface BulkRow {
@@ -303,6 +306,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         tlRes,
         commentsRes,
         taRes,
+        eiRes,
       ] = await Promise.all([
         supabase.from("templates").select("*"),
         supabase.from("applications").select("*"),
@@ -317,6 +321,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         supabase.from("application_timeline").select("*").order("created_at", { ascending: true }),
         supabase.from("application_comments").select("*").order("created_at", { ascending: true }),
         supabase.from("template_assignees").select("template_id, user_id"),
+        supabase.from("earner_institutions").select("earner_id, organization_id"),
       ]);
 
 
@@ -415,6 +420,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         templateId: (r as Row).template_id as string,
         userId: (r as Row).user_id as string,
       }));
+      const earnerInstitutions: EarnerInstitution[] = (eiRes.data ?? []).map((r) => ({
+        earnerId: (r as Row).earner_id as string,
+        organizationId: (r as Row).organization_id as string,
+      }));
 
       setState({
         templates,
@@ -427,6 +436,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         events,
         users,
         templateAssignees,
+        earnerInstitutions,
       });
     } catch (e) {
       console.error("[store] refetchAll failed", e);
@@ -450,6 +460,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "registration_requests" }, () => refetchAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "organizations" }, () => refetchAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "template_assignees" }, () => refetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "earner_institutions" }, () => refetchAll())
       .subscribe();
 
     return () => {
