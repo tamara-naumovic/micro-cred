@@ -251,6 +251,31 @@ function AddUserDialog() {
               </div>
             )}
           </div>
+          {isEarner && organizations.length > 0 && (
+            <div>
+              <Label>Institutions (optional)</Label>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Link this earner to one or more institutions. You can also do this later from the user list.
+              </p>
+              <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border border-border p-2">
+                {organizations.map((o) => {
+                  const checked = earnerOrgIds.includes(o.id);
+                  return (
+                    <label key={o.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleEarnerOrg(o.id)}
+                        disabled={busy}
+                      />
+                      <span className="text-sm">{o.name}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{o.country}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <ProvisionFields value={form} onChange={setForm} disabled={busy} />
           <DialogFooter>
             <SubmitButton busy={busy}>Create</SubmitButton>
