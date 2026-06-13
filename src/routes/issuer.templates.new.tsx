@@ -13,13 +13,20 @@ import { useStore } from "@/lib/store";
 import type { Level, LearningSource, MicroCredentialTemplate, Participation } from "@/lib/types";
 
 export const Route = createFileRoute("/issuer/templates/new")({
-  head: () => ({ meta: [{ title: "Create Template — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Create Micro-credential — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
-      <Form />
+      <Guarded />
     </RoleGuard>
   ),
 });
+
+function Guarded() {
+  const { activeUser } = useStore();
+  if (!activeUser) return null;
+  if (activeUser.subRole !== "admin") return <Navigate to="/issuer/templates" />;
+  return <Form />;
+}
 
 function Form() {
   const { activeUser, upsertTemplate, organizations } = useStore();
