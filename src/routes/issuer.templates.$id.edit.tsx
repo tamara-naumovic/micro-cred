@@ -1,5 +1,5 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
@@ -17,10 +17,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { StaffPicker } from "@/components/StaffPicker";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
-import type { Level, LearningSource, MicroCredentialTemplate, Participation } from "@/lib/types";
+import type { Level, LearningSource, MicroCredentialTemplate, Participation, TemplateStatus } from "@/lib/types";
 
-export const Route = createFileRoute("/issuer/microcredential_templates/new")({
-  head: () => ({ meta: [{ title: "Create Micro-credential — MicroCred" }] }),
+export const Route = createFileRoute("/issuer/templates/$id/edit")({
+  head: () => ({ meta: [{ title: "Edit Micro-credential — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Guarded />
@@ -31,90 +31,92 @@ export const Route = createFileRoute("/issuer/microcredential_templates/new")({
 function Guarded() {
   const { activeUser } = useStore();
   if (!activeUser) return null;
-  if (activeUser.subRole !== "admin") return <Navigate to="/issuer/microcredential_templates" />;
-  return <Form />;
+  if (activeUser.subRole !== "admin") return <Navigate to="/issuer/templates" />;
+  return <EditForm />;
 }
 
-function Form() {
-  const { activeUser, upsertTemplate, organizations, users, assignTemplateUsers } = useStore();
+function EditForm() {
+  const { id } = Route.useParams();
+  const { activeUser, templates, upsertTemplate, users, templateAssignees, assignTemplateUsers } = useStore();
   const navigate = useNavigate();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [source, setSource] = useState<LearningSource>("formal");
-  const [level, setLevel] = useState<Level>("Foundation");
-  const [participation, setParticipation] = useState<Participation>("hybrid");
-  const [ects, setEcts] = useState<string>("");
-  const [skills, setSkills] = useState("");
-  const [outcomes, setOutcomes] = useState("");
-  const [assessment, setAssessment] = useState("");
-  const [expiryMode, setExpiryMode] = useState<"never" | "fixed_date">("never");
-  const [expiryDate, setExpiryDate] = useState<Date | undefined>(undefined);
-  const [assignedStaff, setAssignedStaff] = useState<string[]>([]);
+  const tpl = templates.find((t) => t.id === id);
+  const initialAssigned = useMemo(
+    () => templateAssignees.filter((a) => a.templateId === id).map((a) => a.userId),
+    [templateAssignees, id],
+  );
+
+  const [title, setTitle] = useState(tpl?.title ?? "");
+  const [description, setDescription] = useState(tpl?.description ?? "");
+  const [source, setSource] = useState<LearningSource>(tpl?.source ?? "formal");
+  const [level, setLevel] = useState<Level>(tpl?.level ?? "Foundation");
+  const [participation, setParticipation] = useState<Participation>(tpl?.participation ?? "hybrid");
+  const [ects, setEcts] = useState<string>(tpl?.ects != null ? String(tpl.ects) : "");
+  const [skills, setSkills] = useState(tpl?.skills.join(", ") ?? "");
+  const [outcomes, setOutcomes] = useState(tpl?.outcomes.join("\n") ?? "");
+  const [assessment, setAssessment] = useState(tpl?.assessment ?? "");
+  const [status, setStatus] = useState<TemplateStatus>(tpl?.status ?? "draft");
+  const [expiryMode, setExpiryMode] = useState<"never" | "fixed_date">(tpl?.expiryMode ?? "never");
+  const [expiryDate, setExpiryDate] = useState<Date | undefined>(
+    tpl?.expiryDate ? new Date(tpl.expiryDate) : undefined,
+  );
+  const [assignedStaff, setAssignedStaff] = useState<string[]>(initialAssigned);
 
   if (!activeUser) return null;
-  const issuerOrg = organizations.find((o) => o.id === activeUser.organizationId);
+  if (!tpl) {
+    return (
+      <PageShell title="Micro-credential not found">
+        <Button variant="outline" onClick={() => navigate({ to: "/issuer/templates" })}>Back</Button>
+      </PageShell>
+    );
+  }
+
   const staffUsers = users.filter(
     (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === activeUser.organizationId,
   );
 
 
-  const submit = async (status: "draft" | "active") => {
+  const save = async () => {
     if (!title.trim() || !description.trim()) {
       toast.error("Title and description are required");
-      return;
-    }
-    if (!activeUser.organizationId) {
-      toast.error("Your account is not linked to an issuer organisation");
       return;
     }
     if (expiryMode === "fixed_date" && !expiryDate) {
       toast.error("Please pick an expiration date");
       return;
     }
-    const id = crypto.randomUUID();
-    const tpl: MicroCredentialTemplate = {
-      id,
+    const next: MicroCredentialTemplate = {
+      ...tpl,
       title,
       description,
-      issuerId: activeUser.organizationId,
-      issuerName: issuerOrg?.name ?? activeUser.organization ?? "Issuer",
-      country: issuerOrg?.country ?? "Serbia",
       source,
-      outcomes: outcomes.split("\n").map((s) => s.trim()).filter(Boolean),
-      skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-      ects: ects ? Number(ects) : undefined,
       level,
-      assessment: assessment || "Defined per cohort",
       participation,
-      qualityAssurance: "Internal QA",
-      prerequisites: "—",
-      supervision: "—",
-      stackability: "—",
+      ects: ects ? Number(ects) : undefined,
+      skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+      outcomes: outcomes.split("\n").map((s) => s.trim()).filter(Boolean),
+      assessment: assessment || "Defined per cohort",
+      status,
       expiryMode,
       expiryDate: expiryMode === "fixed_date" && expiryDate ? expiryDate.toISOString() : undefined,
-      status,
-      version: "1.0",
     };
-    upsertTemplate(tpl);
-    if (assignedStaff.length > 0) {
-      try {
-        await assignTemplateUsers(id, assignedStaff);
-      } catch (e: any) {
-        toast.error(e?.message ?? "Failed to assign staff");
-      }
+    upsertTemplate(next);
+    try {
+      await assignTemplateUsers(tpl.id, assignedStaff);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to update staff assignments");
     }
-    toast.success(`Micro-credential ${status === "draft" ? "saved as draft" : "published"}`);
-    navigate({ to: "/issuer/microcredential_templates" });
+    toast.success("Micro-credential updated");
+    navigate({ to: "/issuer/templates/$id", params: { id: tpl.id } });
   };
 
   return (
-    <PageShell title="Create Micro-credential" description="Define a new micro-credential offered by your organisation.">
+    <PageShell title={`Edit: ${tpl.title}`} description="Update the micro-credential specification and staff assignments.">
       <Card>
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <Label>Title</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Data Visualization Essentials" />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <div className="md:col-span-2">
               <Label>Description</Label>
@@ -156,9 +158,20 @@ function Form() {
               <Label>ECTS (optional)</Label>
               <Input value={ects} onChange={(e) => setEcts(e.target.value)} type="number" min={0} max={60} />
             </div>
+            <div>
+              <Label>Status</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as TemplateStatus)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="md:col-span-2">
               <Label>Skills (comma-separated)</Label>
-              <Input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="Data analysis, Tableau, Storytelling" />
+              <Input value={skills} onChange={(e) => setSkills(e.target.value)} />
             </div>
             <div className="md:col-span-2">
               <Label>Learning outcomes (one per line)</Label>
@@ -166,7 +179,7 @@ function Form() {
             </div>
             <div className="md:col-span-2">
               <Label>Assessment</Label>
-              <Input value={assessment} onChange={(e) => setAssessment(e.target.value)} placeholder="Final project + oral defence" />
+              <Input value={assessment} onChange={(e) => setAssessment(e.target.value)} />
             </div>
 
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
@@ -200,7 +213,7 @@ function Form() {
             </div>
 
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
-              <Label>Assign staff (optional)</Label>
+              <Label>Assigned staff</Label>
               {staffUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No staff yet for your institution.</p>
               ) : (
@@ -209,8 +222,8 @@ function Form() {
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => submit("draft")}>Save as draft</Button>
-            <Button onClick={() => submit("active")}>Publish micro-credential</Button>
+            <Button variant="outline" onClick={() => navigate({ to: "/issuer/templates/$id", params: { id: tpl.id } })}>Cancel</Button>
+            <Button onClick={save}>Save changes</Button>
           </div>
         </CardContent>
       </Card>
