@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { FilePlus2, BookOpen } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -9,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/issuer/templates/")({
-  head: () => ({ meta: [{ title: "Templates — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Micro-credentials — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <List />
@@ -18,20 +19,37 @@ export const Route = createFileRoute("/issuer/templates/")({
 });
 
 function List() {
-  const { activeUser, templates, archiveTemplate } = useStore();
+  const { activeUser, templates, templateAssignees, archiveTemplate } = useStore();
+  const assignedIds = useMemo(
+    () => new Set(templateAssignees.filter((a) => a.userId === activeUser?.id).map((a) => a.templateId)),
+    [templateAssignees, activeUser?.id],
+  );
   if (!activeUser) return null;
-  const mine = templates.filter((t) => t.issuerId === activeUser.organizationId);
+  const isStaff = activeUser.subRole === "staff";
+  const mine = templates
+    .filter((t) => t.issuerId === activeUser.organizationId)
+    .filter((t) => (isStaff ? assignedIds.has(t.id) : true));
 
   return (
     <PageShell
-      title="Micro-Credential Templates"
-      description="Define what credentials you can issue, and assign them to course providers."
+      title={isStaff ? "My Micro-credentials" : "Micro-credentials"}
+      description={
+        isStaff
+          ? "Micro-credentials assigned to you for issuance."
+          : "Define what credentials your institution can issue and assign them to staff."
+      }
       actions={
-        <Button asChild><Link to="/issuer/templates/new"><FilePlus2 className="mr-2 h-4 w-4" />Create template</Link></Button>
+        !isStaff && (
+          <Button asChild>
+            <Link to="/issuer/templates/new"><FilePlus2 className="mr-2 h-4 w-4" />Create micro-credential</Link>
+          </Button>
+        )
       }
     >
       {mine.length === 0 && (
-        <Card><CardContent className="p-8 text-sm text-muted-foreground">No templates yet for your organisation.</CardContent></Card>
+        <Card><CardContent className="p-8 text-sm text-muted-foreground">
+          {isStaff ? "No micro-credentials are assigned to you yet." : "No micro-credentials yet for your institution."}
+        </CardContent></Card>
       )}
       <div className="grid gap-4 md:grid-cols-2">
         {mine.map((t) => (
@@ -58,7 +76,7 @@ function List() {
                 <Button size="sm" variant="outline" asChild>
                   <Link to="/issuer/templates/$id" params={{ id: t.id }}>Open</Link>
                 </Button>
-                {t.status !== "archived" && (
+                {!isStaff && t.status !== "archived" && (
                   <Button size="sm" variant="ghost" onClick={() => archiveTemplate(t.id)}>Archive</Button>
                 )}
               </div>
