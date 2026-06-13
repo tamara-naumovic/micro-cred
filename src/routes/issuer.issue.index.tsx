@@ -84,9 +84,9 @@ function Direct() {
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <Label>Template</Label>
+              <Label>Micro-credential</Label>
               <Select value={templateId} onValueChange={setTemplateId}>
-                <SelectTrigger><SelectValue placeholder="Select a template" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select a micro-credential" /></SelectTrigger>
                 <SelectContent>
                   {myTemplates.map((t) => (
                     <SelectItem key={t.id} value={t.id}>{t.title} (v{t.version})</SelectItem>
