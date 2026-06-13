@@ -24,6 +24,7 @@ import {
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
 import { useStore } from "@/lib/store";
 import { adminCreateInstitution } from "@/lib/admin-users.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin/organizations")({
   head: () => ({ meta: [{ title: "Organisations — MicroCred Admin" }] }),
