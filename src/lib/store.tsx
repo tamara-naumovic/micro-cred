@@ -337,12 +337,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       const users: MockUser[] = profiles.map((p) => {
         const userRoles = rolesByUser.get(p.id as string) ?? [];
-        const primary = userRoles[0];
+        const sorted = [...userRoles].sort(
+          (a, b) => (ROLE_PRIORITY[b.role as string] ?? 0) - (ROLE_PRIORITY[a.role as string] ?? 0),
+        );
+        const primary = sorted[0];
+        const primaryRole = (primary?.role as string | undefined) ?? "earner";
         return {
           id: p.id as string,
           name: (p.display_name as string) || ((p.email as string)?.split("@")[0] ?? "User"),
           email: (p.email as string) ?? "",
-          role: primary ? mapDbRoleToRole(primary.role as string) : "earner",
+          role: mapDbRoleToRole(primaryRole),
+          subRole: mapDbRoleToSubRole(primaryRole),
           organizationId: (primary?.organization_id as string | undefined) ?? undefined,
           organization: primary?.organization_id
             ? orgName.get(primary.organization_id as string)
