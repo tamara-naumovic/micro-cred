@@ -9,7 +9,7 @@ import { EbsiPlaceholderCard } from "@/components/EbsiPlaceholderCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { StaffPicker } from "@/components/StaffPicker";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/issuer/templates/$id")({
