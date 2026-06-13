@@ -560,16 +560,21 @@ export type Database = {
           outcomes: string[]
           participation: Database["public"]["Enums"]["participation"]
           prerequisites: string
+          prerequisites_none: boolean
+          qa_document_path: string | null
+          qa_type: string
           quality_assurance: string
           required_evidence: Database["public"]["Enums"]["evidence_type"][]
           skills: string[]
           source: Database["public"]["Enums"]["learning_source"]
           stackability: string
+          stackability_type: string | null
           status: Database["public"]["Enums"]["template_status"]
           subcategory:
             | Database["public"]["Enums"]["non_formal_subcategory"]
             | null
           supervision: string
+          supervision_type: string | null
           title: string
           updated_at: string
           version: string
@@ -591,16 +596,21 @@ export type Database = {
           outcomes?: string[]
           participation?: Database["public"]["Enums"]["participation"]
           prerequisites?: string
+          prerequisites_none?: boolean
+          qa_document_path?: string | null
+          qa_type?: string
           quality_assurance?: string
           required_evidence?: Database["public"]["Enums"]["evidence_type"][]
           skills?: string[]
           source: Database["public"]["Enums"]["learning_source"]
           stackability?: string
+          stackability_type?: string | null
           status?: Database["public"]["Enums"]["template_status"]
           subcategory?:
             | Database["public"]["Enums"]["non_formal_subcategory"]
             | null
           supervision?: string
+          supervision_type?: string | null
           title: string
           updated_at?: string
           version?: string
@@ -622,16 +632,21 @@ export type Database = {
           outcomes?: string[]
           participation?: Database["public"]["Enums"]["participation"]
           prerequisites?: string
+          prerequisites_none?: boolean
+          qa_document_path?: string | null
+          qa_type?: string
           quality_assurance?: string
           required_evidence?: Database["public"]["Enums"]["evidence_type"][]
           skills?: string[]
           source?: Database["public"]["Enums"]["learning_source"]
           stackability?: string
+          stackability_type?: string | null
           status?: Database["public"]["Enums"]["template_status"]
           subcategory?:
             | Database["public"]["Enums"]["non_formal_subcategory"]
             | null
           supervision?: string
+          supervision_type?: string | null
           title?: string
           updated_at?: string
           version?: string
