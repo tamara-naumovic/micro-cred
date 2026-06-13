@@ -724,7 +724,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const { error } = await (supabase.from("templates") as unknown as { upsert: (r: Record<string, unknown>) => Promise<{ error: unknown }> }).upsert(row);
       if (error) {
         console.error("[store] upsertTemplate", error);
-        toast.error(`Failed to save template: ${error.message}`);
+        toast.error(`Failed to save template: ${(error as { message?: string })?.message ?? "unknown error"}`);
         return;
       }
       refetchAll();
