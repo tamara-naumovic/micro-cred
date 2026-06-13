@@ -136,7 +136,11 @@ function UsersPage() {
                       : (u.organizationId ? orgNameById.get(u.organizationId) ?? "—" : "—")}
                   </TableCell>
                   <TableCell>
-                    {u.role === "earner" && <ManageEarnerOrgsDialog earnerId={u.id} earnerName={u.name} />}
+                    <div className="flex items-center justify-end gap-1">
+                      {u.role === "earner" && <ManageEarnerOrgsDialog earnerId={u.id} earnerName={u.name} />}
+                      <EditUserDialog user={u} />
+                      <DeleteUserDialog user={u} />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
