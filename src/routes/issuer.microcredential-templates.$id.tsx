@@ -27,8 +27,9 @@ const SUPERVISION_LABEL: Record<string, string> = {
   supervised_onsite_with_id: "Supervised onsite with identity verification",
 };
 const STACKABILITY_LABEL: Record<string, string> = {
-  stand_alone: "Stand-alone, independent micro-credential",
-  stackable: "Integrated, stackable towards another credential",
+  stand_alone: "Stand-alone",
+  independent_integrated: "Independent micro-credential / integrated",
+  stackable: "Stackable towards another credential",
 };
 
 async function openQaDocument(path: string) {
