@@ -725,6 +725,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })();
   }, [refetchAll]);
 
+  const assignTemplateUsers: StoreCtx["assignTemplateUsers"] = useCallback(async (templateId, userIds) => {
+    const actor = activeUserRef.current;
+    const { data: existing } = await supabase
+      .from("template_assignees")
+      .select("user_id")
+      .eq("template_id", templateId);
+    const existingIds = new Set((existing ?? []).map((r) => r.user_id as string));
+    const toAdd = userIds.filter((id) => !existingIds.has(id));
+    const toRemove = [...existingIds].filter((id) => !userIds.includes(id));
+    if (toAdd.length > 0) {
+      const rows = toAdd.map((uid) => ({
+        template_id: templateId,
+        user_id: uid,
+        assigned_by: actor?.id ?? null,
+      }));
+      const { error } = await (supabase.from("template_assignees") as unknown as {
+        insert: (r: Record<string, unknown>[]) => Promise<{ error: unknown }>;
+      }).insert(rows);
+      if (error) console.error("[store] assignTemplateUsers insert", error);
+    }
+    if (toRemove.length > 0) {
+      const { error } = await supabase
+        .from("template_assignees")
+        .delete()
+        .eq("template_id", templateId)
+        .in("user_id", toRemove);
+      if (error) console.error("[store] assignTemplateUsers delete", error);
+    }
+    await refetchAll();
+  }, [refetchAll]);
+
+
   const approveRegistration: StoreCtx["approveRegistration"] = useCallback((id) => {
     (async () => {
       await supabase
