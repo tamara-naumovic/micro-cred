@@ -74,6 +74,14 @@ async function provisionUser(opts: {
     userId = data.user.id;
   }
 
+  // Defensive: ensure profile row exists even if the auth trigger didn't run.
+  await supabaseAdmin
+    .from("profiles")
+    .upsert(
+      { id: userId, email, display_name: opts.displayName },
+      { onConflict: "id" },
+    );
+
   // The handle_new_user trigger inserts a default 'earner' role. If we want a
   // non-earner role, remove the default first.
   if (opts.role !== "earner") {
@@ -94,17 +102,9 @@ async function provisionUser(opts: {
     throw new Error(roleErr.message);
   }
 
-  // Make sure profile display_name is populated even when the user already existed
-  if (alreadyExisted && opts.displayName) {
-    await supabaseAdmin
-      .from("profiles")
-      .update({ display_name: opts.displayName })
-      .eq("id", userId)
-      .eq("display_name", "");
-  }
-
   return { userId, alreadyExisted };
 }
+
 
 // ============================================================================
 // Platform admin: create any user
