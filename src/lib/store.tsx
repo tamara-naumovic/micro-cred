@@ -29,6 +29,7 @@ import {
   type RequestStatus,
   type Role,
   type SharingSettings,
+  type TemplateAssignment,
   type TemplateStatus,
   type TimelineEvent,
 } from "./types";
