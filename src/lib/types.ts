@@ -8,9 +8,16 @@ export interface MockUser {
   name: string;
   email: string;
   role: Role;
+  // For Issuer role only: distinguishes institution admin from staff employee
+  subRole?: "admin" | "staff";
   organizationId?: string;
   organization?: string;
   studentId?: string;
+}
+
+export interface TemplateAssignment {
+  templateId: string;
+  userId: string;
 }
 
 export type LearningSource = "formal" | "non_formal";
