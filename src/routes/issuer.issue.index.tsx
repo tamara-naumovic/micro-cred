@@ -62,7 +62,7 @@ function Direct() {
 
   const submit = () => {
     if (!templateId || selectedIds.length === 0) {
-      toast.error("Pick a template and at least one earner");
+      toast.error("Pick a micro-credential and at least one earner");
       return;
     }
     const recipients = selectedIds.map((id) => ({
