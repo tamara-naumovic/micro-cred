@@ -29,13 +29,14 @@ const ROLE_HOME: Record<Role, string> = {
 function LoginPage() {
   const navigate = useNavigate();
   const { activeUser } = useStore();
+  const { user, loading } = useAuth();
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (activeUser) {
+    if (!loading && user && activeUser) {
       navigate({ to: ROLE_HOME[activeUser.role] ?? "/earner" });
     }
-  }, [activeUser, navigate]);
+  }, [activeUser, loading, navigate, user]);
 
   return (
     <main className="mx-auto max-w-md px-4 py-10 md:px-8 md:py-14">
@@ -48,7 +49,7 @@ function LoginPage() {
         </p>
       </div>
 
-      <SignInForm onSubmitted={() => setSubmitted(true)} waiting={submitted && !activeUser} />
+      <SignInForm onSubmitted={() => setSubmitted(true)} waiting={submitted && !!user && !activeUser} />
 
       <Card className="mt-6 p-4 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Need an account?</p>

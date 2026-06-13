@@ -45,10 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.from("profiles").select("display_name, email, student_id").eq("id", u.id).maybeSingle(),
         supabase.from("user_roles").select("role, organization_id").eq("user_id", u.id),
       ]);
-      // If neither profile nor roles exist yet (e.g. invite session before
-      // server-side provisioning finished), don't fall back to "earner" —
-      // that would briefly route the user to the wrong dashboard.
-      if (!profile && (!roles || roles.length === 0)) {
+      // Never guess "earner" when roles are missing. During invite / first-login
+      // flows the profile row can exist before the final role row becomes
+      // visible, and a fallback here routes the user to the wrong dashboard.
+      if (!roles || roles.length === 0) {
         setActiveUser(null);
         return;
       }
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (a, b) => (ROLE_PRIORITY[b.role as string] ?? 0) - (ROLE_PRIORITY[a.role as string] ?? 0),
       );
       const primary = sorted[0];
-      const mapped = primary ? mapDbRole(primary.role as string) : { role: "earner" as Role };
+      const mapped = mapDbRole(primary.role as string);
       const mock: MockUser = {
         id: u.id,
         name: profile?.display_name || u.email?.split("@")[0] || "User",
