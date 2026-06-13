@@ -290,6 +290,38 @@ export type Database = {
           },
         ]
       }
+      earner_institutions: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          earner_id: string
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          earner_id: string
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          earner_id?: string
+          id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "earner_institutions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
