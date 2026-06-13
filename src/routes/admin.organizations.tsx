@@ -168,6 +168,7 @@ function AddInstitutionDialog() {
             <p className="mt-1 text-xs text-muted-foreground">
               Optional. PDF or image proof of accreditation (max ~10 MB).
             </p>
+          </div>
           <Separator />
           <div>
             <p className="mb-2 text-sm font-medium">Institution admin</p>
