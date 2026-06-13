@@ -83,7 +83,7 @@ export type SupervisionType =
   | "supervised_online_with_id"
   | "supervised_onsite_with_id";
 
-export type StackabilityType = "stand_alone" | "stackable";
+export type StackabilityType = "stand_alone" | "independent_integrated" | "stackable";
 
 export interface Organization {
   id: string;
