@@ -26,16 +26,27 @@ export const listIssuerStaff = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: roles, error } = await supabaseAdmin
       .from("user_roles")
-      .select("user_id, created_at, profiles!inner(email, display_name)")
+      .select("user_id, created_at")
       .eq("role", "issuer_staff")
       .eq("organization_id", data.organizationId);
     if (error) throw new Error(error.message);
-    return (roles ?? []).map((r: any) => ({
-      userId: r.user_id,
-      email: r.profiles?.email ?? "",
-      displayName: r.profiles?.display_name ?? "",
-      createdAt: r.created_at,
-    }));
+    const userIds = (roles ?? []).map((r: any) => r.user_id);
+    if (userIds.length === 0) return [];
+    const { data: profs, error: pErr } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, display_name")
+      .in("id", userIds);
+    if (pErr) throw new Error(pErr.message);
+    const byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    return (roles ?? []).map((r: any) => {
+      const p: any = byId.get(r.user_id) ?? {};
+      return {
+        userId: r.user_id,
+        email: p.email ?? "",
+        displayName: p.display_name ?? "",
+        createdAt: r.created_at,
+      };
+    });
   });
 
 export const addIssuerStaff = createServerFn({ method: "POST" })
