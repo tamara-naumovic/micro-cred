@@ -104,10 +104,25 @@ function Detail() {
             </Field>
             <Field label="Skills">{tpl.skills.join(", ")}</Field>
             <Field label="Assessment">{tpl.assessment}</Field>
-            <Field label="Quality assurance">{tpl.qualityAssurance}</Field>
-            <Field label="Prerequisites">{tpl.prerequisites}</Field>
-            <Field label="Supervision">{tpl.supervision}</Field>
-            <Field label="Stackability">{tpl.stackability}</Field>
+            <Field label="Quality assurance">
+              <div className="space-y-1">
+                <div>{QA_LABEL[tpl.qaType] ?? tpl.qualityAssurance}</div>
+                {tpl.qaDocumentPath && (
+                  <Button size="sm" variant="outline" onClick={() => openQaDocument(tpl.qaDocumentPath!)}>
+                    <FileDown className="mr-2 h-4 w-4" />Open QA document
+                  </Button>
+                )}
+              </div>
+            </Field>
+            <Field label="Prerequisites">
+              {tpl.prerequisitesNone ? "No prerequisites" : (tpl.prerequisites || "—")}
+            </Field>
+            <Field label="Supervision and identity verification">
+              {tpl.supervisionType ? SUPERVISION_LABEL[tpl.supervisionType] : "—"}
+            </Field>
+            <Field label="Integration / Stackability">
+              {tpl.stackabilityType ? STACKABILITY_LABEL[tpl.stackabilityType] : "—"}
+            </Field>
             <Field label="Expiry">
               {tpl.expiryMode === "fixed_date" && tpl.expiryDate
                 ? `Expires on ${new Date(tpl.expiryDate).toLocaleDateString()}`
