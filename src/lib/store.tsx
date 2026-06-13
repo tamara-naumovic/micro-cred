@@ -46,6 +46,7 @@ interface State {
   audit: AuditEvent[];
   events: PlatformEvent[];
   users: MockUser[];
+  templateAssignees: TemplateAssignment[];
 }
 
 const emptyState: State = {
@@ -58,6 +59,7 @@ const emptyState: State = {
   audit: [],
   events: [],
   users: [],
+  templateAssignees: [],
 };
 
 export interface BulkRow {
