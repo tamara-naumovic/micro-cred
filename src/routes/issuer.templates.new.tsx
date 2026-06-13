@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { StaffPicker } from "@/components/StaffPicker";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import type { Level, LearningSource, MicroCredentialTemplate, Participation } from "@/lib/types";
