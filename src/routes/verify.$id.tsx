@@ -269,3 +269,46 @@ function Field({ label, value, icon }: { label: string; value: string; icon?: Re
     </div>
   );
 }
+
+const QA_LABEL: Record<string, string> = {
+  internal: "Internal",
+  external: "External",
+  internal_and_external: "Internal and external",
+  other: "Other",
+  not_specified: "Not specified",
+};
+const SUPERVISION_LABEL: Record<string, string> = {
+  unsupervised_no_id: "Unsupervised with no identity verification",
+  supervised_no_id: "Supervised with no identity verification",
+  supervised_online_with_id: "Supervised online with identity verification",
+  supervised_onsite_with_id: "Supervised onsite with identity verification",
+};
+const STACKABILITY_LABEL: Record<string, string> = {
+  stand_alone: "Stand-alone",
+  independent_integrated: "Independent micro-credential / integrated",
+  stackable: "Stackable towards another credential",
+};
+
+function TemplateInfo({ cred }: { cred: PublicCred }) {
+  const anyOf = cred as any;
+  const rows: { label: string; value: string }[] = [];
+  if (anyOf.qa_type) rows.push({ label: "Quality assurance", value: QA_LABEL[anyOf.qa_type] ?? anyOf.qa_type });
+  if (anyOf.prerequisites_none) rows.push({ label: "Prerequisites", value: "No prerequisites" });
+  else if (anyOf.prerequisites) rows.push({ label: "Prerequisites", value: anyOf.prerequisites });
+  if (anyOf.supervision_type) rows.push({ label: "Supervision & identity verification", value: SUPERVISION_LABEL[anyOf.supervision_type] ?? anyOf.supervision_type });
+  if (anyOf.stackability_type) rows.push({ label: "Integration / Stackability", value: STACKABILITY_LABEL[anyOf.stackability_type] ?? anyOf.stackability_type });
+  if (rows.length === 0) return null;
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Credential details</div>
+      <dl className="grid grid-cols-1 gap-y-3 sm:grid-cols-2 sm:gap-x-6 text-sm">
+        {rows.map((r) => (
+          <div key={r.label}>
+            <dt className="text-xs uppercase tracking-wider text-muted-foreground">{r.label}</dt>
+            <dd className="mt-0.5 text-sm">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
