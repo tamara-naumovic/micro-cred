@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
 
-export const Route = createFileRoute("/issuer/templates/")({
+export const Route = createFileRoute("/issuer/microcredential_templates/")({
   head: () => ({ meta: [{ title: "Micro-credentials — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
