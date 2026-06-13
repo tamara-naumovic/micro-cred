@@ -1,6 +1,8 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import type { Level, LearningSource, MicroCredentialTemplate, Participation } from "@/lib/types";
 
@@ -29,7 +36,7 @@ function Guarded() {
 }
 
 function Form() {
-  const { activeUser, upsertTemplate, organizations } = useStore();
+  const { activeUser, upsertTemplate, organizations, users, assignTemplateUsers } = useStore();
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -40,11 +47,20 @@ function Form() {
   const [skills, setSkills] = useState("");
   const [outcomes, setOutcomes] = useState("");
   const [assessment, setAssessment] = useState("");
+  const [expiryMode, setExpiryMode] = useState<"never" | "fixed_date">("never");
+  const [expiryDate, setExpiryDate] = useState<Date | undefined>(undefined);
+  const [assignedStaff, setAssignedStaff] = useState<string[]>([]);
 
   if (!activeUser) return null;
   const issuerOrg = organizations.find((o) => o.id === activeUser.organizationId);
+  const staffUsers = users.filter(
+    (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === activeUser.organizationId,
+  );
 
-  const submit = (status: "draft" | "active") => {
+  const toggleStaff = (id: string) =>
+    setAssignedStaff((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const submit = async (status: "draft" | "active") => {
     if (!title.trim() || !description.trim()) {
       toast.error("Title and description are required");
       return;
@@ -53,8 +69,13 @@ function Form() {
       toast.error("Your account is not linked to an issuer organisation");
       return;
     }
+    if (expiryMode === "fixed_date" && !expiryDate) {
+      toast.error("Please pick an expiration date");
+      return;
+    }
+    const id = crypto.randomUUID();
     const tpl: MicroCredentialTemplate = {
-      id: crypto.randomUUID(),
+      id,
       title,
       description,
       issuerId: activeUser.organizationId,
@@ -71,10 +92,19 @@ function Form() {
       prerequisites: "—",
       supervision: "—",
       stackability: "—",
+      expiryMode,
+      expiryDate: expiryMode === "fixed_date" && expiryDate ? expiryDate.toISOString() : undefined,
       status,
       version: "1.0",
     };
     upsertTemplate(tpl);
+    if (assignedStaff.length > 0) {
+      try {
+        await assignTemplateUsers(id, assignedStaff);
+      } catch (e: any) {
+        toast.error(e?.message ?? "Failed to assign staff");
+      }
+    }
     toast.success(`Micro-credential ${status === "draft" ? "saved as draft" : "published"}`);
     navigate({ to: "/issuer/templates" });
   };
@@ -140,6 +170,53 @@ function Form() {
               <Label>Assessment</Label>
               <Input value={assessment} onChange={(e) => setAssessment(e.target.value)} placeholder="Final project + oral defence" />
             </div>
+
+            <div className="md:col-span-2 space-y-2 rounded-md border p-4">
+              <Label>Expiration *</Label>
+              <RadioGroup value={expiryMode} onValueChange={(v) => setExpiryMode(v as "never" | "fixed_date")}>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="never" id="ex-never" />
+                  <Label htmlFor="ex-never" className="font-normal cursor-pointer">Does not expire</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="fixed_date" id="ex-date" />
+                  <Label htmlFor="ex-date" className="font-normal cursor-pointer">Expires on</Label>
+                  {expiryMode === "fixed_date" && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn("w-[220px] justify-start text-left font-normal", !expiryDate && "text-muted-foreground")}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {expiryDate ? format(expiryDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={expiryDate} onSelect={setExpiryDate} initialFocus className={cn("p-3 pointer-events-auto")} />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
+              </RadioGroup>
+            </div>
+
+            {staffUsers.length > 0 && (
+              <div className="md:col-span-2 space-y-2 rounded-md border p-4">
+                <Label>Assign staff (optional)</Label>
+                <div className="grid gap-1 sm:grid-cols-2">
+                  {staffUsers.map((u) => (
+                    <label key={u.id} className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-muted">
+                      <Checkbox checked={assignedStaff.includes(u.id)} onCheckedChange={() => toggleStaff(u.id)} />
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">{u.name}</div>
+                        <div className="truncate text-xs text-muted-foreground">{u.email}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => submit("draft")}>Save as draft</Button>
