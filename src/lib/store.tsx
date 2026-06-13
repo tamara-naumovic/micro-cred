@@ -314,7 +314,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         supabase.from("user_roles").select("*"),
         supabase.from("application_timeline").select("*").order("created_at", { ascending: true }),
         supabase.from("application_comments").select("*").order("created_at", { ascending: true }),
+        supabase.from("template_assignees").select("template_id, user_id"),
       ]);
+
+      const taRes = arguments_taRes_unused: void 0;
 
       const orgs = (orgRes.data ?? []).map(mapOrg);
       const orgName = new Map(orgs.map((o) => [o.id, o.name]));
