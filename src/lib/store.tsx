@@ -825,7 +825,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       state, activeUser, setActiveUser, loading, createApplication, updateSharing,
       advanceApplicationStatus, rejectApplication, addReviewerComment,
       issueFromApplication, directIssue, bulkIssue, revokeCredential,
-      upsertTemplate, archiveTemplate, approveRegistration, rejectRegistration,
+      upsertTemplate, archiveTemplate, assignTemplateUsers, approveRegistration, rejectRegistration,
       markAllRead, reset,
     ],
   );
