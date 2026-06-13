@@ -75,12 +75,12 @@ function Form() {
       version: "1.0",
     };
     upsertTemplate(tpl);
-    toast.success(`Template ${status === "draft" ? "saved as draft" : "published"}`);
+    toast.success(`Micro-credential ${status === "draft" ? "saved as draft" : "published"}`);
     navigate({ to: "/issuer/templates" });
   };
 
   return (
-    <PageShell title="Create Template" description="Define a new micro-credential offered by your organisation.">
+    <PageShell title="Create Micro-credential" description="Define a new micro-credential offered by your organisation.">
       <Card>
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 md:grid-cols-2">
