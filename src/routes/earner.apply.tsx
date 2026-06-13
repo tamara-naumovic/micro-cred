@@ -19,13 +19,18 @@ export const Route = createFileRoute("/earner/apply")({
 });
 
 function Apply() {
-  const { templates, createApplication, applications, credentials, activeUser } = useStore();
+  const { templates, createApplication, applications, credentials, activeUser, earnerInstitutions } = useStore();
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2>(1);
   const [templateId, setTemplateId] = useState<string | null>(null);
 
   const tpl = templates.find((t) => t.id === templateId);
-  const active = templates.filter((t) => t.status === "active");
+  const myOrgIds = new Set(
+    activeUser
+      ? earnerInstitutions.filter((ei) => ei.earnerId === activeUser.id).map((ei) => ei.organizationId)
+      : [],
+  );
+  const active = templates.filter((t) => t.status === "active" && myOrgIds.has(t.issuerId));
 
   const appliedTemplateIds = new Set(
     activeUser
@@ -125,7 +130,11 @@ function Apply() {
             );
           })}
           {active.length === 0 && (
-            <p className="text-sm text-muted-foreground">No active credential templates available.</p>
+            <p className="text-sm text-muted-foreground">
+              {myOrgIds.size === 0
+                ? "You are not linked to any institution yet. Contact the platform admin to be linked to an institution."
+                : "No active micro-credentials available from your institution(s) yet."}
+            </p>
           )}
         </div>
       )}

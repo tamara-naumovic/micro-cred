@@ -162,7 +162,8 @@ function mapTemplate(r: Row, orgName: Map<string, string>): MicroCredentialTempl
     supervision: (r.supervision as string) ?? "",
     stackability: (r.stackability as string) ?? "",
     furtherInfo: (r.further_info as string | null) ?? undefined,
-    expiryRule: (r.expiry_rule as string | null) ?? undefined,
+    expiryMode: ((r.expiry_mode as string | null) === "fixed_date" ? "fixed_date" : "never"),
+    expiryDate: (r.expiry_date as string | null) ?? undefined,
     status: (r.status as TemplateStatus) ?? "draft",
     version: (r.version as string) ?? "1.0",
   };
@@ -546,7 +547,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       issuer_id: tpl.issuerId,
       issuer_name: tpl.issuerName,
       issued_at: issuedAt ?? nowISO(),
-      expires_at: expiryDate ?? null,
+      expires_at: expiryDate ?? (tpl.expiryMode === "fixed_date" ? (tpl.expiryDate ?? null) : null),
       status: "active",
       source: tpl.source,
       subcategory: tpl.subcategory ?? null,
@@ -714,15 +715,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         supervision: t.supervision,
         stackability: t.stackability,
         further_info: t.furtherInfo ?? null,
-        expiry_rule: t.expiryRule ?? null,
+        expiry_mode: t.expiryMode ?? "never",
+        expiry_date: t.expiryMode === "fixed_date" ? (t.expiryDate ?? null) : null,
         status: t.status,
         version: t.version,
         created_by: activeUserRef.current?.id ?? null,
       };
-      const { error } = await supabase.from("templates").upsert(row);
+      const { error } = await (supabase.from("templates") as unknown as { upsert: (r: Record<string, unknown>) => Promise<{ error: unknown }> }).upsert(row);
       if (error) {
         console.error("[store] upsertTemplate", error);
-        toast.error(`Failed to save template: ${error.message}`);
+        toast.error(`Failed to save template: ${(error as { message?: string })?.message ?? "unknown error"}`);
         return;
       }
       refetchAll();
