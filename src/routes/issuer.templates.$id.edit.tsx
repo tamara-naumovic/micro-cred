@@ -219,17 +219,7 @@ function EditForm() {
               {staffUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No staff yet for your institution.</p>
               ) : (
-                <div className="grid gap-1 sm:grid-cols-2">
-                  {staffUsers.map((u) => (
-                    <label key={u.id} className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-muted">
-                      <Checkbox checked={assignedStaff.includes(u.id)} onCheckedChange={() => toggleStaff(u.id)} />
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">{u.name}</div>
-                        <div className="truncate text-xs text-muted-foreground">{u.email}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+                <StaffPicker staff={staffUsers} selected={assignedStaff} onChange={setAssignedStaff} />
               )}
             </div>
           </div>
