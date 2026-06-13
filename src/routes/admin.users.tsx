@@ -153,15 +153,18 @@ function UsersPage() {
 }
 
 function AddUserDialog() {
-  const { organizations } = useStore();
+  const { organizations, reset: storeReset } = useStore();
   const create = useServerFn(adminCreateUser);
+  const assign = useServerFn(assignEarnerInstitution);
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<AppRole>("earner");
   const [orgId, setOrgId] = useState<string>("");
+  const [earnerOrgIds, setEarnerOrgIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [form, setForm, reset] = useProvisionState();
 
   const needsOrg = role === "issuer_admin" || role === "issuer_staff";
+  const isEarner = role === "earner";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -171,7 +174,7 @@ function AddUserDialog() {
     }
     setBusy(true);
     try {
-      await create({
+      const res = await create({
         data: {
           email: form.email,
           displayName: form.displayName,
@@ -182,15 +185,28 @@ function AddUserDialog() {
           redirectTo: typeof window !== "undefined" ? `${window.location.origin}/set-password` : undefined,
         },
       });
+      if (isEarner && earnerOrgIds.length > 0 && res?.userId) {
+        await Promise.all(
+          earnerOrgIds.map((oid) =>
+            assign({ data: { earnerId: res.userId, organizationId: oid } }).catch(() => null),
+          ),
+        );
+      }
       toast.success(form.mode === "invite" ? "Invitation sent" : "User created");
       reset();
       setOrgId("");
+      setEarnerOrgIds([]);
       setOpen(false);
+      storeReset();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to create user");
     } finally {
       setBusy(false);
     }
+  }
+
+  function toggleEarnerOrg(id: string) {
+    setEarnerOrgIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   }
 
   return (
@@ -235,6 +251,31 @@ function AddUserDialog() {
               </div>
             )}
           </div>
+          {isEarner && organizations.length > 0 && (
+            <div>
+              <Label>Institutions (optional)</Label>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Link this earner to one or more institutions. You can also do this later from the user list.
+              </p>
+              <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border border-border p-2">
+                {organizations.map((o) => {
+                  const checked = earnerOrgIds.includes(o.id);
+                  return (
+                    <label key={o.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleEarnerOrg(o.id)}
+                        disabled={busy}
+                      />
+                      <span className="text-sm">{o.name}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{o.country}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <ProvisionFields value={form} onChange={setForm} disabled={busy} />
           <DialogFooter>
             <SubmitButton busy={busy}>Create</SubmitButton>
@@ -246,7 +287,7 @@ function AddUserDialog() {
 }
 
 function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; earnerName: string }) {
-  const { organizations, earnerInstitutions } = useStore();
+  const { organizations, earnerInstitutions, reset: storeReset } = useStore();
   const assign = useServerFn(assignEarnerInstitution);
   const remove = useServerFn(removeEarnerInstitution);
   const [open, setOpen] = useState(false);
@@ -264,6 +305,7 @@ function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; ea
       } else {
         await assign({ data: { earnerId, organizationId: orgId } });
       }
+      storeReset();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed");
     } finally {
