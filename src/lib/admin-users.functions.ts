@@ -135,6 +135,94 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   });
 
 // ============================================================================
+// Platform admin: update a user's profile + role
+// ============================================================================
+export const adminUpdateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: {
+      userId: string;
+      email?: string;
+      displayName?: string;
+      role?: AppRole;
+      organizationId?: string | null;
+    }) => d,
+  )
+  .handler(async ({ data, context }) => {
+    await assertPlatformAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (
+      data.role &&
+      (data.role === "issuer_admin" || data.role === "issuer_staff") &&
+      !data.organizationId
+    ) {
+      throw new Error("organizationId is required for institution roles");
+    }
+
+    const email = data.email?.trim().toLowerCase();
+
+    // Update auth.users email / metadata
+    if (email || data.displayName) {
+      const payload: Record<string, unknown> = {};
+      if (email) payload.email = email;
+      if (data.displayName) payload.user_metadata = { display_name: data.displayName };
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, payload);
+      if (error) throw new Error(error.message);
+    }
+
+    // Update profile row
+    const profilePatch: Record<string, unknown> = {};
+    if (email) profilePatch.email = email;
+    if (data.displayName) profilePatch.display_name = data.displayName;
+    if (Object.keys(profilePatch).length > 0) {
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update(profilePatch)
+        .eq("id", data.userId);
+      if (error) throw new Error(error.message);
+    }
+
+    // Replace role assignment if requested
+    if (data.role) {
+      const { error: delErr } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId);
+      if (delErr) throw new Error(delErr.message);
+
+      const { error: insErr } = await supabaseAdmin.from("user_roles").insert({
+        user_id: data.userId,
+        role: data.role,
+        organization_id:
+          data.role === "issuer_admin" || data.role === "issuer_staff"
+            ? data.organizationId ?? null
+            : null,
+      });
+      if (insErr) throw new Error(insErr.message);
+    }
+
+    return { ok: true };
+  });
+
+// ============================================================================
+// Platform admin: delete a user
+// ============================================================================
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertPlatformAdmin(context.supabase, context.userId);
+    if (data.userId === context.userId) {
+      throw new Error("You cannot delete your own account");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ============================================================================
 // Platform admin: create institution + its admin in a single step
 // ============================================================================
 export const adminCreateInstitution = createServerFn({ method: "POST" })
