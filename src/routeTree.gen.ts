@@ -45,6 +45,7 @@ import { Route as IssuerTemplatesNewRouteImport } from './routes/issuer.template
 import { Route as IssuerTemplatesIdRouteImport } from './routes/issuer.templates.$id'
 import { Route as IssuerIssueBulkRouteImport } from './routes/issuer.issue.bulk'
 import { Route as EarnerCredentialsIdRouteImport } from './routes/earner.credentials.$id'
+import { Route as IssuerTemplatesIdEditRouteImport } from './routes/issuer.templates.$id.edit'
 
 const SetPasswordRoute = SetPasswordRouteImport.update({
   id: '/set-password',
@@ -226,6 +227,11 @@ const EarnerCredentialsIdRoute = EarnerCredentialsIdRouteImport.update({
   path: '/earner/credentials/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IssuerTemplatesIdEditRoute = IssuerTemplatesIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => IssuerTemplatesIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -259,11 +265,12 @@ export interface FileRoutesByFullPath {
   '/issuers/': typeof IssuersIndexRoute
   '/earner/credentials/$id': typeof EarnerCredentialsIdRoute
   '/issuer/issue/bulk': typeof IssuerIssueBulkRoute
-  '/issuer/templates/$id': typeof IssuerTemplatesIdRoute
+  '/issuer/templates/$id': typeof IssuerTemplatesIdRouteWithChildren
   '/issuer/templates/new': typeof IssuerTemplatesNewRoute
   '/earner/credentials/': typeof EarnerCredentialsIndexRoute
   '/issuer/issue/': typeof IssuerIssueIndexRoute
   '/issuer/templates/': typeof IssuerTemplatesIndexRoute
+  '/issuer/templates/$id/edit': typeof IssuerTemplatesIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -297,11 +304,12 @@ export interface FileRoutesByTo {
   '/issuers': typeof IssuersIndexRoute
   '/earner/credentials/$id': typeof EarnerCredentialsIdRoute
   '/issuer/issue/bulk': typeof IssuerIssueBulkRoute
-  '/issuer/templates/$id': typeof IssuerTemplatesIdRoute
+  '/issuer/templates/$id': typeof IssuerTemplatesIdRouteWithChildren
   '/issuer/templates/new': typeof IssuerTemplatesNewRoute
   '/earner/credentials': typeof EarnerCredentialsIndexRoute
   '/issuer/issue': typeof IssuerIssueIndexRoute
   '/issuer/templates': typeof IssuerTemplatesIndexRoute
+  '/issuer/templates/$id/edit': typeof IssuerTemplatesIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -336,11 +344,12 @@ export interface FileRoutesById {
   '/issuers/': typeof IssuersIndexRoute
   '/earner/credentials/$id': typeof EarnerCredentialsIdRoute
   '/issuer/issue/bulk': typeof IssuerIssueBulkRoute
-  '/issuer/templates/$id': typeof IssuerTemplatesIdRoute
+  '/issuer/templates/$id': typeof IssuerTemplatesIdRouteWithChildren
   '/issuer/templates/new': typeof IssuerTemplatesNewRoute
   '/earner/credentials/': typeof EarnerCredentialsIndexRoute
   '/issuer/issue/': typeof IssuerIssueIndexRoute
   '/issuer/templates/': typeof IssuerTemplatesIndexRoute
+  '/issuer/templates/$id/edit': typeof IssuerTemplatesIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -381,6 +390,7 @@ export interface FileRouteTypes {
     | '/earner/credentials/'
     | '/issuer/issue/'
     | '/issuer/templates/'
+    | '/issuer/templates/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -419,6 +429,7 @@ export interface FileRouteTypes {
     | '/earner/credentials'
     | '/issuer/issue'
     | '/issuer/templates'
+    | '/issuer/templates/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -457,6 +468,7 @@ export interface FileRouteTypes {
     | '/earner/credentials/'
     | '/issuer/issue/'
     | '/issuer/templates/'
+    | '/issuer/templates/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -491,7 +503,7 @@ export interface RootRouteChildren {
   IssuersIndexRoute: typeof IssuersIndexRoute
   EarnerCredentialsIdRoute: typeof EarnerCredentialsIdRoute
   IssuerIssueBulkRoute: typeof IssuerIssueBulkRoute
-  IssuerTemplatesIdRoute: typeof IssuerTemplatesIdRoute
+  IssuerTemplatesIdRoute: typeof IssuerTemplatesIdRouteWithChildren
   IssuerTemplatesNewRoute: typeof IssuerTemplatesNewRoute
   EarnerCredentialsIndexRoute: typeof EarnerCredentialsIndexRoute
   IssuerIssueIndexRoute: typeof IssuerIssueIndexRoute
@@ -752,8 +764,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EarnerCredentialsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/issuer/templates/$id/edit': {
+      id: '/issuer/templates/$id/edit'
+      path: '/edit'
+      fullPath: '/issuer/templates/$id/edit'
+      preLoaderRoute: typeof IssuerTemplatesIdEditRouteImport
+      parentRoute: typeof IssuerTemplatesIdRoute
+    }
   }
 }
+
+interface IssuerTemplatesIdRouteChildren {
+  IssuerTemplatesIdEditRoute: typeof IssuerTemplatesIdEditRoute
+}
+
+const IssuerTemplatesIdRouteChildren: IssuerTemplatesIdRouteChildren = {
+  IssuerTemplatesIdEditRoute: IssuerTemplatesIdEditRoute,
+}
+
+const IssuerTemplatesIdRouteWithChildren =
+  IssuerTemplatesIdRoute._addFileChildren(IssuerTemplatesIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -787,7 +817,7 @@ const rootRouteChildren: RootRouteChildren = {
   IssuersIndexRoute: IssuersIndexRoute,
   EarnerCredentialsIdRoute: EarnerCredentialsIdRoute,
   IssuerIssueBulkRoute: IssuerIssueBulkRoute,
-  IssuerTemplatesIdRoute: IssuerTemplatesIdRoute,
+  IssuerTemplatesIdRoute: IssuerTemplatesIdRouteWithChildren,
   IssuerTemplatesNewRoute: IssuerTemplatesNewRoute,
   EarnerCredentialsIndexRoute: EarnerCredentialsIndexRoute,
   IssuerIssueIndexRoute: IssuerIssueIndexRoute,
