@@ -153,15 +153,18 @@ function UsersPage() {
 }
 
 function AddUserDialog() {
-  const { organizations } = useStore();
+  const { organizations, reset: storeReset } = useStore();
   const create = useServerFn(adminCreateUser);
+  const assign = useServerFn(assignEarnerInstitution);
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<AppRole>("earner");
   const [orgId, setOrgId] = useState<string>("");
+  const [earnerOrgIds, setEarnerOrgIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [form, setForm, reset] = useProvisionState();
 
   const needsOrg = role === "issuer_admin" || role === "issuer_staff";
+  const isEarner = role === "earner";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -171,7 +174,7 @@ function AddUserDialog() {
     }
     setBusy(true);
     try {
-      await create({
+      const res = await create({
         data: {
           email: form.email,
           displayName: form.displayName,
@@ -182,15 +185,28 @@ function AddUserDialog() {
           redirectTo: typeof window !== "undefined" ? `${window.location.origin}/set-password` : undefined,
         },
       });
+      if (isEarner && earnerOrgIds.length > 0 && res?.userId) {
+        await Promise.all(
+          earnerOrgIds.map((oid) =>
+            assign({ data: { earnerId: res.userId, organizationId: oid } }).catch(() => null),
+          ),
+        );
+      }
       toast.success(form.mode === "invite" ? "Invitation sent" : "User created");
       reset();
       setOrgId("");
+      setEarnerOrgIds([]);
       setOpen(false);
+      storeReset();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to create user");
     } finally {
       setBusy(false);
     }
+  }
+
+  function toggleEarnerOrg(id: string) {
+    setEarnerOrgIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   }
 
   return (
