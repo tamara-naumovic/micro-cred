@@ -147,6 +147,8 @@ function RealVerify({
             </div>
           )}
 
+          <TemplateInfo cred={cred} />
+
           <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-success-foreground">
             <ShieldCheck className="h-4 w-4" />
             Credential record found in MicroCred registry. Cryptographic verification on EBSI is coming soon.
