@@ -85,8 +85,8 @@ const ISSUER_ADMIN_NAV: NavGroups = [
   {
     group: "Micro-credentials",
     items: [
-      { to: "/issuer/templates", label: "Micro-credentials", icon: BookOpen },
-      { to: "/issuer/templates/new", label: "Create Micro-credential", icon: FilePlus2 },
+      { to: "/issuer/microcredential-templates", label: "Micro-credentials", icon: BookOpen },
+      { to: "/issuer/microcredential-templates/new", label: "Create Micro-credential", icon: FilePlus2 },
       { to: "/issuer/staff", label: "Staff", icon: Users },
       { to: "/issuer/earners", label: "Earners", icon: GraduationCap },
     ],
@@ -115,7 +115,7 @@ const ISSUER_STAFF_NAV: NavGroups = [
   {
     group: "Micro-credentials",
     items: [
-      { to: "/issuer/templates", label: "My Micro-credentials", icon: BookOpen },
+      { to: "/issuer/microcredential-templates", label: "My Micro-credentials", icon: BookOpen },
     ],
   },
   {
