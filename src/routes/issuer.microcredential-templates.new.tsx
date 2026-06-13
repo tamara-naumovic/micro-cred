@@ -66,6 +66,12 @@ const SUPERVISION_OPTIONS: { value: SupervisionType; label: string }[] = [
   { value: "supervised_onsite_with_id", label: "Supervised onsite with identity verification" },
 ];
 
+const STACKABILITY_OPTIONS: { value: StackabilityType; label: string }[] = [
+  { value: "stand_alone", label: "Stand-alone" },
+  { value: "independent_integrated", label: "Independent micro-credential / integrated" },
+  { value: "stackable", label: "Stackable towards another credential" },
+];
+
 function Form() {
   const { activeUser, upsertTemplate, organizations, users, assignTemplateUsers } = useStore();
   const navigate = useNavigate();
