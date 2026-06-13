@@ -547,7 +547,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       issuer_id: tpl.issuerId,
       issuer_name: tpl.issuerName,
       issued_at: issuedAt ?? nowISO(),
-      expires_at: expiryDate ?? null,
+      expires_at: expiryDate ?? (tpl.expiryMode === "fixed_date" ? (tpl.expiryDate ?? null) : null),
       status: "active",
       source: tpl.source,
       subcategory: tpl.subcategory ?? null,

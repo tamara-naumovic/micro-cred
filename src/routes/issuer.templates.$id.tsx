@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
-import { ArrowLeft, Send, Users } from "lucide-react";
+import { ArrowLeft, Pencil, Send, Users } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -55,6 +55,11 @@ function Detail() {
           <Button variant="outline" asChild>
             <Link to="/issuer/templates"><ArrowLeft className="mr-2 h-4 w-4" />All micro-credentials</Link>
           </Button>
+          {!isStaff && (
+            <Button variant="outline" asChild>
+              <Link to="/issuer/templates/$id/edit" params={{ id: tpl.id }}><Pencil className="mr-2 h-4 w-4" />Edit</Link>
+            </Button>
+          )}
           <Button asChild>
             <Link to="/issuer/issue"><Send className="mr-2 h-4 w-4" />Issue this micro-credential</Link>
           </Button>
@@ -82,7 +87,11 @@ function Detail() {
             <Field label="Prerequisites">{tpl.prerequisites}</Field>
             <Field label="Supervision">{tpl.supervision}</Field>
             <Field label="Stackability">{tpl.stackability}</Field>
-            {tpl.expiryRule && <Field label="Expiry">{tpl.expiryRule}</Field>}
+            <Field label="Expiry">
+              {tpl.expiryMode === "fixed_date" && tpl.expiryDate
+                ? `Expires on ${new Date(tpl.expiryDate).toLocaleDateString()}`
+                : "Does not expire"}
+            </Field>
           </CardContent>
         </Card>
         <div className="space-y-4">
