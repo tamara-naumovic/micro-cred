@@ -24,11 +24,20 @@ export const Route = createFileRoute("/issuer/issue/")({
 type RecipientOverride = { grade: string; expiryDate: string };
 
 function Direct() {
-  const { activeUser, templates, users, directIssue } = useStore();
+  const { activeUser, templates, users, templateAssignees, directIssue } = useStore();
   const navigate = useNavigate();
+  const isStaff = activeUser?.subRole === "staff";
+  const assignedIds = useMemo(
+    () => new Set(templateAssignees.filter((a) => a.userId === activeUser?.id).map((a) => a.templateId)),
+    [templateAssignees, activeUser?.id],
+  );
   const myTemplates = useMemo(
-    () => templates.filter((t) => t.issuerId === activeUser?.organizationId && t.status === "active"),
-    [templates, activeUser],
+    () => templates.filter(
+      (t) => t.issuerId === activeUser?.organizationId
+        && t.status === "active"
+        && (!isStaff || assignedIds.has(t.id)),
+    ),
+    [templates, activeUser, isStaff, assignedIds],
   );
   const earners = users.filter((u) => u.role === "earner");
   const [templateId, setTemplateId] = useState(myTemplates[0]?.id ?? "");
