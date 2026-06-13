@@ -38,7 +38,7 @@ function EarnersPage() {
   const [busy, setBusy] = useState(false);
   const [form, setForm, reset] = useProvisionState();
 
-  const orgId = activeUser?.organizationId;
+  const orgId = activeUser?.organizationId ?? "";
 
   const rows = useMemo(() => {
     if (!orgId) return [];

@@ -23,6 +23,7 @@ import { Route as IssuerRevocationsRouteImport } from './routes/issuer.revocatio
 import { Route as IssuerRequestsRouteImport } from './routes/issuer.requests'
 import { Route as IssuerProfileRouteImport } from './routes/issuer.profile'
 import { Route as IssuerEbsiRouteImport } from './routes/issuer.ebsi'
+import { Route as IssuerEarnersRouteImport } from './routes/issuer.earners'
 import { Route as IssuerCredentialsRouteImport } from './routes/issuer.credentials'
 import { Route as EarnerSettingsRouteImport } from './routes/earner.settings'
 import { Route as EarnerProfileRouteImport } from './routes/earner.profile'
@@ -112,6 +113,11 @@ const IssuerProfileRoute = IssuerProfileRouteImport.update({
 const IssuerEbsiRoute = IssuerEbsiRouteImport.update({
   id: '/issuer/ebsi',
   path: '/issuer/ebsi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerEarnersRoute = IssuerEarnersRouteImport.update({
+  id: '/issuer/earners',
+  path: '/issuer/earners',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IssuerCredentialsRoute = IssuerCredentialsRouteImport.update({
@@ -231,6 +237,7 @@ export interface FileRoutesByFullPath {
   '/earner/profile': typeof EarnerProfileRoute
   '/earner/settings': typeof EarnerSettingsRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
+  '/issuer/earners': typeof IssuerEarnersRoute
   '/issuer/ebsi': typeof IssuerEbsiRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
@@ -267,6 +274,7 @@ export interface FileRoutesByTo {
   '/earner/profile': typeof EarnerProfileRoute
   '/earner/settings': typeof EarnerSettingsRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
+  '/issuer/earners': typeof IssuerEarnersRoute
   '/issuer/ebsi': typeof IssuerEbsiRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
@@ -304,6 +312,7 @@ export interface FileRoutesById {
   '/earner/profile': typeof EarnerProfileRoute
   '/earner/settings': typeof EarnerSettingsRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
+  '/issuer/earners': typeof IssuerEarnersRoute
   '/issuer/ebsi': typeof IssuerEbsiRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
@@ -342,6 +351,7 @@ export interface FileRouteTypes {
     | '/earner/profile'
     | '/earner/settings'
     | '/issuer/credentials'
+    | '/issuer/earners'
     | '/issuer/ebsi'
     | '/issuer/profile'
     | '/issuer/requests'
@@ -378,6 +388,7 @@ export interface FileRouteTypes {
     | '/earner/profile'
     | '/earner/settings'
     | '/issuer/credentials'
+    | '/issuer/earners'
     | '/issuer/ebsi'
     | '/issuer/profile'
     | '/issuer/requests'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/earner/profile'
     | '/earner/settings'
     | '/issuer/credentials'
+    | '/issuer/earners'
     | '/issuer/ebsi'
     | '/issuer/profile'
     | '/issuer/requests'
@@ -451,6 +463,7 @@ export interface RootRouteChildren {
   EarnerProfileRoute: typeof EarnerProfileRoute
   EarnerSettingsRoute: typeof EarnerSettingsRoute
   IssuerCredentialsRoute: typeof IssuerCredentialsRoute
+  IssuerEarnersRoute: typeof IssuerEarnersRoute
   IssuerEbsiRoute: typeof IssuerEbsiRoute
   IssuerProfileRoute: typeof IssuerProfileRoute
   IssuerRequestsRoute: typeof IssuerRequestsRoute
@@ -570,6 +583,13 @@ declare module '@tanstack/react-router' {
       path: '/issuer/ebsi'
       fullPath: '/issuer/ebsi'
       preLoaderRoute: typeof IssuerEbsiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/earners': {
+      id: '/issuer/earners'
+      path: '/issuer/earners'
+      fullPath: '/issuer/earners'
+      preLoaderRoute: typeof IssuerEarnersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/issuer/credentials': {
@@ -731,6 +751,7 @@ const rootRouteChildren: RootRouteChildren = {
   EarnerProfileRoute: EarnerProfileRoute,
   EarnerSettingsRoute: EarnerSettingsRoute,
   IssuerCredentialsRoute: IssuerCredentialsRoute,
+  IssuerEarnersRoute: IssuerEarnersRoute,
   IssuerEbsiRoute: IssuerEbsiRoute,
   IssuerProfileRoute: IssuerProfileRoute,
   IssuerRequestsRoute: IssuerRequestsRoute,
