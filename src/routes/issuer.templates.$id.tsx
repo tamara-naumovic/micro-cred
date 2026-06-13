@@ -23,7 +23,7 @@ export const Route = createFileRoute("/issuer/templates/$id")({
 
 function Detail() {
   const { id } = Route.useParams();
-  const { activeUser, templates, templateAssignees, users, assignTemplateUsers } = useStore();
+  const { activeUser, templates, templateAssignees } = useStore();
   const navigate = useNavigate();
   const tpl = templates.find((t) => t.id === id);
   const isStaff = activeUser?.subRole === "staff";
