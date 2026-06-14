@@ -226,7 +226,24 @@ function DetailLayout(p: DetailLayoutProps) {
               )}
             </CardContent>
           </Card>
-          <BlockchainAnchorCard anchor={p.blockchain} showSecret />
+          <CredentialBlockchainVerificationCard
+            data={{
+              credentialId: p.credentialId,
+              vcId: p.blockchain?.vcId ?? null,
+              templateRef: p.blockchain?.templateRef ?? null,
+              network: "bloxberg",
+              chainId: 8995,
+              contractAddress: p.blockchain?.contractAddress ?? null,
+              blockchainStatus: p.blockchain?.chainStatus ?? "not_requested",
+              documentHash: p.blockchain?.documentHash ?? null,
+              learnerCommitment: p.blockchain?.learnerCommitment ?? null,
+              transactionHash: p.blockchain?.txHash ?? null,
+              blockNumber: p.blockchain?.blockNumber ?? null,
+              issuerAddress: p.blockchain?.issuerAddress ?? null,
+            }}
+            audience="owner"
+          />
+
         </div>
 
         <div className="space-y-6">
