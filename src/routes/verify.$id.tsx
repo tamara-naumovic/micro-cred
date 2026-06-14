@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
+import { BlockchainAnchorCard } from "@/components/BlockchainAnchorCard";
 import { useStore } from "@/lib/store";
 import { fetchPublicCredential } from "@/lib/credentials";
 
@@ -149,10 +150,18 @@ function RealVerify({
 
           <TemplateInfo cred={cred} />
 
-          <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-success-foreground">
-            <ShieldCheck className="h-4 w-4" />
-            Credential record found in MicroCred registry. Cryptographic verification on EBSI is coming soon.
-          </div>
+          <BlockchainAnchorCard
+            anchor={{
+              chainStatus: (cred as any).chain_status ?? "pending",
+              txHash: (cred as any).chain_tx_hash ?? null,
+              blockNumber: (cred as any).chain_block_number ?? null,
+              issuerAddress: (cred as any).chain_issuer_address ?? null,
+              contractAddress: (cred as any).chain_contract_address ?? null,
+              documentHash: (cred as any).credential_hash ?? null,
+              learnerCommitment: (cred as any).learner_commitment ?? null,
+              templateRef: (cred as any).template_ref ?? null,
+            }}
+          />
         </CardContent>
       </Card>
 
