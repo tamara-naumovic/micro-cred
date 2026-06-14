@@ -1,5 +1,5 @@
-// Cron-invoked worker that drains the chain_anchor_jobs queue.
-// Handles both template and credential anchor operations.
+// Cron-invoked worker that drains both anchor job queues.
+// Handles template_anchor_jobs and credential_anchor_jobs separately.
 // Called by pg_cron with the project anon key in the `apikey` header.
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -22,16 +22,32 @@ export const Route = createFileRoute("/api/public/hooks/process-chain-anchors")(
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const nowIso = new Date().toISOString();
-        const { data: jobs, error } = await supabaseAdmin
-          .from("chain_anchor_jobs")
-          .select("*")
-          .in("status", ["queued", "failed"])
-          .lt("attempts", MAX_ATTEMPTS)
-          .order("created_at", { ascending: true })
-          .limit(MAX_PER_RUN);
 
-        if (error) {
-          return new Response(JSON.stringify({ error: error.message }), {
+        // Fetch eligible jobs from both queues.
+        const [tplRes, credRes] = await Promise.all([
+          (supabaseAdmin as any)
+            .from("template_anchor_jobs")
+            .select("*")
+            .in("status", ["queued", "failed"])
+            .lt("attempts", MAX_ATTEMPTS)
+            .order("created_at", { ascending: true })
+            .limit(MAX_PER_RUN),
+          (supabaseAdmin as any)
+            .from("credential_anchor_jobs")
+            .select("*")
+            .in("status", ["queued", "failed"])
+            .lt("attempts", MAX_ATTEMPTS)
+            .order("created_at", { ascending: true })
+            .limit(MAX_PER_RUN),
+        ]);
+        if (tplRes.error) {
+          return new Response(JSON.stringify({ error: tplRes.error.message }), {
+            status: 500,
+            headers: { "content-type": "application/json" },
+          });
+        }
+        if (credRes.error) {
+          return new Response(JSON.stringify({ error: credRes.error.message }), {
             status: 500,
             headers: { "content-type": "application/json" },
           });
@@ -42,43 +58,26 @@ export const Route = createFileRoute("/api/public/hooks/process-chain-anchors")(
         );
 
         const results: { jobId: string; entity: string; ok: boolean; error?: string }[] = [];
-        for (const job of (jobs ?? []) as Record<string, any>[]) {
-          // Honor next_attempt_at backoff if set
-          if (job.next_attempt_at && new Date(job.next_attempt_at) > new Date()) continue;
-          const entity = (job.entity_type ?? "credential") as "template" | "credential";
-          const entityId = job.entity_id ?? job.credential_id;
-          const operation = job.operation ?? "anchor_credential";
 
-          await supabaseAdmin
-            .from("chain_anchor_jobs")
+        // Process template jobs first — credentials may unblock once their template is anchored.
+        for (const job of (tplRes.data ?? []) as Record<string, any>[]) {
+          if (job.next_attempt_at && new Date(job.next_attempt_at) > new Date()) continue;
+          await (supabaseAdmin as any)
+            .from("template_anchor_jobs")
             .update({ status: "running", attempts: (job.attempts ?? 0) + 1, last_attempt_at: nowIso } as never)
             .eq("id", job.id);
 
           let res: { ok: boolean; error?: string; txHash?: string };
           try {
-            if (entity === "template") {
-              const { data: rec } = await supabaseAdmin
-                .from("template_blockchain_records")
-                .select("template_version")
-                .eq("template_id", entityId)
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-              const version = (rec as any)?.template_version ?? "1.0";
-              res = await processTemplateAnchor(entityId, version);
-            } else {
-              // Credential anchor or revoke — both call the credential worker which reads current lifecycle.
-              void operation;
-              res = await processCredentialAnchor(entityId);
-            }
+            res = await processTemplateAnchor(job.template_id, job.template_version ?? "1.0");
           } catch (e) {
             res = { ok: false, error: (e as Error).message };
           }
 
           const attempts = (job.attempts ?? 0) + 1;
           const backoffMs = Math.min(60_000 * 2 ** attempts, 60 * 60_000);
-          await supabaseAdmin
-            .from("chain_anchor_jobs")
+          await (supabaseAdmin as any)
+            .from("template_anchor_jobs")
             .update({
               status: res.ok ? "done" : "failed",
               last_error: res.ok ? null : (res.error ?? "unknown error"),
@@ -87,7 +86,79 @@ export const Route = createFileRoute("/api/public/hooks/process-chain-anchors")(
             } as never)
             .eq("id", job.id);
 
-          results.push({ jobId: job.id, entity, ok: res.ok, error: res.error });
+          results.push({ jobId: job.id, entity: "template", ok: res.ok, error: res.error });
+        }
+
+        // Credential jobs — block if template isn't confirmed on-chain.
+        for (const job of (credRes.data ?? []) as Record<string, any>[]) {
+          if (job.next_attempt_at && new Date(job.next_attempt_at) > new Date()) continue;
+
+          // Check template status
+          const { data: cred } = await supabaseAdmin
+            .from("credentials")
+            .select("template_id")
+            .eq("id", job.credential_id)
+            .maybeSingle();
+          const templateId = (cred as any)?.template_id as string | null | undefined;
+          let templateBlocked = false;
+          let blockReason = "Waiting for template to be anchored on blockchain.";
+          if (!templateId) {
+            templateBlocked = true;
+            blockReason = "Credential has no template";
+          } else {
+            const { data: tpl } = await supabaseAdmin
+              .from("templates")
+              .select("blockchain_status")
+              .eq("id", templateId)
+              .maybeSingle();
+            if ((tpl as any)?.blockchain_status !== "confirmed") {
+              templateBlocked = true;
+            }
+          }
+
+          if (templateBlocked) {
+            const attempts = (job.attempts ?? 0) + 1;
+            // Short backoff so the credential picks up quickly after template confirms.
+            const backoffMs = 2 * 60_000;
+            await (supabaseAdmin as any)
+              .from("credential_anchor_jobs")
+              .update({
+                status: "failed",
+                attempts,
+                last_error: blockReason,
+                last_attempt_at: nowIso,
+                next_attempt_at: new Date(Date.now() + backoffMs).toISOString(),
+              } as never)
+              .eq("id", job.id);
+            results.push({ jobId: job.id, entity: "credential", ok: false, error: blockReason });
+            continue;
+          }
+
+          await (supabaseAdmin as any)
+            .from("credential_anchor_jobs")
+            .update({ status: "running", attempts: (job.attempts ?? 0) + 1, last_attempt_at: nowIso } as never)
+            .eq("id", job.id);
+
+          let res: { ok: boolean; error?: string; txHash?: string };
+          try {
+            res = await processCredentialAnchor(job.credential_id);
+          } catch (e) {
+            res = { ok: false, error: (e as Error).message };
+          }
+
+          const attempts = (job.attempts ?? 0) + 1;
+          const backoffMs = Math.min(60_000 * 2 ** attempts, 60 * 60_000);
+          await (supabaseAdmin as any)
+            .from("credential_anchor_jobs")
+            .update({
+              status: res.ok ? "done" : "failed",
+              last_error: res.ok ? null : (res.error ?? "unknown error"),
+              transaction_hash: res.txHash ?? job.transaction_hash ?? null,
+              next_attempt_at: res.ok ? null : new Date(Date.now() + backoffMs).toISOString(),
+            } as never)
+            .eq("id", job.id);
+
+          results.push({ jobId: job.id, entity: "credential", ok: res.ok, error: res.error });
         }
 
         return new Response(JSON.stringify({ processed: results.length, results }), {

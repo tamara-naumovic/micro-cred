@@ -154,8 +154,8 @@ export const enqueueAnchor = createServerFn({ method: "POST" })
     // Insert a queue row. Unique partial index makes this idempotent for active jobs.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: jobErr } = await supabaseAdmin
-      .from("chain_anchor_jobs")
-      .insert({ credential_id: data.credentialId, status: "queued" } as never);
+      .from("credential_anchor_jobs")
+      .insert({ credential_id: data.credentialId, operation: "anchor_credential", status: "queued" } as never);
     // Duplicate-key error is fine — a job is already pending.
     if (jobErr && !/duplicate key|unique/i.test(jobErr.message)) {
       throw new Error(jobErr.message);
@@ -413,14 +413,15 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
 
     // Queue or anchor
     if (data.anchorMode === "later" || !chainCfg()) {
-      await supabaseAdmin
-        .from("chain_anchor_jobs")
+      const { error: qErr } = await supabaseAdmin
+        .from("template_anchor_jobs")
         .insert({
-          entity_type: "template",
-          entity_id: t.id,
+          template_id: t.id,
+          template_version: version,
           operation: "anchor_template",
           status: "queued",
         } as never);
+      if (qErr && !/duplicate/i.test(qErr.message)) throw new Error(qErr.message);
       await supabaseAdmin
         .from("template_blockchain_records")
         .update({ blockchain_status: "queued" } as never)
@@ -436,8 +437,40 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
     // Anchor now
     const { processTemplateAnchor } = await import("./worker.server");
     const res = await processTemplateAnchor(t.id, version);
+    // Always record a job row so it appears in the queue history
+    await supabaseAdmin
+      .from("template_anchor_jobs")
+      .insert({
+        template_id: t.id,
+        template_version: version,
+        operation: "anchor_template",
+        status: res.ok ? "done" : "failed",
+        attempts: 1,
+        last_error: res.ok ? null : (res.error ?? null),
+        last_attempt_at: new Date().toISOString(),
+        transaction_hash: res.txHash ?? null,
+      } as never);
     return { ok: true, version, mode: "now" as const, result: res };
   });
+
+/** Internal helper: ensure a template is confirmed on-chain before anchoring a credential. */
+async function isTemplateAnchored(
+  supabaseAdminClient: any,
+  templateId: string | null | undefined,
+): Promise<{ anchored: boolean; reason?: string }> {
+  if (!templateId) return { anchored: false, reason: "Credential has no template" };
+  const { data: tpl } = await supabaseAdminClient
+    .from("templates")
+    .select("blockchain_status")
+    .eq("id", templateId)
+    .maybeSingle();
+  const status = (tpl as any)?.blockchain_status as string | undefined;
+  if (status === "confirmed") return { anchored: true };
+  return {
+    anchored: false,
+    reason: "Cannot anchor credential: the microcredential template is not yet anchored on the blockchain.",
+  };
+}
 
 interface IssueRecipientInput {
   earnerId: string;
@@ -592,37 +625,62 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             blockchain_status: "not_requested",
           } as never);
 
+        // Always insert into the credential queue so issued MCs are visible there.
+        const { error: jobInsErr } = await supabaseAdmin
+          .from("credential_anchor_jobs")
+          .insert({
+            credential_id: credentialId,
+            operation: "anchor_credential",
+            status: "queued",
+          } as never);
+        if (jobInsErr && !/duplicate/i.test(jobInsErr.message)) throw new Error(jobInsErr.message);
+        await supabase
+          .from("credentials")
+          .update({ chain_status: "queued" } as never)
+          .eq("id", credentialId);
+        await supabaseAdmin
+          .from("credential_blockchain_records")
+          .update({ blockchain_status: "queued" } as never)
+          .eq("credential_id", credentialId);
+
         if (effectiveMode === "later") {
-          await supabaseAdmin
-            .from("chain_anchor_jobs")
-            .insert({
-              entity_type: "credential",
-              entity_id: credentialId,
-              credential_id: credentialId,
-              operation: "anchor_credential",
-              status: "queued",
-            } as never);
-          await supabase
-            .from("credentials")
-            .update({ chain_status: "queued" } as never)
-            .eq("id", credentialId);
-          await supabaseAdmin
-            .from("credential_blockchain_records")
-            .update({ blockchain_status: "queued" } as never)
-            .eq("credential_id", credentialId);
           results.push({ recipientId: r.earnerId, credentialId, credentialStatus: "issued", blockchainStatus: "queued" });
         } else {
-          // Anchor now
-          const { processCredentialAnchor } = await import("./worker.server");
-          const res = await processCredentialAnchor(credentialId);
-          results.push({
-            recipientId: r.earnerId,
-            credentialId,
-            credentialStatus: "issued",
-            blockchainStatus: res.ok ? "confirmed" : "failed",
-            txHash: res.txHash,
-            error: res.ok ? undefined : res.error,
-          });
+          // Anchor now — but only if the template is anchored on-chain.
+          const tplCheck = await isTemplateAnchored(supabaseAdmin, t.id);
+          if (!tplCheck.anchored) {
+            results.push({
+              recipientId: r.earnerId,
+              credentialId,
+              credentialStatus: "issued",
+              blockchainStatus: "queued",
+              error: tplCheck.reason,
+            });
+          } else {
+            const { processCredentialAnchor } = await import("./worker.server");
+            const res = await processCredentialAnchor(credentialId);
+            // Mark the queued job as done/failed so the queue reflects reality.
+            await supabaseAdmin
+              .from("credential_anchor_jobs")
+              .update({
+                status: res.ok ? "done" : "failed",
+                attempts: 1,
+                last_error: res.ok ? null : (res.error ?? null),
+                last_attempt_at: new Date().toISOString(),
+                transaction_hash: res.txHash ?? null,
+              } as never)
+              .eq("credential_id", credentialId)
+              .eq("operation", "anchor_credential")
+              .in("status", ["queued", "running", "failed"]);
+            results.push({
+              recipientId: r.earnerId,
+              credentialId,
+              credentialStatus: "issued",
+              blockchainStatus: res.ok ? "confirmed" : "failed",
+              txHash: res.txHash,
+              error: res.ok ? undefined : res.error,
+            });
+          }
         }
       } catch (e) {
         results.push({
@@ -647,7 +705,7 @@ export const anchorTemplateNow = createServerFn({ method: "POST" })
     return processTemplateAnchor(data.templateId, data.version);
   });
 
-/** Anchor a single credential now (manual). */
+/** Anchor a single credential now (manual). Blocks if template not anchored. */
 export const anchorCredentialNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { credentialId: string }) => d)
@@ -670,6 +728,12 @@ export const anchorCredentialNow = createServerFn({ method: "POST" })
       _template_id: cred.template_id,
     });
     if (!isAdmin && !isOrgAdmin && !isAssignee) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const tplCheck = await isTemplateAnchored(supabaseAdmin, cred.template_id);
+    if (!tplCheck.anchored) {
+      throw new Error(tplCheck.reason ?? "Template not yet anchored");
+    }
     const { processCredentialAnchor } = await import("./worker.server");
     return processCredentialAnchor(data.credentialId);
   });
@@ -677,43 +741,45 @@ export const anchorCredentialNow = createServerFn({ method: "POST" })
 /** Cancel a queued anchor job. */
 export const cancelAnchorJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { jobId: string }) => d)
+  .inputValidator((d: { jobId: string; entityKind: "template" | "credential" }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: job } = await supabaseAdmin
-      .from("chain_anchor_jobs")
+    const table = data.entityKind === "template" ? "template_anchor_jobs" : "credential_anchor_jobs";
+    const { data: job } = await (supabaseAdmin as any)
+      .from(table)
       .select("*")
       .eq("id", data.jobId)
       .maybeSingle();
     if (!job) throw new Error("Job not found");
-    await assertJobAccess(supabase as never, userId, job);
     const j = job as Record<string, any>;
+    const entityId = data.entityKind === "template" ? j.template_id : j.credential_id;
+    await assertJobAccess(supabase as never, userId, { entity_type: data.entityKind, entity_id: entityId });
     if (j.status === "done" || j.status === "running") {
       throw new Error("Job is no longer cancellable");
     }
-    await supabaseAdmin
-      .from("chain_anchor_jobs")
+    await (supabaseAdmin as any)
+      .from(table)
       .update({ status: "cancelled" } as never)
       .eq("id", data.jobId);
-    if (j.entity_type === "credential") {
+    if (data.entityKind === "credential") {
       await supabase
         .from("credentials")
         .update({ chain_status: "cancelled" } as never)
-        .eq("id", j.entity_id);
+        .eq("id", entityId);
       await supabaseAdmin
         .from("credential_blockchain_records")
         .update({ blockchain_status: "cancelled" } as never)
-        .eq("credential_id", j.entity_id);
+        .eq("credential_id", entityId);
     } else {
       await supabaseAdmin
         .from("templates")
         .update({ blockchain_status: "cancelled" } as never)
-        .eq("id", j.entity_id);
+        .eq("id", entityId);
       await supabaseAdmin
         .from("template_blockchain_records")
         .update({ blockchain_status: "cancelled" } as never)
-        .eq("template_id", j.entity_id);
+        .eq("template_id", entityId);
     }
     return { ok: true };
   });
@@ -754,10 +820,8 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
 
     if (alreadyConfirmed) {
       await supabaseAdmin
-        .from("chain_anchor_jobs")
+        .from("credential_anchor_jobs")
         .insert({
-          entity_type: "credential",
-          entity_id: data.credentialId,
           credential_id: data.credentialId,
           operation: "revoke_credential",
           status: "queued",
@@ -767,9 +831,9 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
 
     // Cancel any pending issuance anchor jobs
     await supabaseAdmin
-      .from("chain_anchor_jobs")
+      .from("credential_anchor_jobs")
       .update({ status: "cancelled" } as never)
-      .eq("entity_id", data.credentialId)
+      .eq("credential_id", data.credentialId)
       .eq("operation", "anchor_credential")
       .in("status", ["queued", "failed"]);
     await supabase
@@ -849,94 +913,109 @@ export const listAnchorJobs = createServerFn({ method: "GET" })
     const { isAdmin, orgIds } = await isUserIssuerAdminOrPlatformAdmin(supabase as never, userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: jobs, error } = await (supabaseAdmin as any)
-      .from("chain_anchor_jobs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (error) throw new Error(error.message);
+    const [tplRes, credRes] = await Promise.all([
+      (supabaseAdmin as any)
+        .from("template_anchor_jobs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      (supabaseAdmin as any)
+        .from("credential_anchor_jobs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(500),
+    ]);
+    if (tplRes.error) throw new Error(tplRes.error.message);
+    if (credRes.error) throw new Error(credRes.error.message);
 
-    const rows: QueueRow[] = [];
-    const credIds = new Set<string>();
-    const tplIds = new Set<string>();
-    for (const j of (jobs ?? []) as Record<string, any>[]) {
-      const entity = (j.entity_type ?? "credential") as "template" | "credential";
-      if (entity === "credential") credIds.add(j.entity_id ?? j.credential_id);
-      else tplIds.add(j.entity_id);
-    }
+    const tplJobs = (tplRes.data ?? []) as Record<string, any>[];
+    const credJobs = (credRes.data ?? []) as Record<string, any>[];
 
-    const credMap = new Map<string, any>();
+    const tplIds = Array.from(new Set(tplJobs.map((j) => j.template_id).filter(Boolean)));
+    const credIds = Array.from(new Set(credJobs.map((j) => j.credential_id).filter(Boolean)));
+
     const tplMap = new Map<string, any>();
-    if (credIds.size) {
-      const { data: creds } = await (supabase as any)
-        .from("credentials")
-        .select("id, title, earner_name, issued_at, credential_lifecycle, status, chain_status, chain_tx_hash, issuer_id")
-        .in("id", Array.from(credIds));
-      for (const c of (creds ?? []) as any[]) credMap.set(c.id, c);
-    }
-    if (tplIds.size) {
-      const { data: tpls } = await (supabase as any)
+    const credMap = new Map<string, any>();
+    if (tplIds.length) {
+      const { data: tpls } = await (supabaseAdmin as any)
         .from("templates")
         .select("id, title, version, published_at, status, blockchain_status, issuer_id")
-        .in("id", Array.from(tplIds));
+        .in("id", tplIds);
       for (const t of (tpls ?? []) as any[]) tplMap.set(t.id, t);
     }
+    if (credIds.length) {
+      const { data: creds } = await (supabaseAdmin as any)
+        .from("credentials")
+        .select("id, title, earner_name, issued_at, credential_lifecycle, status, chain_status, chain_tx_hash, issuer_id, template_id")
+        .in("id", credIds);
+      for (const c of (creds ?? []) as any[]) credMap.set(c.id, c);
+    }
 
-    for (const j of (jobs ?? []) as Record<string, any>[]) {
-      const entity = (j.entity_type ?? "credential") as "template" | "credential";
-      const entityId = j.entity_id ?? j.credential_id;
-      let title = "";
-      let subtitle: string | null = null;
-      let dateLabel: string | null = null;
-      let internalStatus = "";
-      let blockchainStatus = "";
-      let txHash: string | null = null;
-      let issuerId: string | null = null;
-      if (entity === "credential") {
-        const c = credMap.get(entityId);
-        if (!c) continue;
-        title = c.title;
-        subtitle = c.earner_name;
-        dateLabel = c.issued_at;
-        internalStatus = c.credential_lifecycle ?? c.status ?? "issued";
-        blockchainStatus = c.chain_status ?? "not_requested";
-        txHash = c.chain_tx_hash ?? null;
-        issuerId = c.issuer_id ?? null;
-      } else {
-        const t = tplMap.get(entityId);
-        if (!t) continue;
-        title = t.title;
-        subtitle = t.version ? `v${t.version}` : null;
-        dateLabel = t.published_at;
-        internalStatus = t.status === "active" ? "published" : (t.status ?? "draft");
-        blockchainStatus = t.blockchain_status ?? "not_requested";
-        issuerId = t.issuer_id ?? null;
-      }
+    const rows: QueueRow[] = [];
 
+    for (const j of tplJobs) {
+      const t = tplMap.get(j.template_id);
+      if (!t) continue;
+      const issuerId: string | null = t.issuer_id ?? null;
       if (!isAdmin && (!issuerId || !orgIds.includes(issuerId))) continue;
-
       rows.push({
         id: j.id,
-        entity_type: entity,
-        entity_id: entityId,
-        operation: j.operation ?? "anchor_credential",
+        entity_type: "template",
+        entity_id: j.template_id,
+        operation: j.operation ?? "anchor_template",
         status: j.status,
         attempts: j.attempts ?? 0,
         last_error: j.last_error ?? null,
         last_attempt_at: j.last_attempt_at ?? null,
         next_attempt_at: j.next_attempt_at ?? null,
-        transaction_hash: j.transaction_hash ?? txHash,
+        transaction_hash: j.transaction_hash ?? null,
         created_at: j.created_at,
-        title,
-        subtitle,
-        dateLabel,
-        internalStatus,
-        blockchainStatus,
-        blockchainTxHash: txHash,
+        title: t.title,
+        subtitle: j.template_version ? `v${j.template_version}` : (t.version ? `v${t.version}` : null),
+        dateLabel: t.published_at,
+        internalStatus: t.status === "active" ? "published" : (t.status ?? "draft"),
+        blockchainStatus: t.blockchain_status ?? "not_requested",
+        blockchainTxHash: null,
         issuerId,
       });
     }
 
+    for (const j of credJobs) {
+      const c = credMap.get(j.credential_id);
+      if (!c) continue;
+      const issuerId: string | null = c.issuer_id ?? null;
+      if (!isAdmin && (!issuerId || !orgIds.includes(issuerId))) continue;
+      // Compute "template blocked" hint for the UI
+      let lastError = j.last_error ?? null;
+      if (!lastError && c.template_id) {
+        const tplRow = tplMap.get(c.template_id);
+        if (tplRow && tplRow.blockchain_status !== "confirmed" && (j.status === "queued" || j.status === "failed")) {
+          lastError = "Waiting for template to be anchored on blockchain.";
+        }
+      }
+      rows.push({
+        id: j.id,
+        entity_type: "credential",
+        entity_id: j.credential_id,
+        operation: j.operation ?? "anchor_credential",
+        status: j.status,
+        attempts: j.attempts ?? 0,
+        last_error: lastError,
+        last_attempt_at: j.last_attempt_at ?? null,
+        next_attempt_at: j.next_attempt_at ?? null,
+        transaction_hash: j.transaction_hash ?? c.chain_tx_hash ?? null,
+        created_at: j.created_at,
+        title: c.title,
+        subtitle: c.earner_name,
+        dateLabel: c.issued_at,
+        internalStatus: c.credential_lifecycle ?? c.status ?? "issued",
+        blockchainStatus: c.chain_status ?? "not_requested",
+        blockchainTxHash: c.chain_tx_hash ?? null,
+        issuerId,
+      });
+    }
+
+    rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
     return { rows, maxAttempts: MAX_ATTEMPTS };
   });
 
@@ -971,55 +1050,72 @@ async function assertJobAccess(supabase: any, userId: string, job: any): Promise
 
 export const retryAnchorJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { jobId: string }) => d)
+  .inputValidator((d: { jobId: string; entityKind: "template" | "credential" }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const table = data.entityKind === "template" ? "template_anchor_jobs" : "credential_anchor_jobs";
     const { data: job } = await (supabaseAdmin as any)
-      .from("chain_anchor_jobs")
+      .from(table)
       .select("*")
       .eq("id", data.jobId)
       .maybeSingle();
     if (!job) throw new Error("Job not found");
-    await assertJobAccess(supabase as never, userId, job);
     const j = job as Record<string, any>;
+    const entityId = data.entityKind === "template" ? j.template_id : j.credential_id;
+    await assertJobAccess(supabase as never, userId, { entity_type: data.entityKind, entity_id: entityId });
     if (j.status === "done") throw new Error("Job already completed");
     if (j.status === "cancelled") throw new Error("Job is cancelled");
     if ((j.attempts ?? 0) >= MAX_ATTEMPTS) throw new Error("Maximum retry attempts reached");
 
-    const entity = (j.entity_type ?? "credential") as "template" | "credential";
-    const entityId = j.entity_id ?? j.credential_id;
+    // For credential jobs, refuse to run if the template is not anchored.
+    if (data.entityKind === "credential") {
+      const { data: cred } = await supabaseAdmin
+        .from("credentials")
+        .select("template_id")
+        .eq("id", entityId)
+        .maybeSingle();
+      const tplCheck = await isTemplateAnchored(supabaseAdmin, (cred as any)?.template_id);
+      if (!tplCheck.anchored) {
+        const nowIso = new Date().toISOString();
+        await (supabaseAdmin as any)
+          .from(table)
+          .update({
+            status: "failed",
+            attempts: (j.attempts ?? 0) + 1,
+            last_error: tplCheck.reason,
+            last_attempt_at: nowIso,
+            next_attempt_at: new Date(Date.now() + 2 * 60_000).toISOString(),
+          } as never)
+          .eq("id", data.jobId);
+        throw new Error(tplCheck.reason ?? "Template not yet anchored");
+      }
+    }
 
-    // Re-queue (cron will pick it up) and also kick off immediately.
+    // Re-queue and kick off immediately.
     await (supabaseAdmin as any)
-      .from("chain_anchor_jobs")
+      .from(table)
       .update({ status: "queued", last_error: null } as never)
       .eq("id", data.jobId);
 
-    let res;
-    if (entity === "credential") {
+    let res: { ok: boolean; error?: string; txHash?: string };
+    if (data.entityKind === "credential") {
       const { processCredentialAnchor } = await import("./worker.server");
       res = await processCredentialAnchor(entityId);
     } else {
-      const { data: rec } = await supabaseAdmin
-        .from("template_blockchain_records")
-        .select("template_version")
-        .eq("template_id", entityId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const version = (rec as any)?.template_version ?? "1.0";
+      const version = j.template_version ?? "1.0";
       const { processTemplateAnchor } = await import("./worker.server");
       res = await processTemplateAnchor(entityId, version);
     }
 
-    await supabaseAdmin
-      .from("chain_anchor_jobs")
+    await (supabaseAdmin as any)
+      .from(table)
       .update({
         status: res.ok ? "done" : "failed",
         attempts: (j.attempts ?? 0) + 1,
         last_error: res.ok ? null : (res.error ?? "unknown error"),
         last_attempt_at: new Date().toISOString(),
+        transaction_hash: res.txHash ?? j.transaction_hash ?? null,
       } as never)
       .eq("id", data.jobId);
 
