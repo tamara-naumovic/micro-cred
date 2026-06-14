@@ -152,7 +152,8 @@ export const enqueueAnchor = createServerFn({ method: "POST" })
     }
 
     // Insert a queue row. Unique partial index makes this idempotent for active jobs.
-    const { error: jobErr } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: jobErr } = await supabaseAdmin
       .from("chain_anchor_jobs")
       .insert({ credential_id: data.credentialId, status: "queued" } as never);
     // Duplicate-key error is fine — a job is already pending.
