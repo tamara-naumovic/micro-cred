@@ -24,7 +24,6 @@ import { Route as IssuerSettingsRouteImport } from './routes/issuer.settings'
 import { Route as IssuerRevocationsRouteImport } from './routes/issuer.revocations'
 import { Route as IssuerRequestsRouteImport } from './routes/issuer.requests'
 import { Route as IssuerProfileRouteImport } from './routes/issuer.profile'
-import { Route as IssuerEbsiRouteImport } from './routes/issuer.ebsi'
 import { Route as IssuerEarnersRouteImport } from './routes/issuer.earners'
 import { Route as IssuerCredentialsRouteImport } from './routes/issuer.credentials'
 import { Route as EarnerSettingsRouteImport } from './routes/earner.settings'
@@ -121,11 +120,6 @@ const IssuerRequestsRoute = IssuerRequestsRouteImport.update({
 const IssuerProfileRoute = IssuerProfileRouteImport.update({
   id: '/issuer/profile',
   path: '/issuer/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerEbsiRoute = IssuerEbsiRouteImport.update({
-  id: '/issuer/ebsi',
-  path: '/issuer/ebsi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IssuerEarnersRoute = IssuerEarnersRouteImport.update({
@@ -261,7 +255,6 @@ export interface FileRoutesByFullPath {
   '/earner/settings': typeof EarnerSettingsRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
-  '/issuer/ebsi': typeof IssuerEbsiRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
   '/issuer/revocations': typeof IssuerRevocationsRoute
@@ -301,7 +294,6 @@ export interface FileRoutesByTo {
   '/earner/settings': typeof EarnerSettingsRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
-  '/issuer/ebsi': typeof IssuerEbsiRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
   '/issuer/revocations': typeof IssuerRevocationsRoute
@@ -342,7 +334,6 @@ export interface FileRoutesById {
   '/earner/settings': typeof EarnerSettingsRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
-  '/issuer/ebsi': typeof IssuerEbsiRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
   '/issuer/revocations': typeof IssuerRevocationsRoute
@@ -384,7 +375,6 @@ export interface FileRouteTypes {
     | '/earner/settings'
     | '/issuer/credentials'
     | '/issuer/earners'
-    | '/issuer/ebsi'
     | '/issuer/profile'
     | '/issuer/requests'
     | '/issuer/revocations'
@@ -424,7 +414,6 @@ export interface FileRouteTypes {
     | '/earner/settings'
     | '/issuer/credentials'
     | '/issuer/earners'
-    | '/issuer/ebsi'
     | '/issuer/profile'
     | '/issuer/requests'
     | '/issuer/revocations'
@@ -464,7 +453,6 @@ export interface FileRouteTypes {
     | '/earner/settings'
     | '/issuer/credentials'
     | '/issuer/earners'
-    | '/issuer/ebsi'
     | '/issuer/profile'
     | '/issuer/requests'
     | '/issuer/revocations'
@@ -505,7 +493,6 @@ export interface RootRouteChildren {
   EarnerSettingsRoute: typeof EarnerSettingsRoute
   IssuerCredentialsRoute: typeof IssuerCredentialsRoute
   IssuerEarnersRoute: typeof IssuerEarnersRoute
-  IssuerEbsiRoute: typeof IssuerEbsiRoute
   IssuerProfileRoute: typeof IssuerProfileRoute
   IssuerRequestsRoute: typeof IssuerRequestsRoute
   IssuerRevocationsRoute: typeof IssuerRevocationsRoute
@@ -633,13 +620,6 @@ declare module '@tanstack/react-router' {
       path: '/issuer/profile'
       fullPath: '/issuer/profile'
       preLoaderRoute: typeof IssuerProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/ebsi': {
-      id: '/issuer/ebsi'
-      path: '/issuer/ebsi'
-      fullPath: '/issuer/ebsi'
-      preLoaderRoute: typeof IssuerEbsiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/issuer/earners': {
@@ -817,7 +797,6 @@ const rootRouteChildren: RootRouteChildren = {
   EarnerSettingsRoute: EarnerSettingsRoute,
   IssuerCredentialsRoute: IssuerCredentialsRoute,
   IssuerEarnersRoute: IssuerEarnersRoute,
-  IssuerEbsiRoute: IssuerEbsiRoute,
   IssuerProfileRoute: IssuerProfileRoute,
   IssuerRequestsRoute: IssuerRequestsRoute,
   IssuerRevocationsRoute: IssuerRevocationsRoute,
@@ -845,13 +824,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
