@@ -85,15 +85,10 @@ function Revocations() {
                         <DialogHeader><DialogTitle>Revoke {c.id}</DialogTitle></DialogHeader>
                         <Input placeholder="Reason for revocation" value={reason} onChange={(e) => setReason(e.target.value)} />
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setTarget(null)}>Cancel</Button>
-                          <Button
-                            onClick={() => {
-                              if (!reason.trim()) return toast.error("Provide a reason");
-                              revokeCredential(c.id, reason);
-                              toast.success("Credential revoked");
-                              setTarget(null); setReason("");
-                            }}
-                          >Confirm revocation</Button>
+                          <Button variant="outline" onClick={() => setTarget(null)} disabled={pending}>Cancel</Button>
+                          <Button onClick={() => handleRevoke(c.id)} disabled={pending}>
+                            {pending ? "Revoking…" : "Confirm revocation"}
+                          </Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
