@@ -91,3 +91,21 @@ function List() {
     </PageShell>
   );
 }
+
+function mapChainStatus(s: string | null | undefined): BlockchainStatus {
+  switch (s) {
+    case "queued":
+    case "submitting":
+    case "submitted":
+    case "confirmed":
+    case "failed":
+    case "cancelled":
+      return s;
+    case "pending":
+      return "queued";
+    case "disabled":
+      return "not_requested";
+    default:
+      return "not_requested";
+  }
+}
