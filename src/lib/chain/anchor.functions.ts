@@ -269,7 +269,7 @@ export const getChainAvailabilityFn = createServerFn({ method: "GET" }).handler(
 });
 
 async function assertIssuerForTemplate(
-  supabase: { from: (t: string) => any },
+  supabase: any,
   userId: string,
   templateId: string,
 ): Promise<{ issuerId: string; issuerName: string }> {
