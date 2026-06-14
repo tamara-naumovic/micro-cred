@@ -22,7 +22,10 @@ export function canonicalJson(value: unknown): string {
 
 export async function sha256Hex(input: string | Uint8Array): Promise<string> {
   const data = typeof input === "string" ? new TextEncoder().encode(input) : input;
-  const digest = await crypto.subtle.digest("SHA-256", data);
+  // Copy into a fresh ArrayBuffer-backed view so the TS lib type matches BufferSource exactly.
+  const buf = new Uint8Array(data.byteLength);
+  buf.set(data);
+  const digest = await crypto.subtle.digest("SHA-256", buf.buffer);
   return bytesToHex(new Uint8Array(digest));
 }
 

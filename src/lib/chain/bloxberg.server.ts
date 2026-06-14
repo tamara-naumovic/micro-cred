@@ -67,7 +67,11 @@ export async function submitAnchor(record: AnchorRecord): Promise<AnchorResult> 
   const ethers = await import("ethers");
   const provider = new ethers.JsonRpcProvider(env.rpcUrl);
   const wallet = new ethers.Wallet(env.privateKey, provider);
-  const contract = new ethers.Contract(env.contractAddress, env.abi as ethers.InterfaceAbi, wallet);
+  const contract = new ethers.Contract(
+    env.contractAddress,
+    env.abi as ConstructorParameters<typeof ethers.Contract>[1],
+    wallet,
+  );
 
   const fn = contract.getFunction(env.functionName);
   const tx = await fn(
