@@ -1,8 +1,10 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CalendarIcon, Upload } from "lucide-react";
+import { CalendarIcon, Upload, AlertTriangle } from "lucide-react";
+import { publishTemplateAndAnchor, getChainAvailabilityFn } from "@/lib/chain/anchor.functions";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -99,6 +101,13 @@ function Form() {
   const [stackabilityType, setStackabilityType] = useState<StackabilityType | "">("");
 
   const [submitting, setSubmitting] = useState(false);
+  const [anchorMode, setAnchorMode] = useState<"now" | "later">("later");
+  const [chainStatus, setChainStatus] = useState<string>("ok");
+  const publishFn = useServerFn(publishTemplateAndAnchor);
+  const availFn = useServerFn(getChainAvailabilityFn);
+  useEffect(() => {
+    availFn().then((r: any) => setChainStatus(r?.status ?? "ok")).catch(() => setChainStatus("rpc_unavailable"));
+  }, [availFn]);
 
   if (!activeUser) return null;
   const issuerOrg = organizations.find((o) => o.id === activeUser.organizationId);
@@ -106,7 +115,7 @@ function Form() {
     (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === activeUser.organizationId,
   );
 
-  const submit = async (status: "draft" | "active") => {
+  const submit = async (status: "draft" | "publish") => {
     if (!activeUser.organizationId) {
       toast.error("Your account is not linked to an issuer organisation");
       return;
@@ -171,9 +180,10 @@ function Form() {
         stackabilityType: stackabilityType || undefined,
         expiryMode,
         expiryDate: expiryMode === "fixed_date" && expiryDate ? expiryDate.toISOString() : undefined,
-        status,
+        status: status === "publish" ? "draft" : status,
         version: "1.0",
       };
+      // Save row first (as draft); the server fn will flip to published and create the version snapshot.
       upsertTemplate(tpl);
       if (assignedStaff.length > 0) {
         try {
@@ -182,7 +192,22 @@ function Form() {
           toast.error(e?.message ?? "Failed to assign staff");
         }
       }
-      toast.success(`Micro-credential ${status === "draft" ? "saved as draft" : "published"}`);
+      if (status === "publish") {
+        // Small delay so the upsert (fire-and-forget) lands before we publish on the server.
+        await new Promise((r) => setTimeout(r, 400));
+        try {
+          const res: any = await publishFn({ data: { templateId: id, anchorMode } });
+          toast.success(
+            res?.mode === "now"
+              ? "Published and anchored on Bloxberg"
+              : "Published · Blockchain anchoring queued",
+          );
+        } catch (e: any) {
+          toast.error(`Published, but anchoring failed: ${e?.message ?? "unknown error"}`);
+        }
+      } else {
+        toast.success("Micro-credential saved as draft");
+      }
       navigate({ to: "/issuer/microcredential-templates" });
     } finally {
       setSubmitting(false);
@@ -364,9 +389,41 @@ function Form() {
               )}
             </div>
           </div>
+
+          <div className="rounded-md border p-4 space-y-3">
+            <div>
+              <Label>Blockchain registration</Label>
+              <p className="text-xs text-muted-foreground">
+                Choose when to anchor the template's cryptographic proof on Bloxberg. Publishing happens immediately either way.
+              </p>
+            </div>
+            <RadioGroup value={anchorMode} onValueChange={(v) => setAnchorMode(v as "now" | "later")} className="space-y-2">
+              <div className="flex items-start gap-2">
+                <RadioGroupItem value="now" id="anchor-now" disabled={chainStatus !== "ok"} />
+                <Label htmlFor="anchor-now" className="font-normal">
+                  Publish and anchor now
+                  <span className="block text-xs text-muted-foreground">Submit the proof transaction to Bloxberg immediately.</span>
+                </Label>
+              </div>
+              <div className="flex items-start gap-2">
+                <RadioGroupItem value="later" id="anchor-later" />
+                <Label htmlFor="anchor-later" className="font-normal">
+                  Publish now, anchor later
+                  <span className="block text-xs text-muted-foreground">The template is published immediately and queued for anchoring.</span>
+                </Label>
+              </div>
+            </RadioGroup>
+            {chainStatus !== "ok" && (
+              <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-2 text-xs">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5" />
+                <span>Bloxberg integration is not currently available. The template will still publish and can be anchored later.</span>
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" disabled={submitting} onClick={() => submit("draft")}>Save as draft</Button>
-            <Button disabled={submitting} onClick={() => submit("active")}>Publish micro-credential</Button>
+            <Button disabled={submitting} onClick={() => submit("publish")}>Publish micro-credential</Button>
           </div>
         </CardContent>
       </Card>

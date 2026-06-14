@@ -87,7 +87,7 @@ function Overview() {
 
       <div className="mt-6 flex items-center gap-2 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
         <ShieldCheck className="h-4 w-4 text-primary" />
-        EBSI anchoring is not yet active in this prototype — see <Link to="/issuer/ebsi" className="ml-1 underline">EBSI Integration</Link>.
+        Bloxberg blockchain anchoring runs independently of credential issuance. Published templates and issued credentials are anchored separately.
       </div>
     </PageShell>
   );

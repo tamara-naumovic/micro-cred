@@ -11,7 +11,7 @@ import {
   FileCheck2,
   FilePlus2,
   GraduationCap,
-  Hexagon,
+  
   History,
   Inbox,
   LayoutDashboard,
@@ -105,7 +105,7 @@ const ISSUER_ADMIN_NAV: NavGroups = [
     group: "Network",
     items: [
       { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck },
-      { to: "/issuer/ebsi", label: "EBSI Integration", icon: Hexagon },
+      
       { to: "/issuer/settings", label: "Settings", icon: Settings },
     ],
   },
