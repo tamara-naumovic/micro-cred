@@ -792,3 +792,231 @@ export const revealLearnerSecret = createServerFn({ method: "POST" })
     if (!cred || cred.earner_id !== userId) throw new Error("Forbidden");
     return { secret: (cred.learner_secret as string) ?? null };
   });
+
+// ============================================================================
+// Phase 5: Anchoring Queue listing + retry
+// ============================================================================
+
+const MAX_ATTEMPTS = 5;
+
+interface QueueRow {
+  id: string;
+  entity_type: "template" | "credential";
+  entity_id: string;
+  operation: string;
+  status: string;
+  attempts: number;
+  last_error: string | null;
+  last_attempt_at: string | null;
+  next_attempt_at: string | null;
+  transaction_hash: string | null;
+  created_at: string;
+  // enriched
+  title: string;
+  subtitle: string | null;
+  dateLabel: string | null;
+  internalStatus: string;
+  blockchainStatus: string;
+  blockchainTxHash: string | null;
+  issuerId: string | null;
+}
+
+async function isUserIssuerAdminOrPlatformAdmin(
+  supabase: any,
+  userId: string,
+): Promise<{ isAdmin: boolean; orgIds: string[] }> {
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: userId });
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("organization_id, role")
+    .eq("user_id", userId)
+    .eq("role", "issuer_admin");
+  const orgIds = ((roles ?? []) as { organization_id: string | null }[])
+    .map((r) => r.organization_id)
+    .filter((x): x is string => !!x);
+  return { isAdmin: !!isAdmin, orgIds };
+}
+
+export const listAnchorJobs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { isAdmin, orgIds } = await isUserIssuerAdminOrPlatformAdmin(supabase as never, userId);
+
+    const { data: jobs, error } = await (supabase as any)
+      .from("chain_anchor_jobs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+
+    const rows: QueueRow[] = [];
+    const credIds = new Set<string>();
+    const tplIds = new Set<string>();
+    for (const j of (jobs ?? []) as Record<string, any>[]) {
+      const entity = (j.entity_type ?? "credential") as "template" | "credential";
+      if (entity === "credential") credIds.add(j.entity_id ?? j.credential_id);
+      else tplIds.add(j.entity_id);
+    }
+
+    const credMap = new Map<string, any>();
+    const tplMap = new Map<string, any>();
+    if (credIds.size) {
+      const { data: creds } = await (supabase as any)
+        .from("credentials")
+        .select("id, title, earner_name, issued_at, credential_lifecycle, status, chain_status, chain_tx_hash, issuer_id")
+        .in("id", Array.from(credIds));
+      for (const c of (creds ?? []) as any[]) credMap.set(c.id, c);
+    }
+    if (tplIds.size) {
+      const { data: tpls } = await (supabase as any)
+        .from("templates")
+        .select("id, title, version, published_at, status, blockchain_status, issuer_id")
+        .in("id", Array.from(tplIds));
+      for (const t of (tpls ?? []) as any[]) tplMap.set(t.id, t);
+    }
+
+    for (const j of (jobs ?? []) as Record<string, any>[]) {
+      const entity = (j.entity_type ?? "credential") as "template" | "credential";
+      const entityId = j.entity_id ?? j.credential_id;
+      let title = "";
+      let subtitle: string | null = null;
+      let dateLabel: string | null = null;
+      let internalStatus = "";
+      let blockchainStatus = "";
+      let txHash: string | null = null;
+      let issuerId: string | null = null;
+      if (entity === "credential") {
+        const c = credMap.get(entityId);
+        if (!c) continue;
+        title = c.title;
+        subtitle = c.earner_name;
+        dateLabel = c.issued_at;
+        internalStatus = c.credential_lifecycle ?? c.status ?? "issued";
+        blockchainStatus = c.chain_status ?? "not_requested";
+        txHash = c.chain_tx_hash ?? null;
+        issuerId = c.issuer_id ?? null;
+      } else {
+        const t = tplMap.get(entityId);
+        if (!t) continue;
+        title = t.title;
+        subtitle = t.version ? `v${t.version}` : null;
+        dateLabel = t.published_at;
+        internalStatus = t.status === "active" ? "published" : (t.status ?? "draft");
+        blockchainStatus = t.blockchain_status ?? "not_requested";
+        issuerId = t.issuer_id ?? null;
+      }
+
+      if (!isAdmin && (!issuerId || !orgIds.includes(issuerId))) continue;
+
+      rows.push({
+        id: j.id,
+        entity_type: entity,
+        entity_id: entityId,
+        operation: j.operation ?? "anchor_credential",
+        status: j.status,
+        attempts: j.attempts ?? 0,
+        last_error: j.last_error ?? null,
+        last_attempt_at: j.last_attempt_at ?? null,
+        next_attempt_at: j.next_attempt_at ?? null,
+        transaction_hash: j.transaction_hash ?? txHash,
+        created_at: j.created_at,
+        title,
+        subtitle,
+        dateLabel,
+        internalStatus,
+        blockchainStatus,
+        blockchainTxHash: txHash,
+        issuerId,
+      });
+    }
+
+    return { rows, maxAttempts: MAX_ATTEMPTS };
+  });
+
+async function assertJobAccess(supabase: any, userId: string, job: any): Promise<void> {
+  const entity = (job.entity_type ?? "credential") as "template" | "credential";
+  const entityId = job.entity_id ?? job.credential_id;
+  let issuerId: string | null = null;
+  if (entity === "credential") {
+    const { data } = await supabase
+      .from("credentials")
+      .select("issuer_id")
+      .eq("id", entityId)
+      .maybeSingle();
+    issuerId = data?.issuer_id ?? null;
+  } else {
+    const { data } = await supabase
+      .from("templates")
+      .select("issuer_id")
+      .eq("id", entityId)
+      .maybeSingle();
+    issuerId = data?.issuer_id ?? null;
+  }
+  if (!issuerId) throw new Error("Entity not found");
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: userId });
+  const { data: isOrgAdmin } = await supabase.rpc("has_role_in_org", {
+    _user_id: userId,
+    _role: "issuer_admin",
+    _org_id: issuerId,
+  });
+  if (!isAdmin && !isOrgAdmin) throw new Error("Forbidden");
+}
+
+export const retryAnchorJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { jobId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: job } = await (supabase as any)
+      .from("chain_anchor_jobs")
+      .select("*")
+      .eq("id", data.jobId)
+      .maybeSingle();
+    if (!job) throw new Error("Job not found");
+    await assertJobAccess(supabase as never, userId, job);
+    const j = job as Record<string, any>;
+    if (j.status === "done") throw new Error("Job already completed");
+    if (j.status === "cancelled") throw new Error("Job is cancelled");
+    if ((j.attempts ?? 0) >= MAX_ATTEMPTS) throw new Error("Maximum retry attempts reached");
+
+    const entity = (j.entity_type ?? "credential") as "template" | "credential";
+    const entityId = j.entity_id ?? j.credential_id;
+
+    // Re-queue (cron will pick it up) and also kick off immediately.
+    await (supabase as any)
+      .from("chain_anchor_jobs")
+      .update({ status: "queued", last_error: null } as never)
+      .eq("id", data.jobId);
+
+    let res;
+    if (entity === "credential") {
+      const { processCredentialAnchor } = await import("./worker.server");
+      res = await processCredentialAnchor(entityId);
+    } else {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: rec } = await supabaseAdmin
+        .from("template_blockchain_records")
+        .select("template_version")
+        .eq("template_id", entityId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const version = (rec as any)?.template_version ?? "1.0";
+      const { processTemplateAnchor } = await import("./worker.server");
+      res = await processTemplateAnchor(entityId, version);
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("chain_anchor_jobs")
+      .update({
+        status: res.ok ? "done" : "failed",
+        attempts: (j.attempts ?? 0) + 1,
+        last_error: res.ok ? null : (res.error ?? "unknown error"),
+        last_attempt_at: new Date().toISOString(),
+      } as never)
+      .eq("id", data.jobId);
+
+    return { ok: res.ok, error: res.error };
+  });
