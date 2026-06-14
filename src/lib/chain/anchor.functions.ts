@@ -152,7 +152,8 @@ export const enqueueAnchor = createServerFn({ method: "POST" })
     }
 
     // Insert a queue row. Unique partial index makes this idempotent for active jobs.
-    const { error: jobErr } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: jobErr } = await supabaseAdmin
       .from("chain_anchor_jobs")
       .insert({ credential_id: data.credentialId, status: "queued" } as never);
     // Duplicate-key error is fine — a job is already pending.
@@ -356,9 +357,14 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
     const templateRef = templateRefKeccak(t.id, version, documentHash);
     const publishedAt = new Date().toISOString();
 
+    // Writes below go through the admin client because template_versions,
+    // template_blockchain_records, and chain_anchor_jobs are RLS-locked
+    // (read-only for authenticated). Authorization was enforced above.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     // Insert immutable version snapshot (idempotent on conflict)
-    const { error: vErr } = await supabase
-      .from("template_versions" as never)
+    const { error: vErr } = await supabaseAdmin
+      .from("template_versions")
       .insert({
         template_id: t.id,
         version,
@@ -372,7 +378,7 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
     if (vErr && !/duplicate/i.test(vErr.message)) throw new Error(vErr.message);
 
     // Update template row to PUBLISHED + snapshot fields
-    await supabase
+    await supabaseAdmin
       .from("templates")
       .update({
         status: "active",
@@ -387,18 +393,12 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
       } as never)
       .eq("id", t.id);
 
-    // Ensure a blockchain_records row exists for this version
-    const { data: avail } = await supabase.rpc("__noop_avail" as never, {} as never).then(
-      () => ({ data: null }),
-      () => ({ data: null }),
-    );
-    void avail;
     const { isChainConfigured: chainCfg } = await import("./bloxberg.server");
     const contractAddress =
       process.env.TEMPLATE_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
 
-    const { error: bErr } = await supabase
-      .from("template_blockchain_records" as never)
+    const { error: bErr } = await supabaseAdmin
+      .from("template_blockchain_records")
       .insert({
         template_id: t.id,
         template_version: version,
@@ -413,20 +413,20 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
 
     // Queue or anchor
     if (data.anchorMode === "later" || !chainCfg()) {
-      await supabase
-        .from("chain_anchor_jobs" as never)
+      await supabaseAdmin
+        .from("chain_anchor_jobs")
         .insert({
           entity_type: "template",
           entity_id: t.id,
           operation: "anchor_template",
           status: "queued",
         } as never);
-      await supabase
-        .from("template_blockchain_records" as never)
+      await supabaseAdmin
+        .from("template_blockchain_records")
         .update({ blockchain_status: "queued" } as never)
         .eq("template_id", t.id)
         .eq("template_version", version);
-      await supabase
+      await supabaseAdmin
         .from("templates")
         .update({ blockchain_status: "queued" } as never)
         .eq("id", t.id);
@@ -495,6 +495,7 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
     const { isChainConfigured: chainCfg } = await import("./bloxberg.server");
     const canAnchorNow = chainCfg();
     const effectiveMode: "now" | "later" = data.anchorMode === "now" && canAnchorNow ? "now" : "later";
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const results: {
       recipientId: string;
@@ -580,8 +581,8 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
         // Blockchain record
         const contractAddress =
           process.env.CREDENTIAL_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
-        await supabase
-          .from("credential_blockchain_records" as never)
+        await supabaseAdmin
+          .from("credential_blockchain_records")
           .insert({
             credential_id: credentialId,
             network: "bloxberg",
@@ -592,8 +593,8 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
           } as never);
 
         if (effectiveMode === "later") {
-          await supabase
-            .from("chain_anchor_jobs" as never)
+          await supabaseAdmin
+            .from("chain_anchor_jobs")
             .insert({
               entity_type: "credential",
               entity_id: credentialId,
@@ -605,8 +606,8 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             .from("credentials")
             .update({ chain_status: "queued" } as never)
             .eq("id", credentialId);
-          await supabase
-            .from("credential_blockchain_records" as never)
+          await supabaseAdmin
+            .from("credential_blockchain_records")
             .update({ blockchain_status: "queued" } as never)
             .eq("credential_id", credentialId);
           results.push({ recipientId: r.earnerId, credentialId, credentialStatus: "issued", blockchainStatus: "queued" });
@@ -678,19 +679,21 @@ export const cancelAnchorJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { jobId: string }) => d)
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: job } = await supabase
-      .from("chain_anchor_jobs" as never)
+    const { supabase, userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: job } = await supabaseAdmin
+      .from("chain_anchor_jobs")
       .select("*")
       .eq("id", data.jobId)
       .maybeSingle();
     if (!job) throw new Error("Job not found");
+    await assertJobAccess(supabase as never, userId, job);
     const j = job as Record<string, any>;
     if (j.status === "done" || j.status === "running") {
       throw new Error("Job is no longer cancellable");
     }
-    await supabase
-      .from("chain_anchor_jobs" as never)
+    await supabaseAdmin
+      .from("chain_anchor_jobs")
       .update({ status: "cancelled" } as never)
       .eq("id", data.jobId);
     if (j.entity_type === "credential") {
@@ -698,17 +701,17 @@ export const cancelAnchorJob = createServerFn({ method: "POST" })
         .from("credentials")
         .update({ chain_status: "cancelled" } as never)
         .eq("id", j.entity_id);
-      await supabase
-        .from("credential_blockchain_records" as never)
+      await supabaseAdmin
+        .from("credential_blockchain_records")
         .update({ blockchain_status: "cancelled" } as never)
         .eq("credential_id", j.entity_id);
     } else {
-      await supabase
+      await supabaseAdmin
         .from("templates")
         .update({ blockchain_status: "cancelled" } as never)
         .eq("id", j.entity_id);
-      await supabase
-        .from("template_blockchain_records" as never)
+      await supabaseAdmin
+        .from("template_blockchain_records")
         .update({ blockchain_status: "cancelled" } as never)
         .eq("template_id", j.entity_id);
     }
@@ -747,9 +750,11 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
       } as never)
       .eq("id", data.credentialId);
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     if (alreadyConfirmed) {
-      await supabase
-        .from("chain_anchor_jobs" as never)
+      await supabaseAdmin
+        .from("chain_anchor_jobs")
         .insert({
           entity_type: "credential",
           entity_id: data.credentialId,
@@ -761,8 +766,8 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
     }
 
     // Cancel any pending issuance anchor jobs
-    await supabase
-      .from("chain_anchor_jobs" as never)
+    await supabaseAdmin
+      .from("chain_anchor_jobs")
       .update({ status: "cancelled" } as never)
       .eq("entity_id", data.credentialId)
       .eq("operation", "anchor_credential")
@@ -771,8 +776,8 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
       .from("credentials")
       .update({ chain_status: "cancelled" } as never)
       .eq("id", data.credentialId);
-    await supabase
-      .from("credential_blockchain_records" as never)
+    await supabaseAdmin
+      .from("credential_blockchain_records")
       .update({ blockchain_status: "cancelled" } as never)
       .eq("credential_id", data.credentialId);
     return { ok: true, mode: "cancelled" };
@@ -842,8 +847,9 @@ export const listAnchorJobs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const { isAdmin, orgIds } = await isUserIssuerAdminOrPlatformAdmin(supabase as never, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: jobs, error } = await (supabase as any)
+    const { data: jobs, error } = await (supabaseAdmin as any)
       .from("chain_anchor_jobs")
       .select("*")
       .order("created_at", { ascending: false })
@@ -968,7 +974,8 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
   .inputValidator((d: { jobId: string }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: job } = await (supabase as any)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: job } = await (supabaseAdmin as any)
       .from("chain_anchor_jobs")
       .select("*")
       .eq("id", data.jobId)
@@ -984,7 +991,7 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
     const entityId = j.entity_id ?? j.credential_id;
 
     // Re-queue (cron will pick it up) and also kick off immediately.
-    await (supabase as any)
+    await (supabaseAdmin as any)
       .from("chain_anchor_jobs")
       .update({ status: "queued", last_error: null } as never)
       .eq("id", data.jobId);
@@ -994,7 +1001,6 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
       const { processCredentialAnchor } = await import("./worker.server");
       res = await processCredentialAnchor(entityId);
     } else {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: rec } = await supabaseAdmin
         .from("template_blockchain_records")
         .select("template_version")
@@ -1007,7 +1013,6 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
       res = await processTemplateAnchor(entityId, version);
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin
       .from("chain_anchor_jobs")
       .update({
