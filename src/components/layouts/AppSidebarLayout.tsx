@@ -98,6 +98,7 @@ const ISSUER_ADMIN_NAV: NavGroups = [
       { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud },
       { to: "/issuer/credentials", label: "Issued Credentials", icon: Award },
       { to: "/issuer/revocations", label: "Revocations", icon: XOctagon },
+      { to: "/issuer/anchoring-queue", label: "Blockchain Queue", icon: Link2 },
     ],
   },
   {
