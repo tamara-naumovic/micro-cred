@@ -31,6 +31,15 @@ export interface DbCredential {
   ebsi_vc_id: string | null;
   ebsi_tx_hash: string | null;
   revocation_reason: string | null;
+  credential_hash: string | null;
+  learner_commitment: string | null;
+  learner_secret: string | null;
+  template_ref: string | null;
+  chain_status: string | null;
+  chain_tx_hash: string | null;
+  chain_block_number: number | null;
+  chain_issuer_address: string | null;
+  chain_contract_address: string | null;
 }
 
 export async function fetchMyCredential(id: string): Promise<DbCredential | null> {
