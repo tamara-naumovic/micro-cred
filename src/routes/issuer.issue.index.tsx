@@ -1,6 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Send } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -11,6 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStore } from "@/lib/store";
+import { AnchorModeSelector, type AnchorMode } from "@/components/AnchorModeSelector";
+import { IssuanceResultDialog, type IssuanceResultRow } from "@/components/IssuanceResultDialog";
+import { issueCredentialsBatch } from "@/lib/chain/anchor.functions";
 
 export const Route = createFileRoute("/issuer/issue/")({
   head: () => ({ meta: [{ title: "Direct Issuance — MicroCred" }] }),
@@ -24,9 +28,9 @@ export const Route = createFileRoute("/issuer/issue/")({
 type RecipientOverride = { grade: string; expiryDate: string };
 
 function Direct() {
-  const { activeUser, templates, users, templateAssignees, directIssue } = useStore();
-  const navigate = useNavigate();
+  const { activeUser, templates, users, templateAssignees } = useStore();
   const isStaff = activeUser?.subRole === "staff";
+  const issueBatch = useServerFn(issueCredentialsBatch);
   const assignedIds = useMemo(
     () => new Set(templateAssignees.filter((a) => a.userId === activeUser?.id).map((a) => a.templateId)),
     [templateAssignees, activeUser?.id],
@@ -44,6 +48,9 @@ function Direct() {
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [defaultGrade, setDefaultGrade] = useState("");
   const [overrides, setOverrides] = useState<Record<string, RecipientOverride>>({});
+  const [anchorMode, setAnchorMode] = useState<AnchorMode>("later");
+  const [submitting, setSubmitting] = useState(false);
+  const [results, setResults] = useState<IssuanceResultRow[] | null>(null);
 
   const selectedIds = Object.keys(overrides);
 
@@ -60,19 +67,41 @@ function Direct() {
     setOverrides((prev) => ({ ...prev, [id]: { ...prev[id], [key]: value } }));
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!templateId || selectedIds.length === 0) {
       toast.error("Pick a micro-credential and at least one earner");
       return;
     }
-    const recipients = selectedIds.map((id) => ({
-      earnerId: id,
-      grade: overrides[id].grade || defaultGrade || undefined,
-      expiryDate: overrides[id].expiryDate ? new Date(overrides[id].expiryDate).toISOString() : undefined,
-    }));
-    const issued = directIssue(templateId, recipients, new Date(issueDate).toISOString());
-    toast.success(`Issued ${issued.length} credential(s)`);
-    navigate({ to: "/issuer/credentials" });
+    const recipients = selectedIds.map((id) => {
+      const u = earners.find((e) => e.id === id);
+      return {
+        earnerId: id,
+        earnerName: u?.name ?? "Earner",
+        grade: overrides[id].grade || defaultGrade || null,
+        expiresAt: overrides[id].expiryDate ? new Date(overrides[id].expiryDate).toISOString() : null,
+      };
+    });
+    setSubmitting(true);
+    try {
+      const res: any = await issueBatch({
+        data: {
+          templateId,
+          issuedAt: new Date(issueDate).toISOString(),
+          recipients,
+          anchorMode,
+        },
+      });
+      const rows: IssuanceResultRow[] = (res?.results ?? []).map((r: IssuanceResultRow) => ({
+        ...r,
+        recipientName: earners.find((e) => e.id === r.recipientId)?.name,
+      }));
+      setResults(rows);
+      // Realtime subscription on credentials triggers refetch automatically.
+    } catch (e: any) {
+      toast.error(e?.message ?? "Issuance failed");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -174,11 +203,23 @@ function Direct() {
             </div>
           )}
 
+
+          <AnchorModeSelector value={anchorMode} onChange={setAnchorMode} scope="credential" />
+
           <div className="flex justify-end">
-            <Button onClick={submit}><Send className="mr-2 h-4 w-4" />Issue credentials</Button>
+            <Button onClick={submit} disabled={submitting}>
+              {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              Issue credentials
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      <IssuanceResultDialog
+        open={!!results}
+        onOpenChange={(o) => { if (!o) setResults(null); }}
+        results={results ?? []}
+      />
     </PageShell>
   );
 }
