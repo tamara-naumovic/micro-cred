@@ -20,6 +20,7 @@ import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 import { Route as ProfileTokenRouteImport } from './routes/profile.$token'
 import { Route as IssuersIdRouteImport } from './routes/issuers.$id'
 import { Route as IssuerStaffRouteImport } from './routes/issuer.staff'
+import { Route as IssuerSettingsRouteImport } from './routes/issuer.settings'
 import { Route as IssuerRevocationsRouteImport } from './routes/issuer.revocations'
 import { Route as IssuerRequestsRouteImport } from './routes/issuer.requests'
 import { Route as IssuerProfileRouteImport } from './routes/issuer.profile'
@@ -100,6 +101,11 @@ const IssuersIdRoute = IssuersIdRouteImport.update({
 const IssuerStaffRoute = IssuerStaffRouteImport.update({
   id: '/issuer/staff',
   path: '/issuer/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerSettingsRoute = IssuerSettingsRouteImport.update({
+  id: '/issuer/settings',
+  path: '/issuer/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IssuerRevocationsRoute = IssuerRevocationsRouteImport.update({
@@ -259,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
   '/issuer/revocations': typeof IssuerRevocationsRoute
+  '/issuer/settings': typeof IssuerSettingsRoute
   '/issuer/staff': typeof IssuerStaffRoute
   '/issuers/$id': typeof IssuersIdRoute
   '/profile/$token': typeof ProfileTokenRoute
@@ -298,6 +305,7 @@ export interface FileRoutesByTo {
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
   '/issuer/revocations': typeof IssuerRevocationsRoute
+  '/issuer/settings': typeof IssuerSettingsRoute
   '/issuer/staff': typeof IssuerStaffRoute
   '/issuers/$id': typeof IssuersIdRoute
   '/profile/$token': typeof ProfileTokenRoute
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
   '/issuer/revocations': typeof IssuerRevocationsRoute
+  '/issuer/settings': typeof IssuerSettingsRoute
   '/issuer/staff': typeof IssuerStaffRoute
   '/issuers/$id': typeof IssuersIdRoute
   '/profile/$token': typeof ProfileTokenRoute
@@ -379,6 +388,7 @@ export interface FileRouteTypes {
     | '/issuer/profile'
     | '/issuer/requests'
     | '/issuer/revocations'
+    | '/issuer/settings'
     | '/issuer/staff'
     | '/issuers/$id'
     | '/profile/$token'
@@ -418,6 +428,7 @@ export interface FileRouteTypes {
     | '/issuer/profile'
     | '/issuer/requests'
     | '/issuer/revocations'
+    | '/issuer/settings'
     | '/issuer/staff'
     | '/issuers/$id'
     | '/profile/$token'
@@ -457,6 +468,7 @@ export interface FileRouteTypes {
     | '/issuer/profile'
     | '/issuer/requests'
     | '/issuer/revocations'
+    | '/issuer/settings'
     | '/issuer/staff'
     | '/issuers/$id'
     | '/profile/$token'
@@ -497,6 +509,7 @@ export interface RootRouteChildren {
   IssuerProfileRoute: typeof IssuerProfileRoute
   IssuerRequestsRoute: typeof IssuerRequestsRoute
   IssuerRevocationsRoute: typeof IssuerRevocationsRoute
+  IssuerSettingsRoute: typeof IssuerSettingsRoute
   IssuerStaffRoute: typeof IssuerStaffRoute
   IssuersIdRoute: typeof IssuersIdRoute
   ProfileTokenRoute: typeof ProfileTokenRoute
@@ -592,6 +605,13 @@ declare module '@tanstack/react-router' {
       path: '/issuer/staff'
       fullPath: '/issuer/staff'
       preLoaderRoute: typeof IssuerStaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/settings': {
+      id: '/issuer/settings'
+      path: '/issuer/settings'
+      fullPath: '/issuer/settings'
+      preLoaderRoute: typeof IssuerSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/issuer/revocations': {
@@ -801,6 +821,7 @@ const rootRouteChildren: RootRouteChildren = {
   IssuerProfileRoute: IssuerProfileRoute,
   IssuerRequestsRoute: IssuerRequestsRoute,
   IssuerRevocationsRoute: IssuerRevocationsRoute,
+  IssuerSettingsRoute: IssuerSettingsRoute,
   IssuerStaffRoute: IssuerStaffRoute,
   IssuersIdRoute: IssuersIdRoute,
   ProfileTokenRoute: ProfileTokenRoute,
