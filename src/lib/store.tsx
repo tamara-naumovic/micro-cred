@@ -10,6 +10,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { enqueueAnchor } from "@/lib/chain/anchor.functions";
 import {
   LIFECYCLE_STAGES,
   type AppNotification,
@@ -204,8 +205,16 @@ function mapCredential(r: Row): IssuedCredential {
     blockchain: {
       did: (r.ebsi_did as string | null) ?? undefined,
       vcId: (r.ebsi_vc_id as string | null) ?? undefined,
-      txHash: (r.ebsi_tx_hash as string | null) ?? undefined,
+      txHash: (r.chain_tx_hash as string | null) ?? (r.ebsi_tx_hash as string | null) ?? undefined,
       ebsiStatus: (r.ebsi_status as "not_anchored" | "pending" | "anchored") ?? "not_anchored",
+      chainStatus: (r.chain_status as "pending" | "submitted" | "confirmed" | "failed" | "disabled" | null) ?? "pending",
+      blockNumber: (r.chain_block_number as number | null) ?? undefined,
+      issuerAddress: (r.chain_issuer_address as string | null) ?? undefined,
+      contractAddress: (r.chain_contract_address as string | null) ?? undefined,
+      documentHash: (r.credential_hash as string | null) ?? undefined,
+      learnerCommitment: (r.learner_commitment as string | null) ?? undefined,
+      templateRef: (r.template_ref as string | null) ?? undefined,
+      learnerSecret: (r.learner_secret as string | null) ?? undefined,
     },
     revocationReason: (r.revocation_reason as string | null) ?? undefined,
     renewedFromId: (r.renewed_from_id as string | null) ?? undefined,
@@ -588,6 +597,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         actor_name: activeUserRef.current?.name ?? "Issuer",
         action: "Credential issued",
       });
+      // Fire-and-forget blockchain anchoring
+      enqueueAnchor({ data: { credentialId: cred.id as string } }).catch((e) =>
+        console.warn("[chain] enqueueAnchor failed", e),
+      );
       refetchAll();
     })();
     return null;
@@ -652,8 +665,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })
         .filter((x): x is Record<string, unknown> => !!x);
       if (rows.length === 0) return;
-      const { error } = await (supabase.from("credentials") as unknown as { insert: (r: Record<string, unknown>[]) => Promise<{ error: unknown }> }).insert(rows);
+      const { data: inserted, error } = await (supabase.from("credentials") as unknown as {
+        insert: (r: Record<string, unknown>[]) => { select: () => Promise<{ data: { id: string }[] | null; error: unknown }> };
+      }).insert(rows).select();
       if (error) console.error("[store] directIssue", error);
+      for (const c of inserted ?? []) {
+        enqueueAnchor({ data: { credentialId: c.id } }).catch((e) =>
+          console.warn("[chain] enqueueAnchor failed", e),
+        );
+      }
       refetchAll();
     })();
     return [];

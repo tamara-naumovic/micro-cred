@@ -45,6 +45,7 @@ import { Route as IssuerMicrocredentialTemplatesNewRouteImport } from './routes/
 import { Route as IssuerMicrocredentialTemplatesIdRouteImport } from './routes/issuer.microcredential-templates.$id'
 import { Route as IssuerIssueBulkRouteImport } from './routes/issuer.issue.bulk'
 import { Route as EarnerCredentialsIdRouteImport } from './routes/earner.credentials.$id'
+import { Route as ApiPublicHooksProcessChainAnchorsRouteImport } from './routes/api/public/hooks/process-chain-anchors'
 
 const SetPasswordRoute = SetPasswordRouteImport.update({
   id: '/set-password',
@@ -229,6 +230,12 @@ const EarnerCredentialsIdRoute = EarnerCredentialsIdRouteImport.update({
   path: '/earner/credentials/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksProcessChainAnchorsRoute =
+  ApiPublicHooksProcessChainAnchorsRouteImport.update({
+    id: '/api/public/hooks/process-chain-anchors',
+    path: '/api/public/hooks/process-chain-anchors',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -267,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/earner/credentials/': typeof EarnerCredentialsIndexRoute
   '/issuer/issue/': typeof IssuerIssueIndexRoute
   '/issuer/microcredential-templates/': typeof IssuerMicrocredentialTemplatesIndexRoute
+  '/api/public/hooks/process-chain-anchors': typeof ApiPublicHooksProcessChainAnchorsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -305,6 +313,7 @@ export interface FileRoutesByTo {
   '/earner/credentials': typeof EarnerCredentialsIndexRoute
   '/issuer/issue': typeof IssuerIssueIndexRoute
   '/issuer/microcredential-templates': typeof IssuerMicrocredentialTemplatesIndexRoute
+  '/api/public/hooks/process-chain-anchors': typeof ApiPublicHooksProcessChainAnchorsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -344,6 +353,7 @@ export interface FileRoutesById {
   '/earner/credentials/': typeof EarnerCredentialsIndexRoute
   '/issuer/issue/': typeof IssuerIssueIndexRoute
   '/issuer/microcredential-templates/': typeof IssuerMicrocredentialTemplatesIndexRoute
+  '/api/public/hooks/process-chain-anchors': typeof ApiPublicHooksProcessChainAnchorsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
     | '/earner/credentials/'
     | '/issuer/issue/'
     | '/issuer/microcredential-templates/'
+    | '/api/public/hooks/process-chain-anchors'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/earner/credentials'
     | '/issuer/issue'
     | '/issuer/microcredential-templates'
+    | '/api/public/hooks/process-chain-anchors'
   id:
     | '__root__'
     | '/'
@@ -460,6 +472,7 @@ export interface FileRouteTypes {
     | '/earner/credentials/'
     | '/issuer/issue/'
     | '/issuer/microcredential-templates/'
+    | '/api/public/hooks/process-chain-anchors'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -499,6 +512,7 @@ export interface RootRouteChildren {
   EarnerCredentialsIndexRoute: typeof EarnerCredentialsIndexRoute
   IssuerIssueIndexRoute: typeof IssuerIssueIndexRoute
   IssuerMicrocredentialTemplatesIndexRoute: typeof IssuerMicrocredentialTemplatesIndexRoute
+  ApiPublicHooksProcessChainAnchorsRoute: typeof ApiPublicHooksProcessChainAnchorsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -755,6 +769,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EarnerCredentialsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/process-chain-anchors': {
+      id: '/api/public/hooks/process-chain-anchors'
+      path: '/api/public/hooks/process-chain-anchors'
+      fullPath: '/api/public/hooks/process-chain-anchors'
+      preLoaderRoute: typeof ApiPublicHooksProcessChainAnchorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -797,17 +818,9 @@ const rootRouteChildren: RootRouteChildren = {
   IssuerIssueIndexRoute: IssuerIssueIndexRoute,
   IssuerMicrocredentialTemplatesIndexRoute:
     IssuerMicrocredentialTemplatesIndexRoute,
+  ApiPublicHooksProcessChainAnchorsRoute:
+    ApiPublicHooksProcessChainAnchorsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

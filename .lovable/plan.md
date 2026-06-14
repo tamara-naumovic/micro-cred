@@ -1,74 +1,117 @@
-## Restructured Micro-credential Template
 
-### New mandatory fields (in addition to existing Title, Description, Source, Level, Participation, Skills, Outcomes, Assessment, Expiration)
+# Bloxberg integracija za izdate MK (revidirano)
 
-**Type of Quality Assurance** (required, dropdown):
-- Internal
-- External
-- Internal and external
-- Other
-- Not specified
+Cilj: pri svakom izdavanju mikrokredencijala asinhrono se šalje transakcija na korisnikov Bloxberg smart contract. On-chain ide minimalan, GDPR-bezbedan zapis; sve PII i puni VC ostaju u Supabase.
 
-When any option is selected, the issuer **must upload a QA confirmation document** (PDF/image). Stored in a new private storage bucket `qa-documents`, with file path saved on the template row.
+## On-chain payload (CredentialRecord)
 
-All previously existing fields become required (Title, Description, Source, Level, Participation, ECTS, Skills, Outcomes, Assessment, Expiration). The form will block submit until all are filled.
+Smart contract prima jedan poziv po credentialu sa sledećom strukturom:
 
-### New optional structured fields
+```
+struct CredentialRecord {
+  bytes32 documentHash;        // sha256 nad kanonskim VC JSON-om
+  bytes32 learnerCommitment;   // sha256(earnerId || randomSecret)
+  bytes32 templateRef;         // sha256(templateId)
+  address issuerAddress;       // wallet potpisnika
+  uint64  issuedAt;            // unix sec
+  uint64  expiresAt;           // unix sec, 0 ako nema
+  CredentialStatus status;     // enum: Active/Revoked/Expired
+  string  issuerNameSnapshot;  // ime issuera u trenutku izdavanja
+}
+```
 
-**Prerequisites** — choice between:
-- Checkbox: "No prerequisites"
-- Text area for free-form description (shown when checkbox unchecked)
+ABI funkcije se čita iz `BLOXBERG_CONTRACT_ABI`; default ime funkcije iz `BLOXBERG_FUNCTION_NAME` (npr. `storeCredential`). Status enum mapiramo: `active=0`, `revoked=1`, `expired=2`.
 
-**Supervision and identity verification** — single-select dropdown (optional):
-- Unsupervised with no identity verification
-- Supervised with no identity verification
-- Supervised online with identity verification
-- Supervised onsite with identity verification
+**Hash konstrukcija:**
+- `documentHash` = SHA-256 nad kanonskim JSON-om punog VC-a (sortirani ključevi, ISO datumi).
+- `learnerCommitment` = SHA-256(`earnerId` ‖ `randomSecret`) — `randomSecret` se generiše po credentialu (32B, crypto.getRandomValues), čuva u DB, nikada ne ide on-chain. Earner može kasnije dokazati vlasništvo preimage-om.
+- `templateRef` = SHA-256(`templateId`) — stabilan, ne otkriva interne UUID-eve.
 
-**Integration / Stackability** — single-select (optional):
-- Stand-alone, independent micro-credential
-- Integrated, stackable towards another credential
+## Off-chain (Supabase)
 
-### Database changes (migration)
+U DB ostaju: `credentialId`, `earnerId`, `randomSecret`, pun VC JSON, EU metadata (level/ECTS/skills/QA/supervision/stackability iz templejta), issuer detalji, evidence (URLs/storage paths), PDF reprezentacija (storage path) — sve već postoji ili dodajemo gde fali.
 
-`public.templates`:
-- Add `qa_type text` (enum-checked: internal | external | internal_and_external | other | not_specified) — NOT NULL with default `'not_specified'` for backfill, then enforce.
-- Add `qa_document_path text` (nullable; required at app-level when qa_type set).
-- Add `prerequisites_none boolean NOT NULL default true`.
-- Keep existing `prerequisites text` for the free-text variant.
-- Replace free-text `supervision` usage by adding `supervision_type text` (nullable) constrained to the 4 options above. Keep `supervision` column for backward compat.
-- Add `stackability_type text` (nullable) constrained to `stand_alone | stackable`.
+## DB šema (nova migracija)
 
-New storage bucket `qa-documents` (private). RLS on `storage.objects`:
-- Issuer admins of the org can insert/select/delete files under path `{issuer_org_id}/...`.
-- Platform admins full access.
+Nove kolone na `credentials`:
+- `credential_hash text` — hex documentHash-a
+- `learner_commitment text` — hex
+- `learner_secret text` — 32B hex, **never exposed via public RPC**
+- `template_ref text` — hex
+- `vc_json jsonb` — kanonski VC payload (snapshot u trenutku izdavanja)
+- `pdf_storage_path text` — opciono, gde sedi PDF
+- `chain_status text default 'pending'` — `pending | submitted | confirmed | failed | disabled`
+- `chain_tx_hash text`
+- `chain_block_number bigint`
+- `chain_issuer_address text`
+- `chain_contract_address text`
+- `chain_error text`
+- `chain_submitted_at timestamptz`
+- `chain_confirmed_at timestamptz`
 
-### Frontend changes
+Nova tabela `chain_anchor_jobs` (queue/retry):
+- `id uuid pk`, `credential_id uuid fk → credentials on delete cascade`
+- `status text` (`queued|running|done|failed`), `attempts int default 0`, `last_error text`
+- `created_at`, `updated_at` (sa trigger-om)
+- unique index na `credential_id` gde `status != 'done'`
 
-`src/lib/types.ts` — extend `MicroCredentialTemplate` with new fields and union types.
+Storage bucket `credential-pdfs` (private) za PDF-ove — opcionalno u ovoj fazi.
 
-`src/routes/issuer.microcredential-templates.new.tsx`:
-- Add QA Type select + file upload (uploaded to `qa-documents` bucket before insert; path saved).
-- Add Prerequisites group (checkbox + conditional textarea).
-- Add Supervision dropdown.
-- Add Stackability radio/select.
-- Mark all previously-optional fields required; client-side validation via zod with toast errors.
+GRANT/RLS:
+- `credentials`: postojeće policy ostaju; nove kolone naslediti; **`learner_secret` i `vc_json` se NE vraćaju iz `get_public_credential`**.
+- `chain_anchor_jobs`: samo `service_role` (interno).
 
-`src/routes/issuer.microcredential-templates.$id.tsx`:
-- Render new fields with labels; provide signed-URL download link for the QA document.
+Update `get_public_credential` RPC → dodati: `credential_hash`, `learner_commitment`, `template_ref`, `chain_tx_hash`, `chain_block_number`, `chain_status`, `chain_issuer_address`, `chain_contract_address`. (PII i secret ne.)
 
-`src/lib/store.tsx` — extend `upsertTemplate` mapping (insert/select) for new columns.
+Update revoke flow: pri postavljanju `status='revoked'` enqueue novi anchor job (re-call contracta sa status=1) — ako contract ima `updateStatus` funkciju (opciono u sledećoj fazi, sad samo `Active` na izdavanju).
 
-`src/integrations/supabase/types.ts` — regenerated after migration.
+## Backend
 
-### Technical details
+1. **`src/lib/chain/hash.ts`** — `canonicalize(obj)`, `sha256Hex(str|Uint8Array)`, helper `to32Bytes(hex)` za `bytes32` prefiks.
+2. **`src/lib/chain/vc.ts`** — `buildVcJson(credential, template, earner, issuerOrg)` vraća kanonski W3C-style payload (id, type, issuer, credentialSubject, issuanceDate, expirationDate, EU metadata u `credentialSubject`/`evidence`).
+3. **`src/lib/chain/bloxberg.server.ts`** — server-only, dinamički import `ethers` v6:
+   - `getSigner()` → `Wallet(BLOXBERG_PRIVATE_KEY, JsonRpcProvider(BLOXBERG_RPC_URL))`
+   - `submitAnchor(record)` poziva `contract[fn](documentHash, learnerCommitment, templateRef, issuerAddress, issuedAt, expiresAt, status, issuerNameSnapshot)`, `tx.wait(1)`, vraća `{txHash, blockNumber, issuerAddress, contractAddress}`.
+   - Bez bilo kog env-a → `ChainNotConfiguredError` (dry-run).
+4. **`src/lib/chain/anchor.functions.ts`** (TanStack server fn, `requireSupabaseAuth`):
+   - `enqueueAnchor({credentialId})` — generiše `randomSecret` ako fali, izračuna `vc_json`, `credential_hash`, `learner_commitment`, `template_ref`, upiše u DB, insert job. Idempotentno.
+   - `processAnchor({credentialId})` (interno, pozivano iz crona, koristi `supabaseAdmin` unutar handler-a) — fetch credentiala, poziva `submitAnchor`, upiše tx polja, status `confirmed`. Na error: `failed` + increment attempts.
+5. **Hook u izdavanju**: posle insert-a u `credentials` (direct issue u `src/lib/store.tsx` realnoj putanji + flow odobrenja aplikacije) — fire-and-forget `enqueueAnchor`. UI ne čeka.
+6. **Cron route** `src/routes/api/public/hooks/process-chain-anchors.ts` (POST, `apikey` provera anon ključem) — pokupi `queued|failed` jobove (`attempts < 5`), obrađuje serijski (Bloxberg nonce), backoff. pg_cron svakih minut, body `{}`.
 
-- File upload uses `supabase.storage.from('qa-documents').upload(\`${orgId}/${templateId}/${file.name}\`, file)`.
-- Download in detail view uses `createSignedUrl(path, 3600)`.
-- Max size 10 MB, accept `application/pdf,image/*`.
-- Migration uses CHECK constraints (not enums) for the new text fields so future options are easy to add.
+## Frontend
 
-### Out of scope
+- **`src/components/EbsiPlaceholderCard.tsx`** → zameniti sa `BlockchainAnchorCard`:
+  - prikaz: `chain_status` badge, `chain_tx_hash` (link na `https://blockexplorer.bloxberg.org/tx/{hash}`), `chain_block_number`, `chain_issuer_address`, `chain_contract_address`, `credential_hash`, `learner_commitment`, `template_ref`, copy buttons.
+  - earner detail dodatno: dugme "Reveal proof secret" otkriva `learnerSecret` (samo vlasniku) za off-chain dokaz commitmenta.
+- **`src/routes/issuer.credentials.tsx`**: kolona/badge sa `chain_status`.
+- **`src/routes/issuer.microcredential-templates.$id.tsx`** (detalj izdatih iz templejta): isti badge.
+- **`src/routes/earner.credentials.$id.tsx`**: `BlockchainAnchorCard` umesto EbsiPlaceholder.
+- **`src/routes/verify.$id.tsx`** (javni share): "Blockchain verification" sekcija — sva ne-PII polja + explorer link, plus uputstvo kako verifikovati hash protiv contracta.
+- **`src/lib/types.ts`**: `BlockchainPlaceholder` → `BlockchainAnchor` sa novim poljima; ostavi backward-compat alias.
 
-- Editing existing templates (edit route was removed earlier).
-- Backfilling QA documents for templates that already exist — they'll show `not_specified` until recreated.
+## Dependencies
+
+- `bun add ethers@^6` — koristi se samo u `*.server.ts` (dinamički import u handler-u).
+
+## Secrets (kasnije dodajemo, kad korisnik dostavi)
+
+`BLOXBERG_RPC_URL`, `BLOXBERG_CONTRACT_ADDRESS`, `BLOXBERG_CONTRACT_ABI` (JSON), `BLOXBERG_FUNCTION_NAME` (default `storeCredential`), `BLOXBERG_PRIVATE_KEY`. Dok nisu setovani: dry-run — hash/commitment/ref se računaju i čuvaju, status ostaje `pending`, badge u UI prikazuje "Awaiting blockchain configuration".
+
+## Van opsega (sad)
+
+- Re-anchor postojećih credential-a (backfill kasnije).
+- On-chain revoke/update status (contract `updateStatus` ako bude postojao — sledeća iteracija).
+- EBSI integracija (ostaje placeholder).
+- PDF generisanje (kolona ostaje slobodna; postojeća logika netaknuta).
+
+## Implementacioni red
+
+1. Migracija: kolone, `chain_anchor_jobs`, GRANT/RLS, update RPC.
+2. `chain/hash.ts`, `chain/vc.ts`, `chain/bloxberg.server.ts`, `chain/anchor.functions.ts`.
+3. Cron route + pg_cron schedule.
+4. Kuke u flow izdavanja (direct + application approval).
+5. UI: `BlockchainAnchorCard` + badge-vi + verify sekcija.
+6. `bun add ethers`.
+
+Tx-evi krenu čim korisnik dostavi contract + ključ.
