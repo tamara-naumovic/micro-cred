@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
-import { BlockchainAnchorCard } from "@/components/BlockchainAnchorCard";
+import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
 import { useStore } from "@/lib/store";
 import { fetchPublicCredential } from "@/lib/credentials";
 
