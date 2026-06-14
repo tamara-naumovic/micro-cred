@@ -106,6 +106,7 @@ const ISSUER_ADMIN_NAV: NavGroups = [
     items: [
       { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck },
       { to: "/issuer/ebsi", label: "EBSI Integration", icon: Hexagon },
+      { to: "/issuer/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
@@ -125,6 +126,12 @@ const ISSUER_STAFF_NAV: NavGroups = [
       { to: "/issuer/issue", label: "Direct Issuance", icon: Send },
       { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud },
       { to: "/issuer/credentials", label: "Issued Credentials", icon: Award },
+    ],
+  },
+  {
+    group: "Account",
+    items: [
+      { to: "/issuer/settings", label: "Settings", icon: Settings },
     ],
   },
 ];

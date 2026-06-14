@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useStore } from "@/lib/store";
+import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({ meta: [{ title: "Platform Settings — MicroCred Admin" }] }),
@@ -41,6 +42,7 @@ function Settings() {
             </Button>
           </CardContent>
         </Card>
+        <ChangePasswordForm />
       </div>
     </PageShell>
   );
