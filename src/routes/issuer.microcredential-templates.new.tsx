@@ -1,8 +1,10 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CalendarIcon, Upload } from "lucide-react";
+import { CalendarIcon, Upload, AlertTriangle } from "lucide-react";
+import { publishTemplateAndAnchor, getChainAvailabilityFn } from "@/lib/chain/anchor.functions";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -99,6 +101,13 @@ function Form() {
   const [stackabilityType, setStackabilityType] = useState<StackabilityType | "">("");
 
   const [submitting, setSubmitting] = useState(false);
+  const [anchorMode, setAnchorMode] = useState<"now" | "later">("later");
+  const [chainStatus, setChainStatus] = useState<string>("ok");
+  const publishFn = useServerFn(publishTemplateAndAnchor);
+  const availFn = useServerFn(getChainAvailabilityFn);
+  useEffect(() => {
+    availFn().then((r: any) => setChainStatus(r?.status ?? "ok")).catch(() => setChainStatus("rpc_unavailable"));
+  }, [availFn]);
 
   if (!activeUser) return null;
   const issuerOrg = organizations.find((o) => o.id === activeUser.organizationId);
