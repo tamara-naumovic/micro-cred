@@ -847,8 +847,9 @@ export const listAnchorJobs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const { isAdmin, orgIds } = await isUserIssuerAdminOrPlatformAdmin(supabase as never, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: jobs, error } = await (supabase as any)
+    const { data: jobs, error } = await (supabaseAdmin as any)
       .from("chain_anchor_jobs")
       .select("*")
       .order("created_at", { ascending: false })
