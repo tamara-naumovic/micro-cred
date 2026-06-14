@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Browse public issuer profiles, verify shared credentials and earner profiles. EBSI-ready architecture for higher education.",
+          "Browse public issuer profiles, verify shared credentials and earner profiles. Blockchain-anchored on Bloxberg for higher education.",
       },
       { property: "og:title", content: "MicroCred — Higher Education Credentialing" },
       {
