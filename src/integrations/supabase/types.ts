@@ -166,9 +166,56 @@ export type Database = {
         }
         Relationships: []
       }
+      chain_anchor_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          credential_id: string
+          id: string
+          last_error: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          credential_id: string
+          id?: string
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          credential_id?: string
+          id?: string
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chain_anchor_jobs_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credentials: {
         Row: {
+          chain_block_number: number | null
+          chain_confirmed_at: string | null
+          chain_contract_address: string | null
+          chain_error: string | null
+          chain_issuer_address: string | null
+          chain_status: string
+          chain_submitted_at: string | null
+          chain_tx_hash: string | null
           created_at: string
+          credential_hash: string | null
           earner_id: string
           earner_name: string
           ebsi_did: string | null
@@ -182,7 +229,10 @@ export type Database = {
           issued_at: string
           issuer_id: string
           issuer_name: string
+          learner_commitment: string | null
+          learner_secret: string | null
           level: Database["public"]["Enums"]["cred_level"]
+          pdf_storage_path: string | null
           renewed_from_id: string | null
           revocation_reason: string | null
           share_is_public: boolean
@@ -198,10 +248,21 @@ export type Database = {
             | Database["public"]["Enums"]["non_formal_subcategory"]
             | null
           template_id: string
+          template_ref: string | null
           title: string
+          vc_json: Json | null
         }
         Insert: {
+          chain_block_number?: number | null
+          chain_confirmed_at?: string | null
+          chain_contract_address?: string | null
+          chain_error?: string | null
+          chain_issuer_address?: string | null
+          chain_status?: string
+          chain_submitted_at?: string | null
+          chain_tx_hash?: string | null
           created_at?: string
+          credential_hash?: string | null
           earner_id: string
           earner_name: string
           ebsi_did?: string | null
@@ -215,7 +276,10 @@ export type Database = {
           issued_at?: string
           issuer_id: string
           issuer_name: string
+          learner_commitment?: string | null
+          learner_secret?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
+          pdf_storage_path?: string | null
           renewed_from_id?: string | null
           revocation_reason?: string | null
           share_is_public?: boolean
@@ -231,10 +295,21 @@ export type Database = {
             | Database["public"]["Enums"]["non_formal_subcategory"]
             | null
           template_id: string
+          template_ref?: string | null
           title: string
+          vc_json?: Json | null
         }
         Update: {
+          chain_block_number?: number | null
+          chain_confirmed_at?: string | null
+          chain_contract_address?: string | null
+          chain_error?: string | null
+          chain_issuer_address?: string | null
+          chain_status?: string
+          chain_submitted_at?: string | null
+          chain_tx_hash?: string | null
           created_at?: string
+          credential_hash?: string | null
           earner_id?: string
           earner_name?: string
           ebsi_did?: string | null
@@ -248,7 +323,10 @@ export type Database = {
           issued_at?: string
           issuer_id?: string
           issuer_name?: string
+          learner_commitment?: string | null
+          learner_secret?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
+          pdf_storage_path?: string | null
           renewed_from_id?: string | null
           revocation_reason?: string | null
           share_is_public?: boolean
@@ -264,7 +342,9 @@ export type Database = {
             | Database["public"]["Enums"]["non_formal_subcategory"]
             | null
           template_id?: string
+          template_ref?: string | null
           title?: string
+          vc_json?: Json | null
         }
         Relationships: [
           {
@@ -702,6 +782,12 @@ export type Database = {
       get_public_credential: {
         Args: { _share_token: string }
         Returns: {
+          chain_block_number: number
+          chain_contract_address: string
+          chain_issuer_address: string
+          chain_status: string
+          chain_tx_hash: string
+          credential_hash: string
           earner_name: string
           ebsi_status: string
           ects: number
@@ -710,6 +796,7 @@ export type Database = {
           id: string
           issued_at: string
           issuer_name: string
+          learner_commitment: string
           level: Database["public"]["Enums"]["cred_level"]
           prerequisites: string
           prerequisites_none: boolean
@@ -720,6 +807,7 @@ export type Database = {
           stackability_type: string
           status: Database["public"]["Enums"]["credential_status"]
           supervision_type: string
+          template_ref: string
           title: string
         }[]
       }
