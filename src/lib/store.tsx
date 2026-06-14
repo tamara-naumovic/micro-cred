@@ -589,6 +589,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         actor_name: activeUserRef.current?.name ?? "Issuer",
         action: "Credential issued",
       });
+      // Fire-and-forget blockchain anchoring
+      enqueueAnchor({ data: { credentialId: cred.id as string } }).catch((e) =>
+        console.warn("[chain] enqueueAnchor failed", e),
+      );
       refetchAll();
     })();
     return null;
@@ -653,8 +657,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })
         .filter((x): x is Record<string, unknown> => !!x);
       if (rows.length === 0) return;
-      const { error } = await (supabase.from("credentials") as unknown as { insert: (r: Record<string, unknown>[]) => Promise<{ error: unknown }> }).insert(rows);
+      const { data: inserted, error } = await (supabase.from("credentials") as unknown as {
+        insert: (r: Record<string, unknown>[]) => { select: () => Promise<{ data: { id: string }[] | null; error: unknown }> };
+      }).insert(rows).select();
       if (error) console.error("[store] directIssue", error);
+      for (const c of inserted ?? []) {
+        enqueueAnchor({ data: { credentialId: c.id } }).catch((e) =>
+          console.warn("[chain] enqueueAnchor failed", e),
+        );
+      }
       refetchAll();
     })();
     return [];
