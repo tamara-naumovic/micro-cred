@@ -28,7 +28,7 @@ export const Route = createFileRoute("/issuer/issue/")({
 type RecipientOverride = { grade: string; expiryDate: string };
 
 function Direct() {
-  const { activeUser, templates, users, templateAssignees, refetchAll } = useStore();
+  const { activeUser, templates, users, templateAssignees } = useStore();
   const isStaff = activeUser?.subRole === "staff";
   const issueBatch = useServerFn(issueCredentialsBatch);
   const assignedIds = useMemo(
