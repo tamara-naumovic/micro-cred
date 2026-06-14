@@ -126,6 +126,7 @@ const ISSUER_STAFF_NAV: NavGroups = [
       { to: "/issuer/issue", label: "Direct Issuance", icon: Send },
       { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud },
       { to: "/issuer/credentials", label: "Issued Credentials", icon: Award },
+      { to: "/issuer/anchoring-queue", label: "Blockchain Queue", icon: Link2 },
     ],
   },
   {
