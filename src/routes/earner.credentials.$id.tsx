@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
-import { BlockchainAnchorCard } from "@/components/BlockchainAnchorCard";
+import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
 import { ShareDialog } from "@/components/ShareDialog";
 import { Switch } from "@/components/ui/switch";
 import { useStore } from "@/lib/store";
