@@ -6,8 +6,10 @@ import { PageShell } from "@/components/PageShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useStore } from "@/lib/store";
+import { BLOCKCHAIN_LABEL, BLOCKCHAIN_BADGE_CLASS, type BlockchainStatus } from "@/lib/status-labels";
 
 export const Route = createFileRoute("/issuer/credentials")({
   head: () => ({ meta: [{ title: "Issued Credentials — MicroCred" }] }),
