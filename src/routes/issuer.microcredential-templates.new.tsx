@@ -115,7 +115,7 @@ function Form() {
     (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === activeUser.organizationId,
   );
 
-  const submit = async (status: "draft" | "active") => {
+  const submit = async (status: "draft" | "publish") => {
     if (!activeUser.organizationId) {
       toast.error("Your account is not linked to an issuer organisation");
       return;
@@ -180,9 +180,10 @@ function Form() {
         stackabilityType: stackabilityType || undefined,
         expiryMode,
         expiryDate: expiryMode === "fixed_date" && expiryDate ? expiryDate.toISOString() : undefined,
-        status,
+        status: status === "publish" ? "draft" : status,
         version: "1.0",
       };
+      // Save row first (as draft); the server fn will flip to published and create the version snapshot.
       upsertTemplate(tpl);
       if (assignedStaff.length > 0) {
         try {
@@ -191,7 +192,22 @@ function Form() {
           toast.error(e?.message ?? "Failed to assign staff");
         }
       }
-      toast.success(`Micro-credential ${status === "draft" ? "saved as draft" : "published"}`);
+      if (status === "publish") {
+        // Small delay so the upsert (fire-and-forget) lands before we publish on the server.
+        await new Promise((r) => setTimeout(r, 400));
+        try {
+          const res: any = await publishFn({ data: { templateId: id, anchorMode } });
+          toast.success(
+            res?.mode === "now"
+              ? "Published and anchored on Bloxberg"
+              : "Published · Blockchain anchoring queued",
+          );
+        } catch (e: any) {
+          toast.error(`Published, but anchoring failed: ${e?.message ?? "unknown error"}`);
+        }
+      } else {
+        toast.success("Micro-credential saved as draft");
+      }
       navigate({ to: "/issuer/microcredential-templates" });
     } finally {
       setSubmitting(false);
