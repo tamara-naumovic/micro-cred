@@ -96,7 +96,7 @@ function Direct() {
         recipientName: earners.find((e) => e.id === r.recipientId)?.name,
       }));
       setResults(rows);
-      refetchAll();
+      // Realtime subscription on credentials triggers refetch automatically.
     } catch (e: any) {
       toast.error(e?.message ?? "Issuance failed");
     } finally {
