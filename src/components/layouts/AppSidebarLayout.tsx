@@ -11,7 +11,7 @@ import {
   FileCheck2,
   FilePlus2,
   GraduationCap,
-  Hexagon,
+  
   History,
   Inbox,
   LayoutDashboard,
