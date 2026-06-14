@@ -625,37 +625,62 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             blockchain_status: "not_requested",
           } as never);
 
+        // Always insert into the credential queue so issued MCs are visible there.
+        const { error: jobInsErr } = await supabaseAdmin
+          .from("credential_anchor_jobs")
+          .insert({
+            credential_id: credentialId,
+            operation: "anchor_credential",
+            status: "queued",
+          } as never);
+        if (jobInsErr && !/duplicate/i.test(jobInsErr.message)) throw new Error(jobInsErr.message);
+        await supabase
+          .from("credentials")
+          .update({ chain_status: "queued" } as never)
+          .eq("id", credentialId);
+        await supabaseAdmin
+          .from("credential_blockchain_records")
+          .update({ blockchain_status: "queued" } as never)
+          .eq("credential_id", credentialId);
+
         if (effectiveMode === "later") {
-          await supabaseAdmin
-            .from("chain_anchor_jobs")
-            .insert({
-              entity_type: "credential",
-              entity_id: credentialId,
-              credential_id: credentialId,
-              operation: "anchor_credential",
-              status: "queued",
-            } as never);
-          await supabase
-            .from("credentials")
-            .update({ chain_status: "queued" } as never)
-            .eq("id", credentialId);
-          await supabaseAdmin
-            .from("credential_blockchain_records")
-            .update({ blockchain_status: "queued" } as never)
-            .eq("credential_id", credentialId);
           results.push({ recipientId: r.earnerId, credentialId, credentialStatus: "issued", blockchainStatus: "queued" });
         } else {
-          // Anchor now
-          const { processCredentialAnchor } = await import("./worker.server");
-          const res = await processCredentialAnchor(credentialId);
-          results.push({
-            recipientId: r.earnerId,
-            credentialId,
-            credentialStatus: "issued",
-            blockchainStatus: res.ok ? "confirmed" : "failed",
-            txHash: res.txHash,
-            error: res.ok ? undefined : res.error,
-          });
+          // Anchor now — but only if the template is anchored on-chain.
+          const tplCheck = await isTemplateAnchored(supabaseAdmin, t.id);
+          if (!tplCheck.anchored) {
+            results.push({
+              recipientId: r.earnerId,
+              credentialId,
+              credentialStatus: "issued",
+              blockchainStatus: "queued",
+              error: tplCheck.reason,
+            });
+          } else {
+            const { processCredentialAnchor } = await import("./worker.server");
+            const res = await processCredentialAnchor(credentialId);
+            // Mark the queued job as done/failed so the queue reflects reality.
+            await supabaseAdmin
+              .from("credential_anchor_jobs")
+              .update({
+                status: res.ok ? "done" : "failed",
+                attempts: 1,
+                last_error: res.ok ? null : (res.error ?? null),
+                last_attempt_at: new Date().toISOString(),
+                transaction_hash: res.txHash ?? null,
+              } as never)
+              .eq("credential_id", credentialId)
+              .eq("operation", "anchor_credential")
+              .in("status", ["queued", "running", "failed"]);
+            results.push({
+              recipientId: r.earnerId,
+              credentialId,
+              credentialStatus: "issued",
+              blockchainStatus: res.ok ? "confirmed" : "failed",
+              txHash: res.txHash,
+              error: res.ok ? undefined : res.error,
+            });
+          }
         }
       } catch (e) {
         results.push({
@@ -680,7 +705,7 @@ export const anchorTemplateNow = createServerFn({ method: "POST" })
     return processTemplateAnchor(data.templateId, data.version);
   });
 
-/** Anchor a single credential now (manual). */
+/** Anchor a single credential now (manual). Blocks if template not anchored. */
 export const anchorCredentialNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { credentialId: string }) => d)
@@ -703,6 +728,12 @@ export const anchorCredentialNow = createServerFn({ method: "POST" })
       _template_id: cred.template_id,
     });
     if (!isAdmin && !isOrgAdmin && !isAssignee) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const tplCheck = await isTemplateAnchored(supabaseAdmin, cred.template_id);
+    if (!tplCheck.anchored) {
+      throw new Error(tplCheck.reason ?? "Template not yet anchored");
+    }
     const { processCredentialAnchor } = await import("./worker.server");
     return processCredentialAnchor(data.credentialId);
   });
