@@ -357,9 +357,14 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
     const templateRef = templateRefKeccak(t.id, version, documentHash);
     const publishedAt = new Date().toISOString();
 
+    // Writes below go through the admin client because template_versions,
+    // template_blockchain_records, and chain_anchor_jobs are RLS-locked
+    // (read-only for authenticated). Authorization was enforced above.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     // Insert immutable version snapshot (idempotent on conflict)
-    const { error: vErr } = await supabase
-      .from("template_versions" as never)
+    const { error: vErr } = await supabaseAdmin
+      .from("template_versions")
       .insert({
         template_id: t.id,
         version,
@@ -373,7 +378,7 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
     if (vErr && !/duplicate/i.test(vErr.message)) throw new Error(vErr.message);
 
     // Update template row to PUBLISHED + snapshot fields
-    await supabase
+    await supabaseAdmin
       .from("templates")
       .update({
         status: "active",
@@ -388,18 +393,12 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
       } as never)
       .eq("id", t.id);
 
-    // Ensure a blockchain_records row exists for this version
-    const { data: avail } = await supabase.rpc("__noop_avail" as never, {} as never).then(
-      () => ({ data: null }),
-      () => ({ data: null }),
-    );
-    void avail;
     const { isChainConfigured: chainCfg } = await import("./bloxberg.server");
     const contractAddress =
       process.env.TEMPLATE_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
 
-    const { error: bErr } = await supabase
-      .from("template_blockchain_records" as never)
+    const { error: bErr } = await supabaseAdmin
+      .from("template_blockchain_records")
       .insert({
         template_id: t.id,
         template_version: version,
@@ -414,20 +413,20 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
 
     // Queue or anchor
     if (data.anchorMode === "later" || !chainCfg()) {
-      await supabase
-        .from("chain_anchor_jobs" as never)
+      await supabaseAdmin
+        .from("chain_anchor_jobs")
         .insert({
           entity_type: "template",
           entity_id: t.id,
           operation: "anchor_template",
           status: "queued",
         } as never);
-      await supabase
-        .from("template_blockchain_records" as never)
+      await supabaseAdmin
+        .from("template_blockchain_records")
         .update({ blockchain_status: "queued" } as never)
         .eq("template_id", t.id)
         .eq("template_version", version);
-      await supabase
+      await supabaseAdmin
         .from("templates")
         .update({ blockchain_status: "queued" } as never)
         .eq("id", t.id);
