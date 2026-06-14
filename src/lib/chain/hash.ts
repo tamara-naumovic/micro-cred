@@ -1,7 +1,8 @@
 // Isomorphic hashing helpers for blockchain anchoring.
 // SHA-256 via Web Crypto. Keccak-256 via js-sha3 (server + client safe).
 
-import { keccak256 } from "js-sha3";
+import sha3 from "js-sha3";
+const { keccak256 } = sha3;
 
 function canonicalize(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value ?? null);
