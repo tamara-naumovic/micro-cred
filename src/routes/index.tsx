@@ -58,7 +58,7 @@ function Home() {
         />
         <div className="mx-auto max-w-7xl px-4 py-16 md:px-8 md:py-24">
           <Badge variant="outline" className="mb-5 gap-1 bg-card">
-            <Hexagon className="h-3 w-3 text-purple" /> EBSI-ready · W3C Verifiable Credentials
+            <Hexagon className="h-3 w-3 text-purple" /> Bloxberg-anchored · W3C Verifiable Credentials
           </Badge>
           <h1 className="max-w-3xl font-display text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl">
             A trustworthy home for higher education{" "}
