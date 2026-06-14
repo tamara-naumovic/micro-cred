@@ -679,19 +679,21 @@ export const cancelAnchorJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { jobId: string }) => d)
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: job } = await supabase
-      .from("chain_anchor_jobs" as never)
+    const { supabase, userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: job } = await supabaseAdmin
+      .from("chain_anchor_jobs")
       .select("*")
       .eq("id", data.jobId)
       .maybeSingle();
     if (!job) throw new Error("Job not found");
+    await assertJobAccess(supabase as never, userId, job);
     const j = job as Record<string, any>;
     if (j.status === "done" || j.status === "running") {
       throw new Error("Job is no longer cancellable");
     }
-    await supabase
-      .from("chain_anchor_jobs" as never)
+    await supabaseAdmin
+      .from("chain_anchor_jobs")
       .update({ status: "cancelled" } as never)
       .eq("id", data.jobId);
     if (j.entity_type === "credential") {
@@ -699,17 +701,17 @@ export const cancelAnchorJob = createServerFn({ method: "POST" })
         .from("credentials")
         .update({ chain_status: "cancelled" } as never)
         .eq("id", j.entity_id);
-      await supabase
-        .from("credential_blockchain_records" as never)
+      await supabaseAdmin
+        .from("credential_blockchain_records")
         .update({ blockchain_status: "cancelled" } as never)
         .eq("credential_id", j.entity_id);
     } else {
-      await supabase
+      await supabaseAdmin
         .from("templates")
         .update({ blockchain_status: "cancelled" } as never)
         .eq("id", j.entity_id);
-      await supabase
-        .from("template_blockchain_records" as never)
+      await supabaseAdmin
+        .from("template_blockchain_records")
         .update({ blockchain_status: "cancelled" } as never)
         .eq("template_id", j.entity_id);
     }
