@@ -77,7 +77,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Role-based platform for earners, course providers, issuers and verifiers, with blockchain-anchored verification on Bloxberg.",
+          "Role-based platform for earners, course providers, issuers and verifiers. EBSI-ready architecture.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:title", content: "MicroCred — Higher Education Micro-Credential Platform" },
