@@ -252,7 +252,7 @@ function AnchoringQueuePage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => retryMut.mutate(r.id)}
+                                  onClick={() => retryMut.mutate({ jobId: r.id, entityKind: r.entity_type })}
                                   disabled={retryMut.isPending}
                                 >
                                   <RefreshCcw className="mr-1 h-3.5 w-3.5" />
@@ -263,7 +263,7 @@ function AnchoringQueuePage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => cancelMut.mutate(r.id)}
+                                onClick={() => cancelMut.mutate({ jobId: r.id, entityKind: r.entity_type })}
                                 disabled={cancelMut.isPending}
                                 title="Cancel"
                               >
