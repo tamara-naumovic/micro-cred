@@ -21,14 +21,46 @@ export const Route = createFileRoute("/issuer/revocations")({
   ),
 });
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function Revocations() {
   const { activeUser, credentials, revokeCredential } = useStore();
   const [target, setTarget] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+  const [pending, setPending] = useState(false);
   if (!activeUser) return null;
   const mine = credentials.filter((c) => c.issuerId === activeUser.organizationId);
   const active = mine.filter((c) => c.status === "active");
   const revoked = mine.filter((c) => c.status === "revoked");
+
+  async function handleRevoke(id: string) {
+    if (!reason.trim()) {
+      toast.error("Provide a reason");
+      return;
+    }
+    setPending(true);
+    try {
+      if (UUID_RE.test(id)) {
+        const { revokeCredentialOnChain } = await import("@/lib/chain/anchor.functions");
+        const res = await revokeCredentialOnChain({ data: { credentialId: id, reason } });
+        if (res.mode === "on_chain_revoke_queued") {
+          toast.success("Revocation queued for on-chain anchoring");
+        } else {
+          toast.success("Credential revoked");
+        }
+        revokeCredential(id, reason);
+      } else {
+        revokeCredential(id, reason);
+        toast.success("Credential revoked");
+      }
+      setTarget(null);
+      setReason("");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
     <PageShell title="Revocations" description="Mark credentials as revoked when integrity issues are confirmed.">
@@ -53,15 +85,10 @@ function Revocations() {
                         <DialogHeader><DialogTitle>Revoke {c.id}</DialogTitle></DialogHeader>
                         <Input placeholder="Reason for revocation" value={reason} onChange={(e) => setReason(e.target.value)} />
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setTarget(null)}>Cancel</Button>
-                          <Button
-                            onClick={() => {
-                              if (!reason.trim()) return toast.error("Provide a reason");
-                              revokeCredential(c.id, reason);
-                              toast.success("Credential revoked");
-                              setTarget(null); setReason("");
-                            }}
-                          >Confirm revocation</Button>
+                          <Button variant="outline" onClick={() => setTarget(null)} disabled={pending}>Cancel</Button>
+                          <Button onClick={() => handleRevoke(c.id)} disabled={pending}>
+                            {pending ? "Revoking…" : "Confirm revocation"}
+                          </Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
