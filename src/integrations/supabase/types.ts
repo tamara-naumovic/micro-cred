@@ -170,28 +170,43 @@ export type Database = {
         Row: {
           attempts: number
           created_at: string
-          credential_id: string
+          credential_id: string | null
+          entity_id: string | null
+          entity_type: string
           id: string
           last_error: string | null
+          next_attempt_at: string | null
+          operation: string
           status: string
+          transaction_hash: string | null
           updated_at: string
         }
         Insert: {
           attempts?: number
           created_at?: string
-          credential_id: string
+          credential_id?: string | null
+          entity_id?: string | null
+          entity_type?: string
           id?: string
           last_error?: string | null
+          next_attempt_at?: string | null
+          operation?: string
           status?: string
+          transaction_hash?: string | null
           updated_at?: string
         }
         Update: {
           attempts?: number
           created_at?: string
-          credential_id?: string
+          credential_id?: string | null
+          entity_id?: string | null
+          entity_type?: string
           id?: string
           last_error?: string | null
+          next_attempt_at?: string | null
+          operation?: string
           status?: string
+          transaction_hash?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -204,18 +219,87 @@ export type Database = {
           },
         ]
       }
+      credential_blockchain_records: {
+        Row: {
+          anchored_at: string | null
+          attempt_count: number
+          block_number: number | null
+          blockchain_status: string
+          chain_id: number
+          contract_address: string
+          contract_credential_id: string | null
+          created_at: string
+          credential_id: string
+          document_hash: string
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          network: string
+          transaction_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          anchored_at?: string | null
+          attempt_count?: number
+          block_number?: number | null
+          blockchain_status?: string
+          chain_id?: number
+          contract_address?: string
+          contract_credential_id?: string | null
+          created_at?: string
+          credential_id: string
+          document_hash: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          network?: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anchored_at?: string | null
+          attempt_count?: number
+          block_number?: number | null
+          blockchain_status?: string
+          chain_id?: number
+          contract_address?: string
+          contract_credential_id?: string | null
+          created_at?: string
+          credential_id?: string
+          document_hash?: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          network?: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credential_blockchain_records_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credentials: {
         Row: {
+          canonical_payload: Json | null
+          chain_attempts: number
           chain_block_number: number | null
           chain_confirmed_at: string | null
           chain_contract_address: string | null
           chain_error: string | null
           chain_issuer_address: string | null
+          chain_last_attempt_at: string | null
           chain_status: string
           chain_submitted_at: string | null
           chain_tx_hash: string | null
           created_at: string
           credential_hash: string | null
+          credential_lifecycle: string
           earner_id: string
           earner_name: string
           ebsi_did: string | null
@@ -229,6 +313,7 @@ export type Database = {
           issued_at: string
           issuer_id: string
           issuer_name: string
+          issuer_name_snapshot: string | null
           learner_commitment: string | null
           learner_secret: string | null
           level: Database["public"]["Enums"]["cred_level"]
@@ -247,22 +332,29 @@ export type Database = {
           subcategory:
             | Database["public"]["Enums"]["non_formal_subcategory"]
             | null
+          superseded_by_id: string | null
           template_id: string
           template_ref: string | null
+          template_version: string | null
           title: string
+          vc_id: string | null
           vc_json: Json | null
         }
         Insert: {
+          canonical_payload?: Json | null
+          chain_attempts?: number
           chain_block_number?: number | null
           chain_confirmed_at?: string | null
           chain_contract_address?: string | null
           chain_error?: string | null
           chain_issuer_address?: string | null
+          chain_last_attempt_at?: string | null
           chain_status?: string
           chain_submitted_at?: string | null
           chain_tx_hash?: string | null
           created_at?: string
           credential_hash?: string | null
+          credential_lifecycle?: string
           earner_id: string
           earner_name: string
           ebsi_did?: string | null
@@ -276,6 +368,7 @@ export type Database = {
           issued_at?: string
           issuer_id: string
           issuer_name: string
+          issuer_name_snapshot?: string | null
           learner_commitment?: string | null
           learner_secret?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
@@ -294,22 +387,29 @@ export type Database = {
           subcategory?:
             | Database["public"]["Enums"]["non_formal_subcategory"]
             | null
+          superseded_by_id?: string | null
           template_id: string
           template_ref?: string | null
+          template_version?: string | null
           title: string
+          vc_id?: string | null
           vc_json?: Json | null
         }
         Update: {
+          canonical_payload?: Json | null
+          chain_attempts?: number
           chain_block_number?: number | null
           chain_confirmed_at?: string | null
           chain_contract_address?: string | null
           chain_error?: string | null
           chain_issuer_address?: string | null
+          chain_last_attempt_at?: string | null
           chain_status?: string
           chain_submitted_at?: string | null
           chain_tx_hash?: string | null
           created_at?: string
           credential_hash?: string | null
+          credential_lifecycle?: string
           earner_id?: string
           earner_name?: string
           ebsi_did?: string | null
@@ -323,6 +423,7 @@ export type Database = {
           issued_at?: string
           issuer_id?: string
           issuer_name?: string
+          issuer_name_snapshot?: string | null
           learner_commitment?: string | null
           learner_secret?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
@@ -341,9 +442,12 @@ export type Database = {
           subcategory?:
             | Database["public"]["Enums"]["non_formal_subcategory"]
             | null
+          superseded_by_id?: string | null
           template_id?: string
           template_ref?: string | null
+          template_version?: string | null
           title?: string
+          vc_id?: string | null
           vc_json?: Json | null
         }
         Relationships: [
@@ -357,6 +461,13 @@ export type Database = {
           {
             foreignKeyName: "credentials_renewed_from_id_fkey"
             columns: ["renewed_from_id"]
+            isOneToOne: false
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credentials_superseded_by_id_fkey"
+            columns: ["superseded_by_id"]
             isOneToOne: false
             referencedRelation: "credentials"
             referencedColumns: ["id"]
@@ -622,13 +733,131 @@ export type Database = {
           },
         ]
       }
+      template_blockchain_records: {
+        Row: {
+          anchored_at: string | null
+          attempt_count: number
+          block_number: number | null
+          blockchain_status: string
+          chain_id: number
+          contract_address: string
+          created_at: string
+          document_hash: string
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          network: string
+          template_id: string
+          template_ref: string
+          template_version: string
+          transaction_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          anchored_at?: string | null
+          attempt_count?: number
+          block_number?: number | null
+          blockchain_status?: string
+          chain_id?: number
+          contract_address?: string
+          created_at?: string
+          document_hash: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          network?: string
+          template_id: string
+          template_ref: string
+          template_version: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anchored_at?: string | null
+          attempt_count?: number
+          block_number?: number | null
+          blockchain_status?: string
+          chain_id?: number
+          contract_address?: string
+          created_at?: string
+          document_hash?: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          network?: string
+          template_id?: string
+          template_ref?: string
+          template_version?: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_blockchain_records_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_versions: {
+        Row: {
+          canonical_payload: Json
+          created_at: string
+          document_hash: string
+          id: string
+          issuer_name_snapshot: string
+          published_at: string
+          published_by: string | null
+          template_id: string
+          template_ref: string
+          version: string
+        }
+        Insert: {
+          canonical_payload: Json
+          created_at?: string
+          document_hash: string
+          id?: string
+          issuer_name_snapshot: string
+          published_at?: string
+          published_by?: string | null
+          template_id: string
+          template_ref: string
+          version: string
+        }
+        Update: {
+          canonical_payload?: Json
+          created_at?: string
+          document_hash?: string
+          id?: string
+          issuer_name_snapshot?: string
+          published_at?: string
+          published_by?: string | null
+          template_id?: string
+          template_ref?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates: {
         Row: {
           assessment: string
+          blockchain_status: string
+          canonical_payload: Json | null
           country: string
           created_at: string
           created_by: string | null
           description: string
+          document_hash: string | null
           ects: number | null
           expiry_date: string | null
           expiry_mode: string
@@ -636,11 +865,14 @@ export type Database = {
           further_info: string | null
           id: string
           issuer_id: string
+          issuer_name_snapshot: string | null
           level: Database["public"]["Enums"]["cred_level"]
           outcomes: string[]
           participation: Database["public"]["Enums"]["participation"]
           prerequisites: string
           prerequisites_none: boolean
+          published_at: string | null
+          published_by: string | null
           qa_document_path: string | null
           qa_type: string
           quality_assurance: string
@@ -655,16 +887,20 @@ export type Database = {
             | null
           supervision: string
           supervision_type: string | null
+          template_ref: string | null
           title: string
           updated_at: string
           version: string
         }
         Insert: {
           assessment?: string
+          blockchain_status?: string
+          canonical_payload?: Json | null
           country: string
           created_at?: string
           created_by?: string | null
           description?: string
+          document_hash?: string | null
           ects?: number | null
           expiry_date?: string | null
           expiry_mode?: string
@@ -672,11 +908,14 @@ export type Database = {
           further_info?: string | null
           id?: string
           issuer_id: string
+          issuer_name_snapshot?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
           outcomes?: string[]
           participation?: Database["public"]["Enums"]["participation"]
           prerequisites?: string
           prerequisites_none?: boolean
+          published_at?: string | null
+          published_by?: string | null
           qa_document_path?: string | null
           qa_type?: string
           quality_assurance?: string
@@ -691,16 +930,20 @@ export type Database = {
             | null
           supervision?: string
           supervision_type?: string | null
+          template_ref?: string | null
           title: string
           updated_at?: string
           version?: string
         }
         Update: {
           assessment?: string
+          blockchain_status?: string
+          canonical_payload?: Json | null
           country?: string
           created_at?: string
           created_by?: string | null
           description?: string
+          document_hash?: string | null
           ects?: number | null
           expiry_date?: string | null
           expiry_mode?: string
@@ -708,11 +951,14 @@ export type Database = {
           further_info?: string | null
           id?: string
           issuer_id?: string
+          issuer_name_snapshot?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
           outcomes?: string[]
           participation?: Database["public"]["Enums"]["participation"]
           prerequisites?: string
           prerequisites_none?: boolean
+          published_at?: string | null
+          published_by?: string | null
           qa_document_path?: string | null
           qa_type?: string
           quality_assurance?: string
@@ -727,6 +973,7 @@ export type Database = {
             | null
           supervision?: string
           supervision_type?: string | null
+          template_ref?: string | null
           title?: string
           updated_at?: string
           version?: string
@@ -788,6 +1035,7 @@ export type Database = {
           chain_status: string
           chain_tx_hash: string
           credential_hash: string
+          credential_lifecycle: string
           earner_name: string
           ebsi_status: string
           ects: number
@@ -808,7 +1056,9 @@ export type Database = {
           status: Database["public"]["Enums"]["credential_status"]
           supervision_type: string
           template_ref: string
+          template_version: string
           title: string
+          vc_id: string
         }[]
       }
       get_public_profile: {
