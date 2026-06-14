@@ -750,9 +750,11 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
       } as never)
       .eq("id", data.credentialId);
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     if (alreadyConfirmed) {
-      await supabase
-        .from("chain_anchor_jobs" as never)
+      await supabaseAdmin
+        .from("chain_anchor_jobs")
         .insert({
           entity_type: "credential",
           entity_id: data.credentialId,
@@ -764,8 +766,8 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
     }
 
     // Cancel any pending issuance anchor jobs
-    await supabase
-      .from("chain_anchor_jobs" as never)
+    await supabaseAdmin
+      .from("chain_anchor_jobs")
       .update({ status: "cancelled" } as never)
       .eq("entity_id", data.credentialId)
       .eq("operation", "anchor_credential")
@@ -774,8 +776,8 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
       .from("credentials")
       .update({ chain_status: "cancelled" } as never)
       .eq("id", data.credentialId);
-    await supabase
-      .from("credential_blockchain_records" as never)
+    await supabaseAdmin
+      .from("credential_blockchain_records")
       .update({ blockchain_status: "cancelled" } as never)
       .eq("credential_id", data.credentialId);
     return { ok: true, mode: "cancelled" };
