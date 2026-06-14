@@ -80,6 +80,9 @@ async function computeAndPersistHashes(
     (cred.vc_json as Record<string, unknown> | null) ??
     buildVcJson({
       credentialId: cred.id,
+      vcId: `urn:microcred:${cred.id}`,
+      templateVersion: null,
+      templateRef: null,
       title: cred.title,
       templateId: cred.template_id,
       earnerId: cred.earner_id,
@@ -217,6 +220,7 @@ export async function processAnchor(credentialId: string): Promise<{
 
   try {
     const res = await submitAnchor({
+      credentialIdHex: cred.id.replace(/-/g, ""),
       documentHashHex: cred.credential_hash!,
       learnerCommitmentHex: cred.learner_commitment!,
       templateRefHex: cred.template_ref!,
