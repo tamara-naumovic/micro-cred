@@ -150,16 +150,21 @@ function RealVerify({
 
           <TemplateInfo cred={cred} />
 
-          <BlockchainAnchorCard
-            anchor={{
-              chainStatus: (cred as any).chain_status ?? "pending",
-              txHash: (cred as any).chain_tx_hash ?? null,
-              blockNumber: (cred as any).chain_block_number ?? null,
-              issuerAddress: (cred as any).chain_issuer_address ?? null,
+          <CredentialBlockchainVerificationCard
+            audience="public"
+            data={{
+              credentialId: (cred as any).id,
+              vcId: (cred as any).vc_id ?? null,
+              templateRef: (cred as any).template_ref ?? null,
+              network: "bloxberg",
+              chainId: 8995,
               contractAddress: (cred as any).chain_contract_address ?? null,
+              blockchainStatus: (cred as any).chain_status ?? "not_requested",
               documentHash: (cred as any).credential_hash ?? null,
               learnerCommitment: (cred as any).learner_commitment ?? null,
-              templateRef: (cred as any).template_ref ?? null,
+              transactionHash: (cred as any).chain_tx_hash ?? null,
+              blockNumber: (cred as any).chain_block_number ?? null,
+              issuerAddress: (cred as any).chain_issuer_address ?? null,
             }}
           />
         </CardContent>
