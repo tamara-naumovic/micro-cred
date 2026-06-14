@@ -54,26 +54,35 @@ function List() {
                 <TableHead>Title</TableHead>
                 <TableHead>Issued</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Blockchain</TableHead>
                 <TableHead>Verify</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mine.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
-                  <TableCell>{c.earnerName}</TableCell>
-                  <TableCell>{c.title}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{new Date(c.issuedAt).toLocaleDateString()}</TableCell>
-                  <TableCell><StatusBadge status={c.status} /></TableCell>
-                  <TableCell>
-                    <Link to="/verify/$id" params={{ id: c.id }} className="inline-flex items-center text-sm text-primary hover:underline">
-                      Verify <ExternalLink className="ml-1 h-3 w-3" />
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {mine.map((c) => {
+                const chainStatus = mapChainStatus(c.blockchain?.chainStatus);
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                    <TableCell>{c.earnerName}</TableCell>
+                    <TableCell>{c.title}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{new Date(c.issuedAt).toLocaleDateString()}</TableCell>
+                    <TableCell><StatusBadge status={c.status} /></TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={BLOCKCHAIN_BADGE_CLASS[chainStatus]}>
+                        {BLOCKCHAIN_LABEL[chainStatus]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Link to="/verify/$id" params={{ id: c.id }} className="inline-flex items-center text-sm text-primary hover:underline">
+                        Verify <ExternalLink className="ml-1 h-3 w-3" />
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {mine.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="p-8 text-center text-sm text-muted-foreground">No credentials match.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="p-8 text-center text-sm text-muted-foreground">No credentials match.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
