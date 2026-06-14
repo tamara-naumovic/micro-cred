@@ -26,6 +26,7 @@ import { Route as IssuerRequestsRouteImport } from './routes/issuer.requests'
 import { Route as IssuerProfileRouteImport } from './routes/issuer.profile'
 import { Route as IssuerEarnersRouteImport } from './routes/issuer.earners'
 import { Route as IssuerCredentialsRouteImport } from './routes/issuer.credentials'
+import { Route as IssuerAnchoringQueueRouteImport } from './routes/issuer.anchoring-queue'
 import { Route as EarnerSettingsRouteImport } from './routes/earner.settings'
 import { Route as EarnerProfileRouteImport } from './routes/earner.profile'
 import { Route as EarnerNotificationsRouteImport } from './routes/earner.notifications'
@@ -130,6 +131,11 @@ const IssuerEarnersRoute = IssuerEarnersRouteImport.update({
 const IssuerCredentialsRoute = IssuerCredentialsRouteImport.update({
   id: '/issuer/credentials',
   path: '/issuer/credentials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerAnchoringQueueRoute = IssuerAnchoringQueueRouteImport.update({
+  id: '/issuer/anchoring-queue',
+  path: '/issuer/anchoring-queue',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EarnerSettingsRoute = EarnerSettingsRouteImport.update({
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/earner/notifications': typeof EarnerNotificationsRoute
   '/earner/profile': typeof EarnerProfileRoute
   '/earner/settings': typeof EarnerSettingsRoute
+  '/issuer/anchoring-queue': typeof IssuerAnchoringQueueRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
   '/issuer/profile': typeof IssuerProfileRoute
@@ -292,6 +299,7 @@ export interface FileRoutesByTo {
   '/earner/notifications': typeof EarnerNotificationsRoute
   '/earner/profile': typeof EarnerProfileRoute
   '/earner/settings': typeof EarnerSettingsRoute
+  '/issuer/anchoring-queue': typeof IssuerAnchoringQueueRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
   '/issuer/profile': typeof IssuerProfileRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/earner/notifications': typeof EarnerNotificationsRoute
   '/earner/profile': typeof EarnerProfileRoute
   '/earner/settings': typeof EarnerSettingsRoute
+  '/issuer/anchoring-queue': typeof IssuerAnchoringQueueRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
   '/issuer/profile': typeof IssuerProfileRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/earner/notifications'
     | '/earner/profile'
     | '/earner/settings'
+    | '/issuer/anchoring-queue'
     | '/issuer/credentials'
     | '/issuer/earners'
     | '/issuer/profile'
@@ -412,6 +422,7 @@ export interface FileRouteTypes {
     | '/earner/notifications'
     | '/earner/profile'
     | '/earner/settings'
+    | '/issuer/anchoring-queue'
     | '/issuer/credentials'
     | '/issuer/earners'
     | '/issuer/profile'
@@ -451,6 +462,7 @@ export interface FileRouteTypes {
     | '/earner/notifications'
     | '/earner/profile'
     | '/earner/settings'
+    | '/issuer/anchoring-queue'
     | '/issuer/credentials'
     | '/issuer/earners'
     | '/issuer/profile'
@@ -491,6 +503,7 @@ export interface RootRouteChildren {
   EarnerNotificationsRoute: typeof EarnerNotificationsRoute
   EarnerProfileRoute: typeof EarnerProfileRoute
   EarnerSettingsRoute: typeof EarnerSettingsRoute
+  IssuerAnchoringQueueRoute: typeof IssuerAnchoringQueueRoute
   IssuerCredentialsRoute: typeof IssuerCredentialsRoute
   IssuerEarnersRoute: typeof IssuerEarnersRoute
   IssuerProfileRoute: typeof IssuerProfileRoute
@@ -634,6 +647,13 @@ declare module '@tanstack/react-router' {
       path: '/issuer/credentials'
       fullPath: '/issuer/credentials'
       preLoaderRoute: typeof IssuerCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/anchoring-queue': {
+      id: '/issuer/anchoring-queue'
+      path: '/issuer/anchoring-queue'
+      fullPath: '/issuer/anchoring-queue'
+      preLoaderRoute: typeof IssuerAnchoringQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/earner/settings': {
@@ -795,6 +815,7 @@ const rootRouteChildren: RootRouteChildren = {
   EarnerNotificationsRoute: EarnerNotificationsRoute,
   EarnerProfileRoute: EarnerProfileRoute,
   EarnerSettingsRoute: EarnerSettingsRoute,
+  IssuerAnchoringQueueRoute: IssuerAnchoringQueueRoute,
   IssuerCredentialsRoute: IssuerCredentialsRoute,
   IssuerEarnersRoute: IssuerEarnersRoute,
   IssuerProfileRoute: IssuerProfileRoute,
