@@ -581,8 +581,8 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
         // Blockchain record
         const contractAddress =
           process.env.CREDENTIAL_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
-        await supabase
-          .from("credential_blockchain_records" as never)
+        await supabaseAdmin
+          .from("credential_blockchain_records")
           .insert({
             credential_id: credentialId,
             network: "bloxberg",
@@ -593,8 +593,8 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
           } as never);
 
         if (effectiveMode === "later") {
-          await supabase
-            .from("chain_anchor_jobs" as never)
+          await supabaseAdmin
+            .from("chain_anchor_jobs")
             .insert({
               entity_type: "credential",
               entity_id: credentialId,
@@ -606,8 +606,8 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             .from("credentials")
             .update({ chain_status: "queued" } as never)
             .eq("id", credentialId);
-          await supabase
-            .from("credential_blockchain_records" as never)
+          await supabaseAdmin
+            .from("credential_blockchain_records")
             .update({ blockchain_status: "queued" } as never)
             .eq("credential_id", credentialId);
           results.push({ recipientId: r.earnerId, credentialId, credentialStatus: "issued", blockchainStatus: "queued" });
