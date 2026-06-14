@@ -171,6 +171,50 @@ export async function processTemplateAnchor(
       } as never)
       .eq("template_id", templateId)
       .eq("template_version", version);
+
+    // Auto-enqueue all related issued credentials that are not yet confirmed on-chain.
+    try {
+      const { data: pendingCreds } = await supabaseAdmin
+        .from("credentials")
+        .select("id, chain_status")
+        .eq("template_id", templateId);
+      const credIds = ((pendingCreds as { id: string; chain_status: string | null }[] | null) ?? [])
+        .filter((r) => r.chain_status !== "confirmed")
+        .map((r) => r.id);
+      if (credIds.length > 0) {
+        const nowIso2 = new Date().toISOString();
+        // Reset any existing non-done jobs so the cron worker re-processes them now.
+        await supabaseAdmin
+          .from("credential_anchor_jobs" as never)
+          .update({
+            status: "queued",
+            attempts: 0,
+            next_attempt_at: nowIso2,
+            last_error: null,
+          } as never)
+          .in("credential_id", credIds)
+          .neq("status", "done");
+        // Insert jobs for credentials that don't have one yet (ignore duplicates).
+        const rows = credIds.map((id) => ({
+          credential_id: id,
+          operation: "anchor_credential",
+          status: "queued",
+        }));
+        const { error: insErr } = await supabaseAdmin
+          .from("credential_anchor_jobs" as never)
+          .insert(rows as never);
+        if (insErr && !/duplicate key|unique/i.test(insErr.message)) {
+          console.error("[auto-enqueue credentials] insert error", insErr.message);
+        }
+        await supabaseAdmin
+          .from("credentials")
+          .update({ chain_status: "pending", chain_error: null } as never)
+          .in("id", credIds);
+      }
+    } catch (e) {
+      console.error("[auto-enqueue credentials] failed", (e as Error).message);
+    }
+
     return { ok: true, txHash: res.txHash };
   } catch (e) {
     const msg = e instanceof ChainNotConfiguredError ? "Chain not configured" : (e as Error).message;
