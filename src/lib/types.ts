@@ -132,6 +132,15 @@ export interface BlockchainPlaceholder {
   vcId?: string;
   txHash?: string;
   ebsiStatus: "not_anchored" | "pending" | "anchored";
+  // Bloxberg anchor (optional, present when issued through real flow)
+  chainStatus?: "pending" | "submitted" | "confirmed" | "failed" | "disabled";
+  blockNumber?: number;
+  issuerAddress?: string;
+  contractAddress?: string;
+  documentHash?: string;
+  learnerCommitment?: string;
+  templateRef?: string;
+  learnerSecret?: string;
 }
 
 export interface SharingSettings {
