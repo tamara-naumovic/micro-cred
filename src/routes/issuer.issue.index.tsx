@@ -203,11 +203,23 @@ function Direct() {
             </div>
           )}
 
+
+          <AnchorModeSelector value={anchorMode} onChange={setAnchorMode} scope="credential" />
+
           <div className="flex justify-end">
-            <Button onClick={submit}><Send className="mr-2 h-4 w-4" />Issue credentials</Button>
+            <Button onClick={submit} disabled={submitting}>
+              {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              Issue credentials
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      <IssuanceResultDialog
+        open={!!results}
+        onOpenChange={(o) => { if (!o) setResults(null); }}
+        results={results ?? []}
+      />
     </PageShell>
   );
 }
