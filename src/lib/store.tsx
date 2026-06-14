@@ -10,6 +10,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { enqueueAnchor } from "@/lib/chain/anchor.functions";
 import {
   LIFECYCLE_STAGES,
   type AppNotification,
