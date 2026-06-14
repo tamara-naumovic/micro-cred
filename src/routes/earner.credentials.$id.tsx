@@ -104,8 +104,16 @@ function dbToBlockchain(c: DbCredential) {
   return {
     did: c.ebsi_did ?? undefined,
     vcId: c.ebsi_vc_id ?? undefined,
-    txHash: c.ebsi_tx_hash ?? undefined,
+    txHash: c.chain_tx_hash ?? c.ebsi_tx_hash ?? undefined,
     ebsiStatus: (c.ebsi_status as "not_anchored" | "pending" | "anchored") ?? "not_anchored",
+    chainStatus: (c.chain_status as "pending" | "submitted" | "confirmed" | "failed" | "disabled" | null) ?? "pending",
+    blockNumber: c.chain_block_number ?? undefined,
+    issuerAddress: c.chain_issuer_address ?? undefined,
+    contractAddress: c.chain_contract_address ?? undefined,
+    documentHash: c.credential_hash ?? undefined,
+    learnerCommitment: c.learner_commitment ?? undefined,
+    templateRef: c.template_ref ?? undefined,
+    learnerSecret: c.learner_secret ?? undefined,
   };
 }
 
