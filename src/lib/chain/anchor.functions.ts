@@ -974,7 +974,8 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
   .inputValidator((d: { jobId: string }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: job } = await (supabase as any)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: job } = await (supabaseAdmin as any)
       .from("chain_anchor_jobs")
       .select("*")
       .eq("id", data.jobId)
@@ -990,7 +991,7 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
     const entityId = j.entity_id ?? j.credential_id;
 
     // Re-queue (cron will pick it up) and also kick off immediately.
-    await (supabase as any)
+    await (supabaseAdmin as any)
       .from("chain_anchor_jobs")
       .update({ status: "queued", last_error: null } as never)
       .eq("id", data.jobId);
