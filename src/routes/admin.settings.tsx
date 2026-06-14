@@ -30,7 +30,7 @@ function Settings() {
             <Toggle label="Require provider sign-off before issuance" defaultChecked />
             <Toggle label="Allow direct issuance by issuers" defaultChecked />
             <Toggle label="Allow bulk issuance via CSV" defaultChecked />
-            <Toggle label="Anchor new credentials to EBSI (mock)" />
+            <Toggle label="Auto-anchor new credentials to Bloxberg" defaultChecked />
           </CardContent>
         </Card>
         <Card>

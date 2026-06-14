@@ -6,8 +6,10 @@ import { PageShell } from "@/components/PageShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useStore } from "@/lib/store";
+import { BLOCKCHAIN_LABEL, BLOCKCHAIN_BADGE_CLASS, type BlockchainStatus } from "@/lib/status-labels";
 
 export const Route = createFileRoute("/issuer/credentials")({
   head: () => ({ meta: [{ title: "Issued Credentials — MicroCred" }] }),
@@ -52,26 +54,35 @@ function List() {
                 <TableHead>Title</TableHead>
                 <TableHead>Issued</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Blockchain</TableHead>
                 <TableHead>Verify</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mine.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
-                  <TableCell>{c.earnerName}</TableCell>
-                  <TableCell>{c.title}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{new Date(c.issuedAt).toLocaleDateString()}</TableCell>
-                  <TableCell><StatusBadge status={c.status} /></TableCell>
-                  <TableCell>
-                    <Link to="/verify/$id" params={{ id: c.id }} className="inline-flex items-center text-sm text-primary hover:underline">
-                      Verify <ExternalLink className="ml-1 h-3 w-3" />
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {mine.map((c) => {
+                const chainStatus = mapChainStatus(c.blockchain?.chainStatus);
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                    <TableCell>{c.earnerName}</TableCell>
+                    <TableCell>{c.title}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{new Date(c.issuedAt).toLocaleDateString()}</TableCell>
+                    <TableCell><StatusBadge status={c.status} /></TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={BLOCKCHAIN_BADGE_CLASS[chainStatus]}>
+                        {BLOCKCHAIN_LABEL[chainStatus]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Link to="/verify/$id" params={{ id: c.id }} className="inline-flex items-center text-sm text-primary hover:underline">
+                        Verify <ExternalLink className="ml-1 h-3 w-3" />
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {mine.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="p-8 text-center text-sm text-muted-foreground">No credentials match.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="p-8 text-center text-sm text-muted-foreground">No credentials match.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -79,4 +90,22 @@ function List() {
       </Card>
     </PageShell>
   );
+}
+
+function mapChainStatus(s: string | null | undefined): BlockchainStatus {
+  switch (s) {
+    case "queued":
+    case "submitting":
+    case "submitted":
+    case "confirmed":
+    case "failed":
+    case "cancelled":
+      return s;
+    case "pending":
+      return "queued";
+    case "disabled":
+      return "not_requested";
+    default:
+      return "not_requested";
+  }
 }

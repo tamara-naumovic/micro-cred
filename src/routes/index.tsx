@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Browse public issuer profiles, verify shared credentials and earner profiles. EBSI-ready architecture for higher education.",
+          "Browse public issuer profiles, verify shared credentials and earner profiles. Blockchain-anchored on Bloxberg for higher education.",
       },
       { property: "og:title", content: "MicroCred — Higher Education Credentialing" },
       {
@@ -58,7 +58,7 @@ function Home() {
         />
         <div className="mx-auto max-w-7xl px-4 py-16 md:px-8 md:py-24">
           <Badge variant="outline" className="mb-5 gap-1 bg-card">
-            <Hexagon className="h-3 w-3 text-purple" /> EBSI-ready · W3C Verifiable Credentials
+            <Hexagon className="h-3 w-3 text-purple" /> Bloxberg-anchored · W3C Verifiable Credentials
           </Badge>
           <h1 className="max-w-3xl font-display text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl">
             A trustworthy home for higher education{" "}
@@ -156,7 +156,7 @@ function Home() {
         </div>
       </section>
 
-      {/* EBSI strip */}
+      {/* Blockchain strip */}
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-start gap-4 p-6 md:flex-row md:items-center md:justify-between">
@@ -166,17 +166,17 @@ function Home() {
               </div>
               <div>
                 <div className="font-display text-lg font-semibold">
-                  Future Blockchain / EBSI Integration
+                  Blockchain-anchored verification on Bloxberg
                 </div>
                 <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-                  Credentials will be anchored to the European Blockchain Services Infrastructure as
-                  W3C Verifiable Credentials. Verification will become cryptographic and offline-checkable.
-                  This release uses mocked anchoring.
+                  Published templates and issued credentials are anchored to the Bloxberg network as
+                  cryptographic proofs. Anyone can verify a credential's integrity, issuer and
+                  lifecycle status on-chain — without exposing the learner's personal data.
                 </p>
               </div>
             </div>
             <Badge variant="outline" className="gap-1">
-              <ShieldCheck className="h-3 w-3" /> Coming soon
+              <ShieldCheck className="h-3 w-3" /> Live on Bloxberg
             </Badge>
           </CardContent>
         </Card>
