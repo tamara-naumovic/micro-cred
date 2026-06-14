@@ -495,6 +495,7 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
     const { isChainConfigured: chainCfg } = await import("./bloxberg.server");
     const canAnchorNow = chainCfg();
     const effectiveMode: "now" | "later" = data.anchorMode === "now" && canAnchorNow ? "now" : "later";
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const results: {
       recipientId: string;
