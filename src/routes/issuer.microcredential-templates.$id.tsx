@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { BlockchainAnchorCard } from "@/components/BlockchainAnchorCard";
+import { TemplateBlockchainProofCard } from "@/components/TemplateBlockchainProofCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -137,7 +137,7 @@ function Detail() {
             isStaff={!!isStaff}
             orgId={activeUser.organizationId}
           />
-          <BlockchainAnchorCard compact />
+          <TemplateBlockchainProofCard templateId={tpl.id} canManage={!isStaff} />
         </div>
       </div>
     </PageShell>
