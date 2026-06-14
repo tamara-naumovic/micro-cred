@@ -154,8 +154,8 @@ export const enqueueAnchor = createServerFn({ method: "POST" })
     // Insert a queue row. Unique partial index makes this idempotent for active jobs.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: jobErr } = await supabaseAdmin
-      .from("chain_anchor_jobs")
-      .insert({ credential_id: data.credentialId, status: "queued" } as never);
+      .from("credential_anchor_jobs")
+      .insert({ credential_id: data.credentialId, operation: "anchor_credential", status: "queued" } as never);
     // Duplicate-key error is fine — a job is already pending.
     if (jobErr && !/duplicate key|unique/i.test(jobErr.message)) {
       throw new Error(jobErr.message);
@@ -413,14 +413,15 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
 
     // Queue or anchor
     if (data.anchorMode === "later" || !chainCfg()) {
-      await supabaseAdmin
-        .from("chain_anchor_jobs")
+      const { error: qErr } = await supabaseAdmin
+        .from("template_anchor_jobs")
         .insert({
-          entity_type: "template",
-          entity_id: t.id,
+          template_id: t.id,
+          template_version: version,
           operation: "anchor_template",
           status: "queued",
         } as never);
+      if (qErr && !/duplicate/i.test(qErr.message)) throw new Error(qErr.message);
       await supabaseAdmin
         .from("template_blockchain_records")
         .update({ blockchain_status: "queued" } as never)
@@ -436,8 +437,40 @@ export const publishTemplateAndAnchor = createServerFn({ method: "POST" })
     // Anchor now
     const { processTemplateAnchor } = await import("./worker.server");
     const res = await processTemplateAnchor(t.id, version);
+    // Always record a job row so it appears in the queue history
+    await supabaseAdmin
+      .from("template_anchor_jobs")
+      .insert({
+        template_id: t.id,
+        template_version: version,
+        operation: "anchor_template",
+        status: res.ok ? "done" : "failed",
+        attempts: 1,
+        last_error: res.ok ? null : (res.error ?? null),
+        last_attempt_at: new Date().toISOString(),
+        transaction_hash: res.txHash ?? null,
+      } as never);
     return { ok: true, version, mode: "now" as const, result: res };
   });
+
+/** Internal helper: ensure a template is confirmed on-chain before anchoring a credential. */
+async function isTemplateAnchored(
+  supabaseAdminClient: any,
+  templateId: string | null | undefined,
+): Promise<{ anchored: boolean; reason?: string }> {
+  if (!templateId) return { anchored: false, reason: "Credential has no template" };
+  const { data: tpl } = await supabaseAdminClient
+    .from("templates")
+    .select("blockchain_status")
+    .eq("id", templateId)
+    .maybeSingle();
+  const status = (tpl as any)?.blockchain_status as string | undefined;
+  if (status === "confirmed") return { anchored: true };
+  return {
+    anchored: false,
+    reason: "Cannot anchor credential: the microcredential template is not yet anchored on the blockchain.",
+  };
+}
 
 interface IssueRecipientInput {
   earnerId: string;
