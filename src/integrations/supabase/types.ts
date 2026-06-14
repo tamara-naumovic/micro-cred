@@ -219,6 +219,56 @@ export type Database = {
           },
         ]
       }
+      credential_anchor_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          credential_id: string
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          next_attempt_at: string | null
+          operation: string
+          status: string
+          transaction_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          credential_id: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          next_attempt_at?: string | null
+          operation?: string
+          status?: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          credential_id?: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          next_attempt_at?: string | null
+          operation?: string
+          status?: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credential_anchor_jobs_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credential_blockchain_records: {
         Row: {
           anchored_at: string | null
@@ -700,6 +750,59 @@ export type Database = {
           type?: Database["public"]["Enums"]["organization_type"]
         }
         Relationships: []
+      }
+      template_anchor_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          next_attempt_at: string | null
+          operation: string
+          status: string
+          template_id: string
+          template_version: string
+          transaction_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          next_attempt_at?: string | null
+          operation?: string
+          status?: string
+          template_id: string
+          template_version: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          next_attempt_at?: string | null
+          operation?: string
+          status?: string
+          template_id?: string
+          template_version?: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_anchor_jobs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       template_assignees: {
         Row: {
