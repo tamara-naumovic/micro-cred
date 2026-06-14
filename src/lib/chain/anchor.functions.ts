@@ -741,43 +741,45 @@ export const anchorCredentialNow = createServerFn({ method: "POST" })
 /** Cancel a queued anchor job. */
 export const cancelAnchorJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { jobId: string }) => d)
+  .inputValidator((d: { jobId: string; entityKind: "template" | "credential" }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: job } = await supabaseAdmin
-      .from("chain_anchor_jobs")
+    const table = data.entityKind === "template" ? "template_anchor_jobs" : "credential_anchor_jobs";
+    const { data: job } = await (supabaseAdmin as any)
+      .from(table)
       .select("*")
       .eq("id", data.jobId)
       .maybeSingle();
     if (!job) throw new Error("Job not found");
-    await assertJobAccess(supabase as never, userId, job);
     const j = job as Record<string, any>;
+    const entityId = data.entityKind === "template" ? j.template_id : j.credential_id;
+    await assertJobAccess(supabase as never, userId, { entity_type: data.entityKind, entity_id: entityId });
     if (j.status === "done" || j.status === "running") {
       throw new Error("Job is no longer cancellable");
     }
-    await supabaseAdmin
-      .from("chain_anchor_jobs")
+    await (supabaseAdmin as any)
+      .from(table)
       .update({ status: "cancelled" } as never)
       .eq("id", data.jobId);
-    if (j.entity_type === "credential") {
+    if (data.entityKind === "credential") {
       await supabase
         .from("credentials")
         .update({ chain_status: "cancelled" } as never)
-        .eq("id", j.entity_id);
+        .eq("id", entityId);
       await supabaseAdmin
         .from("credential_blockchain_records")
         .update({ blockchain_status: "cancelled" } as never)
-        .eq("credential_id", j.entity_id);
+        .eq("credential_id", entityId);
     } else {
       await supabaseAdmin
         .from("templates")
         .update({ blockchain_status: "cancelled" } as never)
-        .eq("id", j.entity_id);
+        .eq("id", entityId);
       await supabaseAdmin
         .from("template_blockchain_records")
         .update({ blockchain_status: "cancelled" } as never)
-        .eq("template_id", j.entity_id);
+        .eq("template_id", entityId);
     }
     return { ok: true };
   });
@@ -818,10 +820,8 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
 
     if (alreadyConfirmed) {
       await supabaseAdmin
-        .from("chain_anchor_jobs")
+        .from("credential_anchor_jobs")
         .insert({
-          entity_type: "credential",
-          entity_id: data.credentialId,
           credential_id: data.credentialId,
           operation: "revoke_credential",
           status: "queued",
@@ -831,9 +831,9 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
 
     // Cancel any pending issuance anchor jobs
     await supabaseAdmin
-      .from("chain_anchor_jobs")
+      .from("credential_anchor_jobs")
       .update({ status: "cancelled" } as never)
-      .eq("entity_id", data.credentialId)
+      .eq("credential_id", data.credentialId)
       .eq("operation", "anchor_credential")
       .in("status", ["queued", "failed"]);
     await supabase
