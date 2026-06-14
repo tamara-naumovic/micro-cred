@@ -389,9 +389,41 @@ function Form() {
               )}
             </div>
           </div>
+
+          <div className="rounded-md border p-4 space-y-3">
+            <div>
+              <Label>Blockchain registration</Label>
+              <p className="text-xs text-muted-foreground">
+                Choose when to anchor the template's cryptographic proof on Bloxberg. Publishing happens immediately either way.
+              </p>
+            </div>
+            <RadioGroup value={anchorMode} onValueChange={(v) => setAnchorMode(v as "now" | "later")} className="space-y-2">
+              <div className="flex items-start gap-2">
+                <RadioGroupItem value="now" id="anchor-now" disabled={chainStatus !== "ok"} />
+                <Label htmlFor="anchor-now" className="font-normal">
+                  Publish and anchor now
+                  <span className="block text-xs text-muted-foreground">Submit the proof transaction to Bloxberg immediately.</span>
+                </Label>
+              </div>
+              <div className="flex items-start gap-2">
+                <RadioGroupItem value="later" id="anchor-later" />
+                <Label htmlFor="anchor-later" className="font-normal">
+                  Publish now, anchor later
+                  <span className="block text-xs text-muted-foreground">The template is published immediately and queued for anchoring.</span>
+                </Label>
+              </div>
+            </RadioGroup>
+            {chainStatus !== "ok" && (
+              <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-2 text-xs">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5" />
+                <span>Bloxberg integration is not currently available. The template will still publish and can be anchored later.</span>
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" disabled={submitting} onClick={() => submit("draft")}>Save as draft</Button>
-            <Button disabled={submitting} onClick={() => submit("active")}>Publish micro-credential</Button>
+            <Button disabled={submitting} onClick={() => submit("publish")}>Publish micro-credential</Button>
           </div>
         </CardContent>
       </Card>
