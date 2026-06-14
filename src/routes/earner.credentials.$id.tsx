@@ -226,7 +226,7 @@ function DetailLayout(p: DetailLayoutProps) {
               )}
             </CardContent>
           </Card>
-          <EbsiPlaceholderCard blockchain={p.blockchain} />
+          <BlockchainAnchorCard anchor={p.blockchain} showSecret />
         </div>
 
         <div className="space-y-6">
