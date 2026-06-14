@@ -1001,7 +1001,6 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
       const { processCredentialAnchor } = await import("./worker.server");
       res = await processCredentialAnchor(entityId);
     } else {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: rec } = await supabaseAdmin
         .from("template_blockchain_records")
         .select("template_version")
@@ -1014,7 +1013,6 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
       res = await processTemplateAnchor(entityId, version);
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin
       .from("chain_anchor_jobs")
       .update({
