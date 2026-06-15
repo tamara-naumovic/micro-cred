@@ -290,7 +290,7 @@ function QaDocumentsEditor({
     }
   };
 
-  const refresh = useStore((s) => s.refetchAll);
+  const { refresh } = useStore();
 
   const onRemove = async (path: string) => {
     setBusy(true);
