@@ -100,6 +100,14 @@ export const addIssuerStaff = createServerFn({ method: "POST" })
         userId = invited.user.id;
       }
 
+      // Ensure profile exists even if the auth trigger didn't run
+      await supabaseAdmin
+        .from("profiles")
+        .upsert(
+          { id: userId, email, display_name: data.displayName ?? "" },
+          { onConflict: "id" },
+        );
+
       // Trigger inserted a default earner role — staff accounts don't need it
       await supabaseAdmin
         .from("user_roles")
