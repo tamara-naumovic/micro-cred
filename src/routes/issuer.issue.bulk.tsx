@@ -63,10 +63,35 @@ function Bulk() {
   );
   const [templateId, setTemplateId] = useState(myTemplates[0]?.id ?? "");
   const [csv, setCsv] = useState(SAMPLE);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const rows = useMemo(() => parseCsv(csv), [csv]);
   const [anchorMode, setAnchorMode] = useState<AnchorMode>("later");
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<IssuanceResultRow[] | null>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const isCsv = file.name.toLowerCase().endsWith(".csv") || file.type === "text/csv" || file.type === "application/vnd.ms-excel";
+    if (!isCsv) return toast.error("Please upload a .csv file");
+    if (file.size > 1_000_000) return toast.error("File too large (max 1 MB)");
+    try {
+      let text = await file.text();
+      if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+      setCsv(text);
+      setFileName(file.name);
+      toast.success(`Loaded ${file.name}`);
+    } catch {
+      toast.error("Failed to read file");
+    }
+  };
+
+  const clearFile = () => {
+    setCsv(SAMPLE);
+    setFileName(null);
+  };
 
   // Earners with an existing non-revoked credential for the selected template
   const earnersWithActive = useMemo(() => {
