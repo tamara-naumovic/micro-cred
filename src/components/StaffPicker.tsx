@@ -11,9 +11,10 @@ interface StaffPickerProps {
   selected: string[];
   onChange: (ids: string[]) => void;
   placeholder?: string;
+  emptyMessage?: string;
 }
 
-export function StaffPicker({ staff, selected, onChange, placeholder }: StaffPickerProps) {
+export function StaffPicker({ staff, selected, onChange, placeholder, emptyMessage }: StaffPickerProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,7 +92,7 @@ export function StaffPicker({ staff, selected, onChange, placeholder }: StaffPic
       )}
       {open && query && results.length === 0 && (
         <div className="absolute left-0 right-0 z-50 mt-1 rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
-          No staff found
+          {emptyMessage ?? "No staff found"}
         </div>
       )}
     </div>
