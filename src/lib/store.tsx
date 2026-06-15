@@ -257,6 +257,7 @@ function mapOrg(r: Row): Organization {
     about: (r.about as string | null) ?? undefined,
     website: (r.website as string | null) ?? undefined,
     accreditations: (r.accreditations as string[]) ?? [],
+    accreditationDocumentUrl: (r.accreditation_document_url as string | null) ?? undefined,
     registeredAt: r.registered_at as string,
   };
 }
