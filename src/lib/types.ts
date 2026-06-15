@@ -114,6 +114,7 @@ export interface MicroCredentialTemplate {
   qualityAssurance: string;
   qaType: QaType;
   qaDocumentPath?: string;
+  qaDocumentPaths?: string[];
   prerequisites: string;
   prerequisitesNone: boolean;
   supervision: string;
