@@ -904,6 +904,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       approveRegistration,
       rejectRegistration,
       markAllRead,
+      markRead,
       reset,
     }),
     [
@@ -911,7 +912,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       advanceApplicationStatus, rejectApplication, addReviewerComment,
       issueFromApplication, directIssue, bulkIssue, revokeCredential,
       upsertTemplate, archiveTemplate, assignTemplateUsers, approveRegistration, rejectRegistration,
-      markAllRead, reset,
+      markAllRead, markRead, reset,
     ],
   );
 
