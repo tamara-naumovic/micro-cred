@@ -1238,8 +1238,22 @@ function LearnerOverview({
                   strokeDasharray="3 3"
                   stroke="hsl(var(--border))"
                 />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }}>
+                  <Label
+                    value="Credentials per learner"
+                    position="insideBottom"
+                    offset={-2}
+                    style={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  />
+                </XAxis>
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }}>
+                  <Label
+                    value="Number of learners"
+                    angle={-90}
+                    position="insideLeft"
+                    style={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  />
+                </YAxis>
                 <Tooltip
                   contentStyle={{
                     background: "hsl(var(--popover))",
