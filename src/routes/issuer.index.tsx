@@ -301,8 +301,6 @@ function Overview() {
       actions={
         <>
           <DashboardFilters
-            period={period}
-            onPeriod={setPeriod}
             templateFilter={templateFilter}
             onTemplate={setTemplateFilter}
             templates={orgTemplates}
