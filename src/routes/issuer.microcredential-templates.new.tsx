@@ -92,7 +92,8 @@ function Form() {
 
   // QA
   const [qaType, setQaType] = useState<QaType | "">("");
-  const [qaFile, setQaFile] = useState<File | null>(null);
+  const [qaFiles, setQaFiles] = useState<File[]>([]);
+  const [qaDragOver, setQaDragOver] = useState(false);
 
   // Optional new fields
   const [prereqNone, setPrereqNone] = useState(true);
