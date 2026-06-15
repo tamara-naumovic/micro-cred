@@ -106,6 +106,7 @@ interface StoreCtx extends State {
   rejectRegistration: (id: string) => void;
 
   markAllRead: (role: Role, userId?: string) => void;
+  markRead: (id: string) => void;
   reset: () => void;
 }
 
