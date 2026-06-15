@@ -200,6 +200,8 @@ interface DetailLayoutProps {
 }
 
 function DetailLayout(p: DetailLayoutProps) {
+  const isPending = p.lifecycle === "pending_earner_acceptance";
+  const isRejected = p.lifecycle === "rejected";
   return (
     <PageShell
       title={p.title}
@@ -212,6 +214,24 @@ function DetailLayout(p: DetailLayoutProps) {
         </Button>
       }
     >
+      {isPending && (
+        <AcceptanceBanner
+          credentialId={p.credentialId}
+          onChanged={p.onAcceptanceChanged}
+          mockNotice={p.mockNotice}
+        />
+      )}
+      {isRejected && (
+        <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
+          <div className="font-medium text-destructive">You rejected this credential.</div>
+          {p.rejectionReason && (
+            <div className="mt-1 text-muted-foreground">Reason: {p.rejectionReason}</div>
+          )}
+          <div className="mt-1 text-xs text-muted-foreground">
+            Waiting for the issuer to update and resend, or to accept the rejection.
+          </div>
+        </div>
+      )}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <Card>
