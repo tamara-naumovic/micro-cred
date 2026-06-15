@@ -1,9 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, BadgeCheck, ExternalLink, Globe2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, BadgeCheck, ExternalLink, FileText, Globe2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/lib/store";
+import type { MicroCredentialTemplate } from "@/lib/types";
 
 export const Route = createFileRoute("/issuers/$id")({
   head: ({ params }) => ({
@@ -21,7 +24,18 @@ function IssuerProfile() {
   const issuer = organizations.find((o) => o.id === id && o.type === "issuer");
   if (!issuer) throw notFound();
   const tpls = templates.filter((t) => t.issuerId === id && t.status !== "archived");
+  const formal = tpls.filter((t) => t.source === "formal");
+  const nonFormal = tpls.filter((t) => t.source === "non_formal");
   const issuedCount = credentials.filter((c) => c.issuerId === id).length;
+  const registeredYear = issuer.registeredAt
+    ? new Date(issuer.registeredAt).getFullYear()
+    : null;
+
+  const websiteHref = issuer.website
+    ? issuer.website.startsWith("http")
+      ? issuer.website
+      : `https://${issuer.website}`
+    : null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 md:px-8">
@@ -40,11 +54,14 @@ function IssuerProfile() {
               </div>
               <div>
                 <h1 className="font-display text-2xl font-semibold leading-tight">{issuer.name}</h1>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <Globe2 className="h-3.5 w-3.5" /> {issuer.country}
-                  {issuer.website && (
+                <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <Globe2 className="h-3.5 w-3.5" /> {issuer.country}
+                  </span>
+                  {registeredYear && <span>Registered since {registeredYear}</span>}
+                  {websiteHref && (
                     <a
-                      href={issuer.website.startsWith("http") ? issuer.website : `https://${issuer.website}`}
+                      href={websiteHref}
                       className="inline-flex items-center gap-1 text-primary hover:underline"
                       target="_blank"
                       rel="noreferrer"
@@ -61,7 +78,9 @@ function IssuerProfile() {
             </div>
           </div>
 
-          {issuer.about && <p className="mt-5 text-sm leading-relaxed text-muted-foreground">{issuer.about}</p>}
+          {issuer.about && (
+            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">{issuer.about}</p>
+          )}
 
           {issuer.accreditations && issuer.accreditations.length > 0 && (
             <div className="mt-5">
@@ -73,12 +92,43 @@ function IssuerProfile() {
               </div>
             </div>
           )}
+
+          {issuer.accreditationDocumentUrl && (
+            <div className="mt-5">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                Accreditation document
+              </div>
+              <div className="mt-2">
+                <AccreditationDocLink path={issuer.accreditationDocumentUrl} />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <h2 className="mt-10 mb-4 font-display text-xl font-semibold">Micro-credentials this issuer can award</h2>
+      <TemplateSection title="Formal credentials" items={formal} />
+      <TemplateSection title="Non-formal credentials" items={nonFormal} />
+
+      {tpls.length === 0 && (
+        <p className="mt-10 text-sm text-muted-foreground">No active templates.</p>
+      )}
+    </main>
+  );
+}
+
+function TemplateSection({
+  title,
+  items,
+}: {
+  title: string;
+  items: MicroCredentialTemplate[];
+}) {
+  if (items.length === 0) return null;
+  return (
+    <>
+      <h2 className="mt-10 mb-4 font-display text-xl font-semibold">{title}</h2>
       <div className="grid gap-3 md:grid-cols-2">
-        {tpls.map((t) => (
+        {items.map((t) => (
           <Card key={t.id}>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">{t.title}</CardTitle>
@@ -91,15 +141,47 @@ function IssuerProfile() {
                 </Badge>
                 {t.level !== "N/A" && <Badge variant="outline">{t.level}</Badge>}
                 {t.ects && <Badge variant="outline">{t.ects} ECTS</Badge>}
-                <Badge variant="outline" className="capitalize">{t.participation.replace(/_/g, " ")}</Badge>
+                <Badge variant="outline" className="capitalize">
+                  {t.participation.replace(/_/g, " ")}
+                </Badge>
               </div>
             </CardContent>
           </Card>
         ))}
-        {tpls.length === 0 && (
-          <p className="text-sm text-muted-foreground">No active templates.</p>
-        )}
       </div>
-    </main>
+    </>
+  );
+}
+
+function AccreditationDocLink({ path }: { path: string }) {
+  const [loading, setLoading] = useState(false);
+
+  const open = async () => {
+    // If it's already a full URL, just open it
+    if (/^https?:\/\//i.test(path)) {
+      window.open(path, "_blank", "noreferrer");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .storage
+        .from("accreditation-docs")
+        .createSignedUrl(path, 60 * 60);
+      if (error || !data?.signedUrl) {
+        console.error("[accreditation doc]", error);
+        return;
+      }
+      window.open(data.signedUrl, "_blank", "noreferrer");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button variant="outline" size="sm" onClick={open} disabled={loading}>
+      <FileText className="mr-1 h-3.5 w-3.5" />
+      {loading ? "Opening…" : "View document"}
+    </Button>
   );
 }
