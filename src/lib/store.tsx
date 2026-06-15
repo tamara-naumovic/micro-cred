@@ -298,6 +298,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>(emptyState);
   const [activeUser, setActiveUserState] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const stateRef = useRef<State>(emptyState);
+  stateRef.current = state;
   const activeUserRef = useRef<MockUser | null>(null);
   activeUserRef.current = activeUser;
 
