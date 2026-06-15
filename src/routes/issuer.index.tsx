@@ -80,27 +80,6 @@ export const Route = createFileRoute("/issuer/")({
 
 // ============ Helpers ============
 
-type Period = "30d" | "6m" | "ay" | "all";
-
-function periodStart(p: Period): Date {
-  const now = new Date();
-  if (p === "30d") {
-    const d = new Date(now);
-    d.setDate(d.getDate() - 30);
-    return d;
-  }
-  if (p === "6m") {
-    const d = new Date(now);
-    d.setMonth(d.getMonth() - 6);
-    return d;
-  }
-  if (p === "ay") {
-    // Academic year: Oct 1 - Sep 30
-    const y = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
-    return new Date(y, 9, 1);
-  }
-  return new Date(0);
-}
 
 function maskAddress(addr?: string) {
   if (!addr) return "Not configured";
