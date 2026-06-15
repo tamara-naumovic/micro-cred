@@ -810,12 +810,21 @@ export const revealLearnerSecret = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: cred } = await supabase
       .from("credentials")
-      .select("earner_id, learner_secret")
+      .select("earner_id")
       .eq("id", data.credentialId)
       .maybeSingle();
-    if (!cred || cred.earner_id !== userId) throw new Error("Forbidden");
-    return { secret: (cred.learner_secret as string) ?? null };
+    if (!cred || (cred as { earner_id: string }).earner_id !== userId) {
+      throw new Error("Forbidden");
+    }
+    // RLS on credential_secrets also restricts to the earner.
+    const { data: row } = await supabase
+      .from("credential_secrets")
+      .select("secret")
+      .eq("credential_id", data.credentialId)
+      .maybeSingle();
+    return { secret: ((row as { secret: string } | null)?.secret) ?? null };
   });
+
 
 // ============================================================================
 // Phase 5: Anchoring Queue listing + retry
