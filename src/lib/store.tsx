@@ -166,6 +166,7 @@ function mapTemplate(r: Row, orgName: Map<string, string>): MicroCredentialTempl
     qualityAssurance: (r.quality_assurance as string) ?? "",
     qaType: ((r.qa_type as string) ?? "not_specified") as MicroCredentialTemplate["qaType"],
     qaDocumentPath: (r.qa_document_path as string | null) ?? undefined,
+    qaDocumentPaths: ((r.qa_document_paths as string[] | null) ?? []),
     prerequisites: (r.prerequisites as string) ?? "",
     prerequisitesNone: (r.prerequisites_none as boolean | null) ?? true,
     supervision: (r.supervision as string) ?? "",
