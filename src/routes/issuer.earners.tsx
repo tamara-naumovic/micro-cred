@@ -34,7 +34,7 @@ export const Route = createFileRoute("/issuer/earners")({
 });
 
 function EarnersPage() {
-  const { activeUser, earnerInstitutions, users } = useStore();
+  const { activeUser, earnerInstitutions, users, refresh } = useStore();
   const router = useRouter();
   const create = useServerFn(orgCreateEarner);
   const bulk = useServerFn(orgBulkCreateEarners);
@@ -103,6 +103,7 @@ function EarnersPage() {
         reset();
         toast.success(form.mode === "invite" ? "Invitation sent" : "Earner added");
       }
+      await refresh();
       router.invalidate();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed");
@@ -116,6 +117,7 @@ function EarnersPage() {
     try {
       await unlink({ data: { earnerId, organizationId: orgId } });
       toast.success("Unlinked");
+      await refresh();
       router.invalidate();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed");
@@ -174,6 +176,7 @@ function EarnersPage() {
                 label="earners"
                 onSubmit={async (rs) => {
                   const res = await bulk({ data: { organizationId: orgId, rows: rs } });
+                  await refresh();
                   router.invalidate();
                   return res;
                 }}
