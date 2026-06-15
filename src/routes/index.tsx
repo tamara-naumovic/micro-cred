@@ -89,12 +89,6 @@ function Home() {
             )}
           </div>
 
-          {/* Quick stats */}
-          <div className="mt-12 grid max-w-3xl grid-cols-3 gap-4">
-            <Stat n="\n" label="\n" />
-            <Stat n="\n" label="\n" />
-            <Stat n="\n" label="\n" />
-          </div>
         </div>
       </section>
 
