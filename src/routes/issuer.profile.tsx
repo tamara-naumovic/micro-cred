@@ -46,7 +46,12 @@ function Profile() {
               {org.accreditations?.map((a) => <Badge key={a} variant="outline">{a}</Badge>)}
             </div>
             {org.website && (
-              <a href={org.website} target="_blank" rel="noreferrer" className="inline-flex items-center text-primary hover:underline">
+              <a
+                href={org.website.startsWith("http") ? org.website : `https://${org.website}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center text-primary hover:underline"
+              >
                 <Globe className="mr-1 h-4 w-4" />{org.website}
               </a>
             )}
