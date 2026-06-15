@@ -48,8 +48,15 @@ export const Route = createFileRoute("/issuer/microcredential-templates/new")({
 
 function Guarded() {
   const { activeUser } = useStore();
+  const isStaff = activeUser?.subRole === "staff";
+  useEffect(() => {
+    if (isStaff) {
+      toast.error("You don't have permission to create micro-credentials.");
+    }
+  }, [isStaff]);
   if (!activeUser) return null;
-  if (activeUser.subRole !== "admin") return <Navigate to="/issuer/microcredential-templates" />;
+  if (activeUser.subRole !== "admin")
+    return <Navigate to="/issuer/microcredential-templates" replace />;
   return <Form />;
 }
 
