@@ -24,8 +24,11 @@ const STATUS_PUBLISHED = 0;
  * vc_json / credential_hash / learner_commitment / learner_secret /
  * template_ref. Without these the on-chain submit would receive null
  * hex strings and crash with "Cannot read properties of null (reading 'startsWith')".
+ *
+ * Exported so server fns (repairCredentialChainFields) can reuse the same
+ * logic and surface failures explicitly to the UI.
  */
-async function ensureCredentialChainFields(
+export async function ensureCredentialChainFields(
   supabaseAdmin: any,
   cred: Record<string, any>,
 ): Promise<Record<string, any>> {
@@ -99,7 +102,7 @@ async function ensureCredentialChainFields(
     (cred.learner_commitment as string | null) ??
     learnerCommitmentKeccak(cred.earner_id, cred.id, learnerSecret);
 
-  await supabaseAdmin
+  const { error: updErr } = await supabaseAdmin
     .from("credentials")
     .update({
       vc_id: vcId,
@@ -112,6 +115,11 @@ async function ensureCredentialChainFields(
       learner_commitment: learnerCommitment,
     } as never)
     .eq("id", cred.id);
+  if (updErr) {
+    throw new Error(
+      `Failed to backfill chain fields for credential ${cred.id}: ${updErr.message}`,
+    );
+  }
 
   const contractAddress =
     process.env.CREDENTIAL_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
@@ -140,6 +148,7 @@ async function ensureCredentialChainFields(
     learner_commitment: learnerCommitment,
   };
 }
+
 
 export async function processCredentialAnchor(credentialId: string): Promise<{
   ok: boolean;
