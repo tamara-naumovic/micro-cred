@@ -44,7 +44,7 @@ function IssuerProfile() {
                   <Globe2 className="h-3.5 w-3.5" /> {issuer.country}
                   {issuer.website && (
                     <a
-                      href={issuer.website}
+                      href={issuer.website.startsWith("http") ? issuer.website : `https://${issuer.website}`}
                       className="inline-flex items-center gap-1 text-primary hover:underline"
                       target="_blank"
                       rel="noreferrer"
