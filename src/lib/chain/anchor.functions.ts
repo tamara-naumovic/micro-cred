@@ -624,10 +624,16 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             vc_json: vc,
             credential_hash: docHash,
             learner_commitment: learnerCommitment,
-            learner_secret: secret,
             chain_status: "not_requested",
           } as never);
         if (insErr) throw new Error(insErr.message);
+
+        // Persist learner secret to the earner-only table.
+        await supabaseAdmin
+          .from("credential_secrets")
+          .upsert({ credential_id: credentialId, secret } as never, {
+            onConflict: "credential_id",
+          } as never);
 
         // Blockchain record stub — anchoring deferred until earner accepts.
         const contractAddress =
@@ -642,6 +648,7 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             document_hash: docHash,
             blockchain_status: "not_requested",
           } as never);
+
 
         // Intentionally do NOT enqueue an anchor job: it will be enqueued
         // when the earner accepts the credential. effectiveMode (now/later)
