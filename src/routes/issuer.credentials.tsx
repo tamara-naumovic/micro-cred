@@ -20,6 +20,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useStore } from "@/lib/store";
 import {
   BLOCKCHAIN_LABEL,
@@ -39,8 +46,10 @@ export const Route = createFileRoute("/issuer/credentials")({
 });
 
 function List() {
-  const { activeUser, credentials, templateAssignees } = useStore();
+  const { activeUser, credentials, templateAssignees, templates } = useStore();
   const [q, setQ] = useState("");
+  const [templateFilter, setTemplateFilter] = useState<string>("all");
+  const [lifecycleFilter, setLifecycleFilter] = useState<string>("all");
   const [editTarget, setEditTarget] = useState<IssuedCredential | null>(null);
   const [grade, setGrade] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -54,15 +63,30 @@ function List() {
   const assignedIds = new Set(
     templateAssignees.filter((a) => a.userId === activeUser.id).map((a) => a.templateId),
   );
+  const availableTemplates = templates
+    .filter((t) => t.issuerId === activeUser.organizationId)
+    .filter((t) => (isStaff ? assignedIds.has(t.id) : true));
   const mine = credentials
     .filter((c) => c.issuerId === activeUser.organizationId)
     .filter((c) => (isStaff ? (c.templateId ? assignedIds.has(c.templateId) : false) : true))
+    .filter((c) => templateFilter === "all" || c.templateId === templateFilter)
+    .filter((c) => lifecycleFilter === "all" || (c.lifecycle ?? "issued") === lifecycleFilter)
     .filter((c) =>
       !q ||
       c.title.toLowerCase().includes(q.toLowerCase()) ||
       c.earnerName.toLowerCase().includes(q.toLowerCase()) ||
       c.id.toLowerCase().includes(q.toLowerCase()),
     );
+
+  const LIFECYCLE_OPTIONS: { value: string; label: string }[] = [
+    { value: "issued", label: "Issued" },
+    { value: "pending_earner_acceptance", label: "Pending acceptance" },
+    { value: "rejected", label: "Rejected" },
+    { value: "revoked", label: "Revoked" },
+    { value: "expired", label: "Expired" },
+    { value: "superseded", label: "Superseded" },
+    { value: "draft", label: "Draft" },
+  ];
 
   const openEdit = (c: IssuedCredential) => {
     setEditTarget(c);
@@ -108,7 +132,42 @@ function List() {
     <PageShell
       title="Issued Credentials"
       description="All micro-credentials your organisation has issued."
-      actions={<Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="w-56" />}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            placeholder="Search…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-56"
+          />
+          <Select value={templateFilter} onValueChange={setTemplateFilter}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="All templates" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All templates</SelectItem>
+              {availableTemplates.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={lifecycleFilter} onValueChange={setLifecycleFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All lifecycle statuses</SelectItem>
+              {LIFECYCLE_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      }
     >
       <Card>
         <CardContent className="p-0">
