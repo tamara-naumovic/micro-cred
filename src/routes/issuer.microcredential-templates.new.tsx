@@ -139,19 +139,20 @@ function Form() {
 
     setSubmitting(true);
     const id = crypto.randomUUID();
-    let qaPath: string | undefined;
+    const qaPaths: string[] = [];
     try {
-      if (qaFile) {
-        const safeName = qaFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        qaPath = `${activeUser.organizationId}/${id}/${safeName}`;
+      for (const f of qaFiles) {
+        const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${activeUser.organizationId}/${id}/${Date.now()}-${safeName}`;
         const { error: upErr } = await supabase.storage
           .from("qa-documents")
-          .upload(qaPath, qaFile, { upsert: false, contentType: qaFile.type || undefined });
+          .upload(path, f, { upsert: false, contentType: f.type || undefined });
         if (upErr) {
-          toast.error(`Failed to upload QA document: ${upErr.message}`);
+          toast.error(`Failed to upload ${f.name}: ${upErr.message}`);
           setSubmitting(false);
           return;
         }
+        qaPaths.push(path);
       }
 
       const tpl: MicroCredentialTemplate = {
