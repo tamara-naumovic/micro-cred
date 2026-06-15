@@ -1,26 +1,25 @@
 import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Trash2, Upload, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
 import { BulkUsersUpload } from "@/components/admin/BulkUsersUpload";
 import { useStore } from "@/lib/store";
-import { orgBulkCreateEarners, orgCreateEarner, removeEarnerInstitution } from "@/lib/admin-users.functions";
+import {
+  assignEarnerInstitution,
+  orgBulkCreateEarners,
+  orgCreateEarner,
+  removeEarnerInstitution,
+} from "@/lib/admin-users.functions";
 
 const PAGE_SIZE = 10;
 
@@ -39,9 +38,10 @@ function EarnersPage() {
   const router = useRouter();
   const create = useServerFn(orgCreateEarner);
   const bulk = useServerFn(orgBulkCreateEarners);
+  const assign = useServerFn(assignEarnerInstitution);
   const unlink = useServerFn(removeEarnerInstitution);
-  const [open, setOpen] = useState(false);
-  const [bulkOpen, setBulkOpen] = useState(false);
+  const [tab, setTab] = useState<"existing" | "new" | "bulk">("existing");
+  const [existingEmail, setExistingEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm, reset] = useProvisionState();
   const [page, setPage] = useState(1);
@@ -76,23 +76,34 @@ function EarnersPage() {
     );
   }
 
-  async function onCreate(e: React.FormEvent) {
+  async function onAdd(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      await create({
-        data: {
-          organizationId: orgId,
-          email: form.email,
-          displayName: form.displayName,
-          mode: form.mode,
-          password: form.password,
-          redirectTo: typeof window !== "undefined" ? `${window.location.origin}/set-password` : undefined,
-        },
-      });
-      toast.success(form.mode === "invite" ? "Invitation sent" : "Earner added");
-      reset();
-      setOpen(false);
+      if (tab === "existing") {
+        const email = existingEmail.trim().toLowerCase();
+        if (!email) return;
+        const user = users.find((u) => u.email.toLowerCase() === email);
+        if (!user) throw new Error("No user found with that email");
+        if (user.role !== "earner") throw new Error("That user is not an earner");
+        await assign({ data: { earnerId: user.id, organizationId: orgId } });
+        setExistingEmail("");
+        toast.success("Earner linked");
+      } else {
+        await create({
+          data: {
+            organizationId: orgId,
+            email: form.email,
+            displayName: form.displayName,
+            mode: form.mode,
+            password: form.password,
+            redirectTo: typeof window !== "undefined" ? `${window.location.origin}/set-password` : undefined,
+          },
+        });
+        reset();
+        toast.success(form.mode === "invite" ? "Invitation sent" : "Earner added");
+      }
+      router.invalidate();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed");
     } finally {
@@ -105,6 +116,7 @@ function EarnersPage() {
     try {
       await unlink({ data: { earnerId, organizationId: orgId } });
       toast.success("Unlinked");
+      router.invalidate();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed");
     } finally {
@@ -116,53 +128,61 @@ function EarnersPage() {
     <PageShell
       title="Earners"
       description="Students linked to your institution."
-      actions={
-        <div className="flex gap-2">
-          <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Bulk add</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Bulk add earners</DialogTitle>
-                <DialogDescription>
-                  Provision multiple earner accounts at once with set passwords.
-                </DialogDescription>
-              </DialogHeader>
+    >
+      <Card className="mb-6">
+        <CardContent className="p-5">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "existing" | "new" | "bulk")}>
+            <TabsList className="grid w-full grid-cols-3 sm:w-auto">
+              <TabsTrigger value="existing">Existing user</TabsTrigger>
+              <TabsTrigger value="new">Create new account</TabsTrigger>
+              <TabsTrigger value="bulk">Bulk add</TabsTrigger>
+            </TabsList>
+            <TabsContent value="existing" className="mt-4">
+              <form onSubmit={onAdd} className="space-y-4">
+                <div>
+                  <Label htmlFor="earner-email">Email of existing user</Label>
+                  <Input
+                    id="earner-email"
+                    type="email"
+                    placeholder="student@example.com"
+                    value={existingEmail}
+                    onChange={(e) => setExistingEmail(e.target.value)}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    The person must already have an earner account on the platform.
+                  </p>
+                </div>
+                <div className="flex justify-end">
+                  <SubmitButton busy={busy}>
+                    <UserPlus className="mr-2 h-4 w-4" />Add earner
+                  </SubmitButton>
+                </div>
+              </form>
+            </TabsContent>
+            <TabsContent value="new" className="mt-4">
+              <form onSubmit={onAdd} className="space-y-4">
+                <ProvisionFields value={form} onChange={setForm} disabled={busy} />
+                <div className="flex justify-end">
+                  <SubmitButton busy={busy}>
+                    <UserPlus className="mr-2 h-4 w-4" />Add earner
+                  </SubmitButton>
+                </div>
+              </form>
+            </TabsContent>
+            <TabsContent value="bulk" className="mt-4">
               <BulkUsersUpload
                 label="earners"
                 onSubmit={async (rs) => {
                   const res = await bulk({ data: { organizationId: orgId, rows: rs } });
                   router.invalidate();
-                  if (res.failed === 0) setBulkOpen(false);
                   return res;
                 }}
               />
-            </DialogContent>
-          </Dialog>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><UserPlus className="mr-2 h-4 w-4" /> Add earner</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Add earner</DialogTitle>
-                <DialogDescription>
-                  Existing accounts are linked to your institution. New accounts are
-                  provisioned and linked in one step.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={onCreate} className="space-y-4">
-                <ProvisionFields value={form} onChange={setForm} disabled={busy} />
-                <DialogFooter>
-                  <SubmitButton busy={busy}>Add</SubmitButton>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      }
-    >
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardContent className="p-0">
           <Table>
