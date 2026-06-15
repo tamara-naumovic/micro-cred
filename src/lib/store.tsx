@@ -709,7 +709,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         inserts.push(
           buildCredentialInsert(
             tpl,
-            { id: u.id, name: `${r.firstName} ${r.lastName}` },
+            { id: u.id, name: u.name },
             r.grade,
             r.expiryDate,
           ),
