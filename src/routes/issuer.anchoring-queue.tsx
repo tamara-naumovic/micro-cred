@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listAnchorJobs, retryAnchorJob, cancelAnchorJob, repairCredentialChainFields } from "@/lib/chain/anchor.functions";
+import { listAnchorJobs, retryAnchorJob, cancelAnchorJob, repairCredentialChainFields, processAnchorQueueFn } from "@/lib/chain/anchor.functions";
 import { useAuth } from "@/lib/auth";
 import {
   BLOCKCHAIN_LABEL,
@@ -54,6 +54,7 @@ function AnchoringQueuePage() {
   const retry = useServerFn(retryAnchorJob);
   const cancel = useServerFn(cancelAnchorJob);
   const repair = useServerFn(repairCredentialChainFields);
+  const processQueue = useServerFn(processAnchorQueueFn);
   const qc = useQueryClient();
   const { user, loading: authLoading } = useAuth();
 
@@ -105,8 +106,18 @@ function AnchoringQueuePage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const processMut = useMutation({
+    mutationFn: () => processQueue(),
+    onSuccess: (res: { processed: number }) => {
+      toast.success(`Processed ${res.processed} job(s)`);
+      qc.invalidateQueries({ queryKey: ["anchor-jobs"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const rows = data?.rows ?? [];
   const maxAttempts = data?.maxAttempts ?? 5;
+
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -129,12 +140,22 @@ function AnchoringQueuePage() {
 
   return (
     <div className="container mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Blockchain Anchoring Queue</h1>
-        <p className="text-sm text-muted-foreground">
-          Independent of credential issuance. Templates and credentials are fully valid once
-          published or issued — anchoring only adds an external integrity proof on Bloxberg.
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Blockchain Anchoring Queue</h1>
+          <p className="text-sm text-muted-foreground">
+            Independent of credential issuance. Templates and credentials are fully valid once
+            published or issued — anchoring only adds an external integrity proof on Bloxberg.
+          </p>
+        </div>
+        <Button
+          onClick={() => processMut.mutate()}
+          disabled={processMut.isPending}
+          className="shrink-0"
+        >
+          <RefreshCcw className={`mr-2 h-4 w-4 ${processMut.isPending ? "animate-spin" : ""}`} />
+          {processMut.isPending ? "Processing…" : "Process queue now"}
+        </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">
@@ -143,6 +164,7 @@ function AnchoringQueuePage() {
         <SummaryStat label="Failed" value={counts.failed} tone="destructive" />
         <SummaryStat label="Confirmed" value={counts.done} tone="success" />
       </div>
+
 
       <Card>
         <CardHeader>
