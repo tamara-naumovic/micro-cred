@@ -1203,13 +1203,22 @@ export const rejectCredential = createServerFn({ method: "POST" })
     if (updErr) throw new Error(updErr.message);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("notifications").insert({
-      for_role: "issuer_admin",
-      for_org_id: (cred as any).issuer_id,
-      title: "Earner rejected credential",
-      body: `${(cred as any).title} was rejected. Reason: ${reason}`,
-      link: "/issuer/credentials",
-    } as never);
+    await supabaseAdmin.from("notifications").insert([
+      {
+        for_role: "issuer_admin",
+        for_org_id: (cred as any).issuer_id,
+        title: "Earner rejected credential",
+        body: `${(cred as any).title} was rejected. Reason: ${reason}`,
+        link: "/issuer/credentials",
+      },
+      {
+        for_role: "issuer_staff",
+        for_org_id: (cred as any).issuer_id,
+        title: "Earner rejected credential",
+        body: `${(cred as any).title} was rejected. Reason: ${reason}`,
+        link: "/issuer/credentials",
+      },
+    ] as never);
 
     return { ok: true };
   });
@@ -1340,9 +1349,22 @@ export const discardRejectedCredential = createServerFn({ method: "POST" })
     if (!isAdmin && !isOrgAdmin && !isAssignee) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: full } = await supabaseAdmin
+      .from("credentials")
+      .select("earner_id, title")
+      .eq("id", data.credentialId)
+      .maybeSingle();
     await supabaseAdmin.from("credential_anchor_jobs").delete().eq("credential_id", data.credentialId);
     await supabaseAdmin.from("credential_blockchain_records").delete().eq("credential_id", data.credentialId);
     await supabaseAdmin.from("credentials").delete().eq("id", data.credentialId);
+    if (full && (full as any).earner_id) {
+      await supabaseAdmin.from("notifications").insert({
+        for_user_id: (full as any).earner_id,
+        title: "Rejection accepted by issuer",
+        body: `Your rejection of "${(full as any).title}" was accepted. The credential has been discarded.`,
+        link: "/earner/credentials",
+      } as never);
+    }
 
     return { ok: true };
   });
