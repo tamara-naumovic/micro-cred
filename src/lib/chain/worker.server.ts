@@ -183,7 +183,9 @@ export async function processTemplateAnchor(
         .map((r) => r.id);
       if (credIds.length > 0) {
         const nowIso2 = new Date().toISOString();
-        // Reset any existing non-done jobs so the cron worker re-processes them now.
+        // Re-queue only jobs that were skipped due to "Chain not configured".
+        // Do NOT reset attempts/status on jobs that failed for other reasons —
+        // that would bypass MAX_ATTEMPTS and risk infinite retry loops.
         await supabaseAdmin
           .from("credential_anchor_jobs" as never)
           .update({
@@ -193,7 +195,8 @@ export async function processTemplateAnchor(
             last_error: null,
           } as never)
           .in("credential_id", credIds)
-          .neq("status", "done");
+          .eq("status", "failed")
+          .eq("last_error", "Chain not configured");
         // Insert jobs for credentials that don't have one yet (ignore duplicates).
         const rows = credIds.map((id) => ({
           credential_id: id,
