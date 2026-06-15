@@ -49,6 +49,7 @@ interface State {
   audit: AuditEvent[];
   events: PlatformEvent[];
   users: MockUser[];
+  userRolesById: Record<string, string[]>;
   templateAssignees: TemplateAssignment[];
   earnerInstitutions: EarnerInstitution[];
 }
@@ -63,6 +64,7 @@ const emptyState: State = {
   audit: [],
   events: [],
   users: [],
+  userRolesById: {},
   templateAssignees: [],
   earnerInstitutions: [],
 };
