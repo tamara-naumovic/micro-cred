@@ -1246,9 +1246,9 @@ function LearnerOverview({
                     style={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
                   />
                 </XAxis>
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }}>
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={45}>
                   <Label
-                    value="Number of learners"
+                    value={"Number of\nlearners"}
                     angle={-90}
                     position="left"
                     offset={10}
