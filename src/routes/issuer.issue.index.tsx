@@ -182,6 +182,7 @@ function Direct() {
                 selected={selectedIds}
                 onChange={setSelectedIds}
                 placeholder="Search earners by name or email"
+                emptyMessage="No earner found"
               />
             </div>
             {templateId && earnersWithActive.size > 0 && (

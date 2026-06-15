@@ -11,9 +11,10 @@ interface StaffPickerProps {
   selected: string[];
   onChange: (ids: string[]) => void;
   placeholder?: string;
+  emptyMessage?: string;
 }
 
-export function StaffPicker({ staff, selected, onChange, placeholder }: StaffPickerProps) {
+export function StaffPicker({ staff, selected, onChange, placeholder, emptyMessage }: StaffPickerProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
