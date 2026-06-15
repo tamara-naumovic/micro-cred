@@ -20,6 +20,7 @@ import {
 import { StatusBadge } from "@/components/StatusBadge";
 import { ChainPendingChip } from "@/components/CredentialCard";
 import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
+import { EvidenceSection } from "@/components/evidence/EvidenceSection";
 import { ShareDialog } from "@/components/ShareDialog";
 import { Switch } from "@/components/ui/switch";
 import { useStore } from "@/lib/store";
@@ -116,6 +117,7 @@ function RealDetail({ credentialId }: { credentialId: string }) {
       lifecycle={cred.credential_lifecycle as IssuedCredential["lifecycle"]}
       rejectionReason={cred.rejection_reason ?? undefined}
       onAcceptanceChanged={() => qc.invalidateQueries({ queryKey: ["credential", credentialId] })}
+      evidence={{ credentialId: cred.id, privateProofAvailable: !!cred.learner_secret }}
     />
   );
 }
@@ -198,6 +200,7 @@ interface DetailLayoutProps {
   lifecycle?: IssuedCredential["lifecycle"];
   rejectionReason?: string;
   onAcceptanceChanged?: () => void;
+  evidence?: { credentialId: string; privateProofAvailable: boolean };
 }
 
 function DetailLayout(p: DetailLayoutProps) {
@@ -289,6 +292,14 @@ function DetailLayout(p: DetailLayoutProps) {
             }}
             audience="owner"
           />
+
+          {p.evidence && !isPending && !isRejected && (
+            <EvidenceSection
+              credentialId={p.evidence.credentialId}
+              isOwner
+              privateProofAvailable={p.evidence.privateProofAvailable}
+            />
+          )}
 
         </div>
 
