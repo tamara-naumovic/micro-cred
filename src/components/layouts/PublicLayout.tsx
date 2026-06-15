@@ -49,8 +49,8 @@ export function PublicLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t border-border bg-muted/30 py-8 text-center text-xs text-muted-foreground">
-        MicroCred · Research prototype for the doctoral micro-credential platform · Mock data only
+      <footer className="border-t border-border bg-muted/30 py-8 text-center text-xs text-muted-foreground whitespace-pre-wrap">
+        MicroCred · Research prototype for the doctoral micro-credential platform&nbsp;
       </footer>
     </div>
   );
