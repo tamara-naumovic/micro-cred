@@ -46,7 +46,7 @@ function parseCsv(input: string): BulkRow[] {
 }
 
 function Bulk() {
-  const { activeUser, templates, users, templateAssignees } = useStore();
+  const { activeUser, templates, users, templateAssignees, credentials } = useStore();
   const issueBatch = useServerFn(issueCredentialsBatch);
   const isStaff = activeUser?.subRole === "staff";
   const assignedIds = useMemo(
@@ -68,27 +68,39 @@ function Bulk() {
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<IssuanceResultRow[] | null>(null);
 
-  // Pre-resolve emails to earner IDs
+  // Earners with an existing non-revoked credential for the selected template
+  const earnersWithActive = useMemo(() => {
+    if (!templateId) return new Set<string>();
+    return new Set(
+      credentials
+        .filter((c) => c.templateId === templateId && c.status !== "revoked")
+        .map((c) => c.earnerId),
+    );
+  }, [credentials, templateId]);
+
+  // Pre-resolve emails to earner IDs and detect duplicates
   const resolved = useMemo(() => {
     return rows.map((r) => {
       const u = users.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
-      return { row: r, user: u };
+      const alreadyHas = u ? earnersWithActive.has(u.id) : false;
+      return { row: r, user: u, alreadyHas };
     });
-  }, [rows, users]);
+  }, [rows, users, earnersWithActive]);
   const unmatched = resolved.filter((r) => !r.user).length;
+  const duplicates = resolved.filter((r) => r.user && r.alreadyHas).length;
 
   const submit = async () => {
     if (!templateId) return toast.error("Pick a micro-credential");
     if (rows.length === 0) return toast.error("CSV is empty or malformed");
     const recipients = resolved
-      .filter((r) => r.user)
+      .filter((r) => r.user && !r.alreadyHas)
       .map((r) => ({
         earnerId: r.user!.id,
         earnerName: r.user!.name,
         grade: r.row.grade ?? null,
         expiresAt: r.row.expiryDate ? new Date(r.row.expiryDate).toISOString() : null,
       }));
-    if (recipients.length === 0) return toast.error("No CSV rows matched an existing earner email");
+    if (recipients.length === 0) return toast.error("No CSV rows are eligible for issuance");
     setSubmitting(true);
     try {
       const res: any = await issueBatch({
@@ -113,6 +125,18 @@ function Bulk() {
             credentialStatus: "not_issued",
             blockchainStatus: "not_requested",
             error: "No earner account found for this email",
+          });
+        });
+      // Include duplicates as not-issued
+      resolved
+        .filter((r) => r.user && r.alreadyHas)
+        .forEach((r) => {
+          rowsOut.push({
+            recipientId: r.user!.id,
+            recipientName: r.user!.name,
+            credentialStatus: "not_issued",
+            blockchainStatus: "not_requested",
+            error: "Earner already has an active (non-revoked) credential for this micro-credential",
           });
         });
       setResults(rowsOut);
