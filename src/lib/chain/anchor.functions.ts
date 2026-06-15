@@ -1370,3 +1370,143 @@ export const discardRejectedCredential = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/**
+ * Repair a single credential's chain fields and re-queue its anchor job.
+ * Use when a credential was created via a legacy path and is missing
+ * vc_json / credential_hash / learner_commitment / template_ref.
+ */
+export const repairCredentialChainFields = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { credentialId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: cred } = await supabase
+      .from("credentials")
+      .select("issuer_id, template_id")
+      .eq("id", data.credentialId)
+      .maybeSingle();
+    if (!cred) throw new Error("Credential not found");
+
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: userId });
+    const { data: isOrgAdmin } = await supabase.rpc("has_role_in_org", {
+      _user_id: userId,
+      _role: "issuer_admin",
+      _org_id: (cred as any).issuer_id,
+    });
+    const { data: isAssignee } = await supabase.rpc("is_template_assignee", {
+      _user_id: userId,
+      _template_id: (cred as any).template_id,
+    });
+    if (!isAdmin && !isOrgAdmin && !isAssignee) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { ensureCredentialChainFields } = await import("./worker.server");
+
+    const { data: full, error: fetchErr } = await supabaseAdmin
+      .from("credentials")
+      .select("*")
+      .eq("id", data.credentialId)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!full) throw new Error("Credential not found");
+
+    const repaired = await ensureCredentialChainFields(
+      supabaseAdmin,
+      full as Record<string, any>,
+    );
+
+    // Reset chain status + clear last error so worker will pick it up again.
+    await supabaseAdmin
+      .from("credentials")
+      .update({ chain_status: "queued", chain_error: null } as never)
+      .eq("id", data.credentialId);
+
+    // Reset / insert the anchor job.
+    const nowIso = new Date().toISOString();
+    const { data: existingJob } = await (supabaseAdmin as any)
+      .from("credential_anchor_jobs")
+      .select("id")
+      .eq("credential_id", data.credentialId)
+      .eq("operation", "anchor_credential")
+      .maybeSingle();
+    if (existingJob) {
+      await (supabaseAdmin as any)
+        .from("credential_anchor_jobs")
+        .update({
+          status: "queued",
+          attempts: 0,
+          last_error: null,
+          next_attempt_at: nowIso,
+        } as never)
+        .eq("id", (existingJob as any).id);
+    } else {
+      await (supabaseAdmin as any)
+        .from("credential_anchor_jobs")
+        .insert({
+          credential_id: data.credentialId,
+          operation: "anchor_credential",
+          status: "queued",
+        } as never);
+    }
+
+    // If the template is anchored, try the submit inline so the user sees a result.
+    const tplCheck = await isTemplateAnchored(supabaseAdmin, (cred as any).template_id);
+    if (tplCheck.anchored) {
+      const { processCredentialAnchor } = await import("./worker.server");
+      const res = await processCredentialAnchor(data.credentialId);
+      return {
+        ok: res.ok,
+        repaired: {
+          credential_hash: repaired.credential_hash,
+          learner_commitment: repaired.learner_commitment,
+          template_ref: repaired.template_ref,
+        },
+        anchorResult: res,
+      };
+    }
+
+    return {
+      ok: true,
+      repaired: {
+        credential_hash: repaired.credential_hash,
+        learner_commitment: repaired.learner_commitment,
+        template_ref: repaired.template_ref,
+      },
+      anchorResult: { ok: false, skipped: true, error: tplCheck.reason ?? "Template not anchored yet" },
+    };
+  });
+
+/**
+ * Platform-admin only: backfill chain fields for every credential row
+ * that is missing any of credential_hash / learner_commitment / template_ref / vc_json.
+ */
+export const backfillAllPendingCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: userId });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { ensureCredentialChainFields } = await import("./worker.server");
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("credentials")
+      .select("*")
+      .or(
+        "credential_hash.is.null,learner_commitment.is.null,template_ref.is.null,vc_json.is.null",
+      );
+    if (error) throw new Error(error.message);
+
+    const results: { id: string; ok: boolean; error?: string }[] = [];
+    for (const row of (rows ?? []) as Record<string, any>[]) {
+      try {
+        await ensureCredentialChainFields(supabaseAdmin, row);
+        results.push({ id: row.id, ok: true });
+      } catch (e) {
+        results.push({ id: row.id, ok: false, error: (e as Error).message });
+      }
+    }
+    return { processed: results.length, results };
+  });
