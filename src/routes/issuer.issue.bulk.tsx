@@ -97,7 +97,7 @@ function Bulk() {
     if (!templateId) return toast.error("Pick a micro-credential");
     if (rows.length === 0) return toast.error("CSV is empty or malformed");
     const recipients = resolved
-      .filter((r) => r.user && !r.alreadyHas)
+      .filter((r) => r.user && !r.alreadyHas && !r.isStaffOrAdmin)
       .map((r) => ({
         earnerId: r.user!.id,
         earnerName: r.user!.name,
@@ -141,6 +141,18 @@ function Bulk() {
             credentialStatus: "not_issued",
             blockchainStatus: "not_requested",
             error: "Earner already has an active (non-revoked) credential for this micro-credential",
+          });
+        });
+      // Include staff/admin conflicts as not-issued
+      resolved
+        .filter((r) => r.user && r.isStaffOrAdmin)
+        .forEach((r) => {
+          rowsOut.push({
+            recipientId: r.user!.id,
+            recipientName: r.user!.name,
+            credentialStatus: "not_issued",
+            blockchainStatus: "not_requested",
+            error: "This account belongs to issuer staff or admin and cannot receive credentials",
           });
         });
       setResults(rowsOut);
