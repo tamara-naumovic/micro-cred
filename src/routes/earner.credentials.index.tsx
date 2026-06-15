@@ -72,7 +72,7 @@ function List() {
     try {
       await accept({ data: { credentialId: c.id } });
       toast.success("Credential accepted");
-      refetchAll?.();
+      
     } catch (e: any) {
       toast.error(e?.message ?? "Could not accept");
     } finally {
@@ -92,7 +92,7 @@ function List() {
       toast.success("Credential rejected");
       setRejectTarget(null);
       setRejectReason("");
-      refetchAll?.();
+      
     } catch (e: any) {
       toast.error(e?.message ?? "Could not reject");
     } finally {
