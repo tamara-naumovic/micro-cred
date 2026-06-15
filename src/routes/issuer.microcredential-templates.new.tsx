@@ -130,7 +130,7 @@ function Form() {
     if (!outcomes.trim()) requiredErrors.push("Learning outcomes");
     if (!assessment.trim()) requiredErrors.push("Assessment");
     if (!qaType) requiredErrors.push("Quality assurance type");
-    if (qaType && qaType !== "not_specified" && !qaFile) requiredErrors.push("Quality assurance document");
+    if (qaType && qaType !== "not_specified" && qaFiles.length === 0) requiredErrors.push("Quality assurance document");
     if (expiryMode === "fixed_date" && !expiryDate) requiredErrors.push("Expiration date");
     if (requiredErrors.length > 0) {
       toast.error(`Required: ${requiredErrors.join(", ")}`);
