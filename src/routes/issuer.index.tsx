@@ -25,6 +25,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Label,
   Line,
   LineChart,
   ResponsiveContainer,
