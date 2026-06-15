@@ -165,6 +165,8 @@ function MockDetail({ credentialId }: { credentialId: string }) {
       verifyPath={verifyPath}
       onToggle={(patch) => Promise.resolve(updateSharing(cred.id, patch))}
       credentialId={cred.id}
+      lifecycle={cred.lifecycle}
+      rejectionReason={cred.rejectionReason}
       mockNotice
     />
   );
@@ -192,6 +194,9 @@ interface DetailLayoutProps {
   credentialId: string;
   onToggle: (patch: Partial<SharingSettings>) => Promise<void> | void;
   mockNotice?: boolean;
+  lifecycle?: IssuedCredential["lifecycle"];
+  rejectionReason?: string;
+  onAcceptanceChanged?: () => void;
 }
 
 function DetailLayout(p: DetailLayoutProps) {
