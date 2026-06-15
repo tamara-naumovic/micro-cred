@@ -67,7 +67,7 @@ function Dash() {
                 <CredentialCard
                   key={c.id}
                   credential={c}
-                  detailHref={c.verificationLink}
+                  detailHref={`/earner/credentials/${c.id}`}
                 />
               ))}
               {mine.length === 0 && <p className="text-sm text-muted-foreground">No credentials yet.</p>}
