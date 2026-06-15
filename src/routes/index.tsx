@@ -102,7 +102,7 @@ function Home() {
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
         <div className="mb-8">
           <div className="text-xs uppercase tracking-widest text-muted-foreground">Roles</div>
-          <h2 className="mt-2 font-display text-3xl font-semibold">One platform, five perspectives</h2>
+          <h2 className="mt-2 font-display text-3xl font-semibold">One platform, three perspectives</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {ROLES.map((r) => {
