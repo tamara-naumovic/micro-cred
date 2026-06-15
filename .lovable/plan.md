@@ -1,61 +1,28 @@
-# Institution Admin Dashboard Redesign — Plan
+Adrese potvrđene:
+- TemplateRegistry: `0xBf55f8413DFf2Aeb136c6d385BB7caE2d1080FAc`
+- CredentialRegistry: `0x082aBf0423d43E4286bC61151E34377e1Bc69596`
 
-Scope: rewrite `src/routes/issuer.index.tsx` only. Visual language, routing and RLS stay as-is. All data is already loaded into the existing `useStore()` client store (already RLS-scoped to the user's institution), so no new queries, no new RLS, no migrations are required. We will *filter by `activeUser.organizationId`* in every selector. Staff vs admin scoping (assigned templates only for staff) is preserved.
+Kad odobriš plan, izvršiću sledeće redosledom:
 
-## Components to add or replace
+1. **Bundle ABI fajlova** — `src/lib/chain/abi/CredentialRegistry.json` i `TemplateRegistry.json` (sa GitHub repoa). Skidam ABI parsiranje iz env-a.
 
-Single-file rewrite of `src/routes/issuer.index.tsx`, broken into local subcomponents:
+2. **Prepisati `src/lib/chain/bloxberg.server.ts`** da odgovara stvarnim potpisima:
+   - `registerTemplateVersion(templateRef, templateIdHash, documentHash, version:uint32, issuerNameSnapshot)`
+   - `issueCredential(credentialId, documentHash, learnerCommitment, templateRef, expiresAt, issuerNameSnapshot)`
+   - `revokeCredential(credentialId, reasonHash)`
+   - `getChainAvailability()` dodatno proverava da issuer wallet ima `ISSUER_ROLE` na oba ugovora.
 
-1. `KpiRow` — 6 `MetricCard`s (reuse existing component):
-   - Published MC templates (count of `templates.status === 'active'`, current org)
-   - Total issued credentials (with "X this month" subline)
-   - Active learners (distinct `earnerId` with at least one non-revoked/non-expired credential)
-   - Active issuers (users from store with `role === 'issuer'` in this org)
-   - Pending actions (sum: awaiting signature + open requests + queued + failed anchors) — clickable, scrolls to Actions panel
-   - Blockchain confirmed (`confirmed / total` + `%`, excluding `disabled`)
-2. `IssuedOverTimeChart` — recharts `LineChart` via existing `ui/chart.tsx`, two series (issued / blockchain-confirmed). Period filter: 30d / 6m / academic year / custom.
-3. `LifecycleChart` — horizontal `BarChart`, statuses Active / Pending acceptance / Expired / Revoked / Superseded; each bar links to `/issuer/credentials?status=…`.
-4. `TemplateStatusPanel` — compact two-column count grid: lifecycle (Draft/Published/Archived) + blockchain (Queued/Confirmed/Failed) shown side by side, never merged.
-5. `ActionsRequiringAttention` — replaces the current "Awaiting your signature" panel. Compact rows with icon + label + count + action button. Hidden rows for zero-count items; full empty-state when nothing pending.
-6. `BloxbergStatusCard` — uses anchor-job aggregates already in the store (queued/failed counts, last confirmed timestamp). RPC/contract/wallet fields rendered as "Not configured" placeholders when absent (no secrets surfaced; address masked `0x1D1B…fc7E`). "Open blockchain queue" button → `/issuer/anchoring-queue`.
-7. `TopMicroCredentialsTable` — top templates owned by org with columns: MC, version, issued, active learners, blockchain confirmed (`n/m`), last issued. Sortable headers; row click → template details.
-8. `IssuerActivityTable` — rows per issuer user in the org with templates managed, credentials issued, pending actions, last activity. No ranking labels.
-9. `LearnerOverviewPanel` — aggregates only (unique learners, new this month, avg creds/learner, multi-credential learners, awaiting acceptance) + small `BarChart` distribution (1 / 2–3 / 4+).
-10. `RecentActivityList` — derived from store `events` + `audit` filtered to this org's templates/credentials; latest 5–10 with icon, title, name, actor (when permitted), timestamp, status badge; "View all activity" link to `/issuer/credentials` or audit page if available.
-11. `DashboardFilters` — global period selector (30d / 6m / academic year / custom) + template selector. State held in route via `useState` (kept minimal; URL search-params left as a follow-up to avoid scope creep).
+3. **Migracija**: dodati `credentials.recovery_secret bytea` (samo `service_role` čita/piše; RLS deny svima) za off-chain re-derivaciju `learnerCommitment`.
 
-All cards/charts/tables get loading skeletons (`Skeleton` from `ui/skeleton`, gated on `loading` from store), empty states, and safe fallback messages.
+4. **Update `anchor.functions.ts` + `worker.server.ts`**: pri izdavanju generisati 32B `recovery_secret`, izračunati `learnerCommitment = keccak256(credentialId ‖ learnerIdHash ‖ recoverySecret)`, sačuvati i anchor-ovati. Za template-e koristiti integer `version`.
 
-## Data — reuse only
+5. **Dodati 3 secrets** preko forme (ti unosiš vrednosti):
+   - `BLOXBERG_PRIVATE_KEY` (0x… 64 hex)
+   - `TEMPLATE_REGISTRY_ADDRESS` = `0xBf55…0FAc`
+   - `CREDENTIAL_REGISTRY_ADDRESS` = `0x082a…9596`
 
-All from `useStore()`:
-- `templates`, `credentials`, `applications`, `users`, `templateAssignees`, `organizations`, `events`, `audit`.
-- Blockchain status read from `credential.blockchain.chainStatus` and analogous template fields already mapped in the store.
-- Anchor-queue counts derived from `credentials`/`templates` by `chainStatus` (`pending`+`submitted` → queued, `failed` → failed). If a dedicated anchor-jobs slice is later added we can swap; for now this matches what `issuer.anchoring-queue.tsx` does.
+6. **Issuer dashboard "Blockchain" widget**: prikazuje status iz `getChainAvailability` (ok / missing_config / rpc_unavailable / insufficient_balance / missing_role), wallet address, balance, linkove na block explorer za oba registar contracta.
 
-Scoping helper (already present pattern): `c.issuerId === orgId && (!isStaff || assignedIds.has(c.templateId))`.
+7. **Smoke test**: anchor-ovati 1 postojeći template i izdati 1 credential, proveriti tx na block exploreru.
 
-## Charts
-
-Use the existing shadcn `ChartContainer` + recharts wrapper (`src/components/ui/chart.tsx`) — same primitives, no new dep.
-
-## Missing data / not implemented in this pass
-
-These are surfaced with neutral placeholders (no fake values):
-- Live RPC connectivity, chain ID, contract addresses, wallet balance — rendered as "Not configured" / "—" unless already exposed via store; wiring the read-only chain config is out of scope for a dashboard task.
-- "Awaiting institutional signature" specifically — mapped to applications in `verified_by_provider` (the existing meaning of "awaiting signature" on this app).
-- "Academic year" period assumes Oct 1 – Sep 30 by current date; configurable later if needed.
-
-## Security / scoping checks
-
-- Every selector filters by `activeUser.organizationId` and (for staff) `templateAssignees`. No cross-org rows are read or aggregated.
-- No private keys, learner secrets, or full VC payloads are rendered. Wallet address masked.
-- RLS unchanged; no SQL in this change.
-- No admin client, no server functions added.
-
-## Out of scope
-
-- Backend changes (no migrations, no new RPCs).
-- Blockchain write logic.
-- URL-state for filters (can be added later via `validateSearch`).
-- A dedicated "all activity" page (link points to existing surfaces).
+**Napomena o `ISSUER_ROLE`**: tvoj issuer wallet MORA već imati `ISSUER_ROLE` granted na oba ugovora (od strane admin wallet-a koji je deployovao). Ako nema, sve transakcije će revert-ovati sa `AccessControlUnauthorizedAccount`. Health check iz koraka 2 će to odmah prijaviti.

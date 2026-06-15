@@ -1,7 +1,9 @@
 // Server-only Bloxberg client. Never import from client-reachable modules at top level.
 // Always use dynamic import from within a server function handler.
 
-import { to0x } from "./hash";
+import { to0x, keccak256Hex } from "./hash";
+import CredentialRegistryAbi from "./abi/CredentialRegistry.json";
+import TemplateRegistryAbi from "./abi/TemplateRegistry.json";
 
 export class ChainNotConfiguredError extends Error {
   constructor(message = "Bloxberg chain anchoring is not configured") {
@@ -11,24 +13,24 @@ export class ChainNotConfiguredError extends Error {
 }
 
 export interface CredentialAnchorRecord {
-  credentialIdHex: string;
-  documentHashHex: string;
-  learnerCommitmentHex: string;
-  templateRefHex: string;
-  issuedAt: number;
-  expiresAt: number;
-  status: number; // 0=Active, 1=Revoked, 2=Expired
+  credentialIdHex: string;           // hex (16 or 32 bytes); will be normalized to bytes32 via keccak when short
+  documentHashHex: string;           // 32-byte hex
+  learnerCommitmentHex: string;      // 32-byte hex
+  templateRefHex: string;            // 32-byte hex
+  issuedAt: number;                  // unused on-chain (contract uses block.timestamp); kept for API back-compat
+  expiresAt: number;                 // 0 = never
+  status: number;                    // unused on-chain (contract initializes Active); kept for back-compat
   issuerNameSnapshot: string;
 }
 
 export interface TemplateAnchorRecord {
-  templateRefHex: string;
-  documentHashHex: string;
-  templateIdHex: string;
-  version: string;
+  templateRefHex: string;            // 32-byte hex
+  documentHashHex: string;           // 32-byte hex
+  templateIdHex: string;             // 32-byte hex (will be normalized via keccak when short)
+  version: string;                   // semver-ish "MAJOR.MINOR"
   issuerNameSnapshot: string;
-  publishedAt: number;
-  status: number;
+  publishedAt: number;               // unused on-chain
+  status: number;                    // unused on-chain
 }
 
 export interface AnchorResult {
@@ -52,75 +54,100 @@ function readBase(): ChainBase {
   return { rpcUrl, chainId, privateKey };
 }
 
-function readCredentialContract(): { address: string; abi: unknown; functionName: string } {
-  const address =
+function readCredentialAddress(): string {
+  const a =
     process.env.CREDENTIAL_REGISTRY_ADDRESS ||
     process.env.BLOXBERG_CONTRACT_ADDRESS ||
     "";
-  const abiRaw = process.env.CREDENTIAL_REGISTRY_ABI || process.env.BLOXBERG_CONTRACT_ABI || "";
-  const functionName = process.env.CREDENTIAL_REGISTRY_FUNCTION || process.env.BLOXBERG_FUNCTION_NAME || "storeCredential";
-  if (!address || !abiRaw) throw new ChainNotConfiguredError("Missing CREDENTIAL_REGISTRY_ADDRESS or ABI");
-  try {
-    return { address, abi: JSON.parse(abiRaw), functionName };
-  } catch (e) {
-    throw new Error(`Invalid CREDENTIAL_REGISTRY_ABI JSON: ${(e as Error).message}`);
-  }
+  if (!a) throw new ChainNotConfiguredError("Missing CREDENTIAL_REGISTRY_ADDRESS");
+  return a;
 }
 
-function readTemplateContract(): { address: string; abi: unknown; functionName: string } {
-  const address = process.env.TEMPLATE_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
-  const abiRaw = process.env.TEMPLATE_REGISTRY_ABI || process.env.BLOXBERG_CONTRACT_ABI || "";
-  const functionName = process.env.TEMPLATE_REGISTRY_FUNCTION || "storeTemplate";
-  if (!address || !abiRaw) throw new ChainNotConfiguredError("Missing TEMPLATE_REGISTRY_ADDRESS or ABI");
-  try {
-    return { address, abi: JSON.parse(abiRaw), functionName };
-  } catch (e) {
-    throw new Error(`Invalid TEMPLATE_REGISTRY_ABI JSON: ${(e as Error).message}`);
-  }
+function readTemplateAddress(): string {
+  const a = process.env.TEMPLATE_REGISTRY_ADDRESS || "";
+  if (!a) throw new ChainNotConfiguredError("Missing TEMPLATE_REGISTRY_ADDRESS");
+  return a;
 }
 
 export function isChainConfigured(): boolean {
-  return !!process.env.BLOXBERG_PRIVATE_KEY && !!(
-    process.env.CREDENTIAL_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS
+  return (
+    !!process.env.BLOXBERG_PRIVATE_KEY &&
+    !!(process.env.CREDENTIAL_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS) &&
+    !!process.env.TEMPLATE_REGISTRY_ADDRESS
   );
 }
 
 export type AvailabilityStatus =
-  | { status: "ok"; chainId: number; rpcUrl: string; address: string }
+  | { status: "ok"; chainId: number; rpcUrl: string; credentialAddress: string; templateAddress: string; issuerAddress: string; balanceWei: string }
   | { status: "missing_config"; reason: string }
-  | { status: "no_contract"; reason: string }
   | { status: "rpc_unavailable"; reason: string }
-  | { status: "insufficient_balance"; reason: string };
+  | { status: "insufficient_balance"; reason: string; issuerAddress: string }
+  | { status: "missing_role"; reason: string; issuerAddress: string; missingOn: ("template" | "credential")[] };
+
+/** Normalize an arbitrary hex (with/without 0x) to 32-byte (64 hex chars). Short inputs are keccak-hashed. */
+function toBytes32Hex(hex: string): string {
+  const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
+  if (clean.length === 64) return clean;
+  return keccak256Hex(hex);
+}
 
 export async function getChainAvailability(): Promise<AvailabilityStatus> {
   let base: ChainBase;
+  let credAddr: string;
+  let tplAddr: string;
   try {
     base = readBase();
+    credAddr = readCredentialAddress();
+    tplAddr = readTemplateAddress();
   } catch (e) {
     return { status: "missing_config", reason: (e as Error).message };
-  }
-  let contract: { address: string };
-  try {
-    contract = readCredentialContract();
-  } catch (e) {
-    return { status: "no_contract", reason: (e as Error).message };
   }
   try {
     const ethers = await import("ethers");
     const provider = new ethers.JsonRpcProvider(base.rpcUrl);
-    const ac = new AbortController();
-    const to = setTimeout(() => ac.abort(), 3000);
     const block = await Promise.race([
       provider.getBlockNumber(),
-      new Promise<number>((_, rej) => setTimeout(() => rej(new Error("RPC timeout")), 3000)),
-    ]).finally(() => clearTimeout(to));
+      new Promise<number>((_, rej) => setTimeout(() => rej(new Error("RPC timeout")), 4000)),
+    ]);
     if (typeof block !== "number") throw new Error("RPC unreachable");
     const wallet = new ethers.Wallet(base.privateKey, provider);
     const bal = await provider.getBalance(wallet.address);
     if (bal === 0n) {
-      return { status: "insufficient_balance", reason: "Issuer wallet has zero balance" };
+      return { status: "insufficient_balance", reason: "Issuer wallet has zero balance", issuerAddress: wallet.address };
     }
-    return { status: "ok", chainId: base.chainId, rpcUrl: base.rpcUrl, address: contract.address };
+    // Check ISSUER_ROLE on both contracts
+    const ISSUER_ROLE = keccak256Hex("ISSUER_ROLE");
+    const issuerRoleBytes32 = to0x(ISSUER_ROLE);
+    const credContract = new ethers.Contract(credAddr, CredentialRegistryAbi as never, provider);
+    const tplContract = new ethers.Contract(tplAddr, TemplateRegistryAbi as never, provider);
+    const missing: ("template" | "credential")[] = [];
+    try {
+      const [credHas, tplHas] = await Promise.all([
+        credContract.hasRole(issuerRoleBytes32, wallet.address) as Promise<boolean>,
+        tplContract.hasRole(issuerRoleBytes32, wallet.address) as Promise<boolean>,
+      ]);
+      if (!credHas) missing.push("credential");
+      if (!tplHas) missing.push("template");
+    } catch (e) {
+      return { status: "rpc_unavailable", reason: `Role check failed: ${(e as Error).message}` };
+    }
+    if (missing.length > 0) {
+      return {
+        status: "missing_role",
+        reason: `Issuer wallet is missing ISSUER_ROLE on: ${missing.join(", ")} registry`,
+        issuerAddress: wallet.address,
+        missingOn: missing,
+      };
+    }
+    return {
+      status: "ok",
+      chainId: base.chainId,
+      rpcUrl: base.rpcUrl,
+      credentialAddress: credAddr,
+      templateAddress: tplAddr,
+      issuerAddress: wallet.address,
+      balanceWei: bal.toString(),
+    };
   } catch (e) {
     return { status: "rpc_unavailable", reason: (e as Error).message };
   }
@@ -128,20 +155,23 @@ export async function getChainAvailability(): Promise<AvailabilityStatus> {
 
 export async function submitCredentialAnchor(record: CredentialAnchorRecord): Promise<AnchorResult> {
   const base = readBase();
-  const c = readCredentialContract();
+  const address = readCredentialAddress();
   const ethers = await import("ethers");
   const provider = new ethers.JsonRpcProvider(base.rpcUrl);
   const wallet = new ethers.Wallet(base.privateKey, provider);
-  const contract = new ethers.Contract(c.address, c.abi as ConstructorParameters<typeof ethers.Contract>[1], wallet);
-  const fn = contract.getFunction(c.functionName);
-  const tx = await fn(
+  const contract = new ethers.Contract(
+    address,
+    CredentialRegistryAbi as ConstructorParameters<typeof ethers.Contract>[1],
+    wallet,
+  );
+  // Contract: issueCredential(bytes32 credentialId, bytes32 documentHash, bytes32 learnerCommitment,
+  //                           bytes32 templateRef, uint64 expiresAt, string issuerNameSnapshot)
+  const tx = await contract.issueCredential(
+    to0x(toBytes32Hex(record.credentialIdHex)),
     to0x(record.documentHashHex),
     to0x(record.learnerCommitmentHex),
     to0x(record.templateRefHex),
-    wallet.address,
-    BigInt(record.issuedAt),
     BigInt(record.expiresAt),
-    record.status,
     record.issuerNameSnapshot,
   );
   const receipt = await tx.wait(1);
@@ -149,54 +179,75 @@ export async function submitCredentialAnchor(record: CredentialAnchorRecord): Pr
     txHash: tx.hash,
     blockNumber: Number(receipt?.blockNumber ?? 0),
     issuerAddress: wallet.address,
-    contractAddress: c.address,
+    contractAddress: address,
   };
 }
 
 // Backwards-compat alias used by older code paths.
 export const submitAnchor = submitCredentialAnchor;
 
+/** "1.0" → 1000, "1.2" → 1002, "2.0" → 2000. Stored on-chain as uint32 so versions sort. */
+function versionToUint32(version: string): number {
+  const m = /^(\d+)\.(\d+)$/.exec(version);
+  if (m) return Number(m[1]) * 1000 + Number(m[2]);
+  const n = Number(version);
+  if (Number.isFinite(n) && n >= 0) return Math.floor(n) * 1000;
+  return 1000;
+}
+
 export async function submitTemplateAnchor(record: TemplateAnchorRecord): Promise<AnchorResult> {
   const base = readBase();
-  const c = readTemplateContract();
+  const address = readTemplateAddress();
   const ethers = await import("ethers");
   const provider = new ethers.JsonRpcProvider(base.rpcUrl);
   const wallet = new ethers.Wallet(base.privateKey, provider);
-  const contract = new ethers.Contract(c.address, c.abi as ConstructorParameters<typeof ethers.Contract>[1], wallet);
-  const fn = contract.getFunction(c.functionName);
-  const tx = await fn(
+  const contract = new ethers.Contract(
+    address,
+    TemplateRegistryAbi as ConstructorParameters<typeof ethers.Contract>[1],
+    wallet,
+  );
+  // Contract: registerTemplateVersion(bytes32 templateRef, bytes32 templateIdHash, bytes32 documentHash,
+  //                                   uint32 version, string issuerNameSnapshot)
+  const tx = await contract.registerTemplateVersion(
     to0x(record.templateRefHex),
+    to0x(toBytes32Hex(record.templateIdHex)),
     to0x(record.documentHashHex),
-    to0x(record.templateIdHex),
-    record.version,
+    versionToUint32(record.version),
     record.issuerNameSnapshot,
-    wallet.address,
-    BigInt(record.publishedAt),
-    record.status,
   );
   const receipt = await tx.wait(1);
   return {
     txHash: tx.hash,
     blockNumber: Number(receipt?.blockNumber ?? 0),
     issuerAddress: wallet.address,
-    contractAddress: c.address,
+    contractAddress: address,
   };
 }
 
-export async function submitRevokeCredential(credentialIdHex: string): Promise<AnchorResult> {
+export async function submitRevokeCredential(
+  credentialIdHex: string,
+  reasonHashHex?: string,
+): Promise<AnchorResult> {
   const base = readBase();
-  const c = readCredentialContract();
+  const address = readCredentialAddress();
   const ethers = await import("ethers");
   const provider = new ethers.JsonRpcProvider(base.rpcUrl);
   const wallet = new ethers.Wallet(base.privateKey, provider);
-  const contract = new ethers.Contract(c.address, c.abi as ConstructorParameters<typeof ethers.Contract>[1], wallet);
-  const fn = contract.getFunction(process.env.CREDENTIAL_REGISTRY_REVOKE_FUNCTION || "revokeCredential");
-  const tx = await fn(to0x(credentialIdHex));
+  const contract = new ethers.Contract(
+    address,
+    CredentialRegistryAbi as ConstructorParameters<typeof ethers.Contract>[1],
+    wallet,
+  );
+  const reason = reasonHashHex
+    ? to0x(toBytes32Hex(reasonHashHex))
+    : to0x("0".repeat(64));
+  // Contract: revokeCredential(bytes32 credentialId, bytes32 reasonHash)
+  const tx = await contract.revokeCredential(to0x(toBytes32Hex(credentialIdHex)), reason);
   const receipt = await tx.wait(1);
   return {
     txHash: tx.hash,
     blockNumber: Number(receipt?.blockNumber ?? 0),
     issuerAddress: wallet.address,
-    contractAddress: c.address,
+    contractAddress: address,
   };
 }
