@@ -3,7 +3,7 @@ import {
   ArrowRight,
   Award,
   BadgeCheck,
-  ClipboardCheck,
+  
   GraduationCap,
   Hexagon,
   Search,
