@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
-import { Trash2, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -12,8 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
+import { BulkUsersUpload } from "@/components/admin/BulkUsersUpload";
 import { useStore } from "@/lib/store";
-import { addIssuerStaff, listIssuerStaff, removeIssuerStaff } from "@/lib/issuer-staff.functions";
+import { addIssuerStaff, bulkAddIssuerStaff, listIssuerStaff, removeIssuerStaff } from "@/lib/issuer-staff.functions";
+
+const PAGE_SIZE = 10;
+
 
 export const Route = createFileRoute("/issuer/staff")({
   head: () => ({ meta: [{ title: "Staff — MicroCred" }] }),
