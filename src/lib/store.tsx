@@ -457,6 +457,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         organizationId: (r as Row).organization_id as string,
       }));
 
+      const userRolesById: Record<string, string[]> = {};
+      for (const [uid, rs] of rolesByUser.entries()) {
+        userRolesById[uid] = rs.map((r) => r.role as string);
+      }
+
       setState({
         templates,
         credentials,
@@ -467,6 +472,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         audit,
         events,
         users,
+        userRolesById,
         templateAssignees,
         earnerInstitutions,
       });
