@@ -53,6 +53,7 @@ function AnchoringQueuePage() {
   const list = useServerFn(listAnchorJobs);
   const retry = useServerFn(retryAnchorJob);
   const cancel = useServerFn(cancelAnchorJob);
+  const repair = useServerFn(repairCredentialChainFields);
   const qc = useQueryClient();
   const { user, loading: authLoading } = useAuth();
 
