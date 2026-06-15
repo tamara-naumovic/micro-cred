@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
+import { XCircle, Clock, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
