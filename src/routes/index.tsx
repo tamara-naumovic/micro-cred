@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
+import { getDashboardPath } from "@/components/DashboardHomeLink";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,7 +44,7 @@ const ROLES = [
 ];
 
 function Home() {
-  const { organizations, credentials } = useStore();
+  const { organizations, credentials, activeUser } = useStore();
   const issuers = organizations.filter((o) => o.type === "issuer");
   const issuedCount = credentials.length;
 
@@ -78,9 +79,15 @@ function Home() {
                 <Search className="mr-2 h-4 w-4" /> Browse issuers
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link to="/login">Sign in to a workspace</Link>
-            </Button>
+            {activeUser ? (
+              <Button size="lg" variant="outline" asChild>
+                <Link to={getDashboardPath(activeUser.role)}>Go to your workspace</Link>
+              </Button>
+            ) : (
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/login">Sign in to a workspace</Link>
+              </Button>
+            )}
           </div>
 
           {/* Quick stats */}

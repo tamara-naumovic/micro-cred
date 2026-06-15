@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 
-function getDashboardPath(role?: string) {
+export function getDashboardPath(role?: string) {
   if (role === "earner") return "/earner";
   if (role === "issuer") return "/issuer";
   if (role === "admin") return "/admin";
