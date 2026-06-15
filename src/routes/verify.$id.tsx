@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
 import { useStore } from "@/lib/store";
-import { fetchPublicCredential } from "@/lib/credentials";
+import { fetchPublicCredential, fetchCredentialVisibility } from "@/lib/credentials";
 
 export const Route = createFileRoute("/verify/$id")({
   head: ({ params }) => ({
@@ -40,7 +40,14 @@ function VerifyPage() {
     retry: false,
   });
 
-  if (dbQuery.isLoading) {
+  // Visibility lookup (distinguishes "exists but private" from "not found")
+  const visQuery = useQuery({
+    queryKey: ["credential-visibility", id],
+    queryFn: () => fetchCredentialVisibility(id),
+    retry: false,
+  });
+
+  if (dbQuery.isLoading || visQuery.isLoading) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 md:px-8">
         <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Verifying…</CardContent></Card>
@@ -50,6 +57,11 @@ function VerifyPage() {
 
   if (dbQuery.data) {
     return <RealVerify cred={dbQuery.data} shareToken={id} />;
+  }
+
+  // Credential exists in DB but earner marked it private
+  if (visQuery.data?.exists && !visQuery.data.isPublic) {
+    return <PrivateNotice />;
   }
 
   // No DB hit — mock fallback

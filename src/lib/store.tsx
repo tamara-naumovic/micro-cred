@@ -201,6 +201,10 @@ function mapCredential(r: Row): IssuedCredential {
       showSource: (r.share_show_source as boolean) ?? true,
       showExpiry: (r.share_show_expiry as boolean) ?? true,
       showSkills: (r.share_show_skills as boolean) ?? true,
+      showLevel: ((r as Record<string, unknown>).share_show_level as boolean) ?? true,
+      showPrerequisites: ((r as Record<string, unknown>).share_show_prerequisites as boolean) ?? true,
+      showSupervision: ((r as Record<string, unknown>).share_show_supervision as boolean) ?? true,
+      showIntegration: ((r as Record<string, unknown>).share_show_integration as boolean) ?? true,
     },
     blockchain: {
       did: (r.ebsi_did as string | null) ?? undefined,
@@ -540,6 +544,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (settings.showSource !== undefined) patch.share_show_source = settings.showSource;
     if (settings.showExpiry !== undefined) patch.share_show_expiry = settings.showExpiry;
     if (settings.showSkills !== undefined) patch.share_show_skills = settings.showSkills;
+    if (settings.showLevel !== undefined) patch.share_show_level = settings.showLevel;
+    if (settings.showPrerequisites !== undefined) patch.share_show_prerequisites = settings.showPrerequisites;
+    if (settings.showSupervision !== undefined) patch.share_show_supervision = settings.showSupervision;
+    if (settings.showIntegration !== undefined) patch.share_show_integration = settings.showIntegration;
     (supabase.from("credentials") as unknown as { update: (p: Record<string, unknown>) => { eq: (k: string, v: string) => Promise<{ error: unknown }> } })
       .update(patch).eq("id", credentialId).then(({ error }) => {
       if (error) console.error("[store] updateSharing", error);
