@@ -373,8 +373,12 @@ export type Database = {
           share_is_public: boolean
           share_show_expiry: boolean
           share_show_grade: boolean
+          share_show_integration: boolean
+          share_show_level: boolean
+          share_show_prerequisites: boolean
           share_show_skills: boolean
           share_show_source: boolean
+          share_show_supervision: boolean
           share_token: string
           skills: string[]
           source: Database["public"]["Enums"]["learning_source"]
@@ -428,8 +432,12 @@ export type Database = {
           share_is_public?: boolean
           share_show_expiry?: boolean
           share_show_grade?: boolean
+          share_show_integration?: boolean
+          share_show_level?: boolean
+          share_show_prerequisites?: boolean
           share_show_skills?: boolean
           share_show_source?: boolean
+          share_show_supervision?: boolean
           share_token?: string
           skills?: string[]
           source: Database["public"]["Enums"]["learning_source"]
@@ -483,8 +491,12 @@ export type Database = {
           share_is_public?: boolean
           share_show_expiry?: boolean
           share_show_grade?: boolean
+          share_show_integration?: boolean
+          share_show_level?: boolean
+          share_show_prerequisites?: boolean
           share_show_skills?: boolean
           share_show_source?: boolean
+          share_show_supervision?: boolean
           share_token?: string
           skills?: string[]
           source?: Database["public"]["Enums"]["learning_source"]
@@ -1129,6 +1141,13 @@ export type Database = {
     }
     Functions: {
       can_access_application: { Args: { _app_id: string }; Returns: boolean }
+      get_credential_visibility: {
+        Args: { _share_token: string }
+        Returns: {
+          exists_flag: boolean
+          is_public: boolean
+        }[]
+      }
       get_public_credential: {
         Args: { _share_token: string }
         Returns: {
