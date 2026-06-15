@@ -373,75 +373,8 @@ function Overview() {
         />
       </div>
 
-      {/* Row 2 — Time series + Lifecycle */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">
-              Credentials issued over time
-            </CardTitle>
-            <CardDescription>
-              {`Number of credentials issued per ${period === "30d" ? "day" : period === "6m" ? "week" : "month"}, and how many of those are confirmed on Bloxberg.`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {series.every((p) => p.issued === 0 && p.confirmed === 0) ? (
-              <EmptyBlock label="No credentials have been issued in this period." />
-            ) : (
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={series}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="hsl(var(--border))"
-                    />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                    />
-                    <YAxis
-                      allowDecimals={false}
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                      labelFormatter={(_label, payload) => {
-                        const p = payload?.[0]?.payload as
-                          | { rangeLabel?: string; label?: string }
-                          | undefined;
-                        return p?.rangeLabel ?? p?.label ?? "";
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="issued"
-                      name="Issued"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="confirmed"
-                      name="Confirmed"
-                      stroke="hsl(var(--success, 142 71% 45%))"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
+      {/* Row 2 — Lifecycle */}
+      <div className="mt-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Credential lifecycle</CardTitle>
