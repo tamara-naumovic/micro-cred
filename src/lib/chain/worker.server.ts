@@ -32,6 +32,16 @@ export async function ensureCredentialChainFields(
   supabaseAdmin: any,
   cred: Record<string, any>,
 ): Promise<Record<string, any>> {
+  // Load any existing learner secret from the locked-down secrets table.
+  if (!cred.learner_secret) {
+    const { data: secRow } = await supabaseAdmin
+      .from("credential_secrets")
+      .select("secret")
+      .eq("credential_id", cred.id)
+      .maybeSingle();
+    cred.learner_secret = ((secRow as { secret: string } | null)?.secret) ?? null;
+  }
+
   const hasAll =
     cred.credential_hash &&
     cred.learner_commitment &&
@@ -111,7 +121,6 @@ export async function ensureCredentialChainFields(
       template_version: templateVersion,
       template_ref: templateRef,
       credential_hash: docHash,
-      learner_secret: learnerSecret,
       learner_commitment: learnerCommitment,
     } as never)
     .eq("id", cred.id);
@@ -120,6 +129,13 @@ export async function ensureCredentialChainFields(
       `Failed to backfill chain fields for credential ${cred.id}: ${updErr.message}`,
     );
   }
+
+  // Persist the secret to the earner-only table (admin client; RLS bypassed).
+  await supabaseAdmin
+    .from("credential_secrets")
+    .upsert({ credential_id: cred.id, secret: learnerSecret } as never, {
+      onConflict: "credential_id",
+    } as never);
 
   const contractAddress =
     process.env.CREDENTIAL_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
@@ -148,6 +164,7 @@ export async function ensureCredentialChainFields(
     learner_commitment: learnerCommitment,
   };
 }
+
 
 
 export async function processCredentialAnchor(credentialId: string): Promise<{
