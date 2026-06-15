@@ -1187,18 +1187,26 @@ export const acceptCredential = createServerFn({ method: "POST" })
       const msg = (e as Error)?.message ?? "Chain anchor failed";
       console.error("[acceptCredential] chain anchor failed:", msg);
       // Make sure a job exists so cron retries, and surface the error.
-      await supabaseAdmin
+      const { error: insErr } = await supabaseAdmin
         .from("credential_anchor_jobs")
-        .upsert(
-          {
-            credential_id: data.credentialId,
-            operation: "anchor_credential",
+        .insert({
+          credential_id: data.credentialId,
+          operation: "anchor_credential",
+          status: "queued",
+          last_error: msg,
+          last_attempt_at: new Date().toISOString(),
+        } as never);
+      if (insErr && /duplicate/i.test(insErr.message)) {
+        await supabaseAdmin
+          .from("credential_anchor_jobs")
+          .update({
             status: "queued",
             last_error: msg,
             last_attempt_at: new Date().toISOString(),
-          } as never,
-          { onConflict: "credential_id,operation" } as never,
-        );
+          } as never)
+          .eq("credential_id", data.credentialId)
+          .eq("operation", "anchor_credential");
+      }
       await supabaseAdmin
         .from("credentials")
         .update({ chain_status: "queued", chain_error: msg } as never)
