@@ -38,7 +38,6 @@ export const Route = createFileRoute("/")({
 
 const ROLES = [
   { icon: GraduationCap, label: "Earners", desc: "Apply, collect, share micro-credentials." },
-  { icon: ClipboardCheck, label: "Course Providers", desc: "Review evidence, validate achievement." },
   { icon: Award, label: "Issuers", desc: "Design templates, issue and revoke credentials." },
   { icon: ShieldQuestion, label: "Verifiers", desc: "Verify a credential or open a shared profile." },
 ];
