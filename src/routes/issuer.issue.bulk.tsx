@@ -46,7 +46,7 @@ function parseCsv(input: string): BulkRow[] {
 }
 
 function Bulk() {
-  const { activeUser, templates, users, templateAssignees, credentials } = useStore();
+  const { activeUser, templates, users, userRolesById, templateAssignees, credentials } = useStore();
   const issueBatch = useServerFn(issueCredentialsBatch);
   const isStaff = activeUser?.subRole === "staff";
   const assignedIds = useMemo(
@@ -78,16 +78,20 @@ function Bulk() {
     );
   }, [credentials, templateId]);
 
-  // Pre-resolve emails to earner IDs and detect duplicates
+  // Pre-resolve emails to earner IDs and detect duplicates / staff conflicts
   const resolved = useMemo(() => {
     return rows.map((r) => {
       const u = users.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
+      const roles = u ? (userRolesById[u.id] ?? []) : [];
+      const isStaffOrAdmin =
+        roles.includes("issuer_admin") || roles.includes("issuer_staff");
       const alreadyHas = u ? earnersWithActive.has(u.id) : false;
-      return { row: r, user: u, alreadyHas };
+      return { row: r, user: u, alreadyHas, isStaffOrAdmin };
     });
-  }, [rows, users, earnersWithActive]);
+  }, [rows, users, userRolesById, earnersWithActive]);
   const unmatched = resolved.filter((r) => !r.user).length;
   const duplicates = resolved.filter((r) => r.user && r.alreadyHas).length;
+  const staffConflicts = resolved.filter((r) => r.user && r.isStaffOrAdmin).length;
 
   const submit = async () => {
     if (!templateId) return toast.error("Pick a micro-credential");
