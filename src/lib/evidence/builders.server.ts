@@ -407,7 +407,8 @@ export async function buildCredentialPdf(
   });
   y -= 22;
 
-  // Metadata grid -----------------------------------------------------------
+  // Metadata grid (snapshot-first so old credentials stay historically accurate)
+  const snap = snapshotAchievement(cred, template);
   const rows: Array<[string, string]> = [];
   rows.push(["Issued", fmtDate(cred.issued_at)]);
   rows.push(["Expires", cred.expires_at ? fmtDate(cred.expires_at) : "Does not expire"]);
@@ -415,19 +416,19 @@ export async function buildCredentialPdf(
   if (cred.level && cred.level !== "N/A") rows.push(["Level", cred.level]);
   if (cred.ects != null) rows.push(["ECTS / workload", `${cred.ects} ECTS`]);
   rows.push(["Source", cred.source === "formal" ? "Formal" : "Non-formal"]);
-  if (template?.participation) rows.push(["Participation", template.participation]);
-  if (template?.assessment) rows.push(["Assessment", template.assessment]);
-  if (template?.qa_type) rows.push(["Quality assurance", template.qa_type]);
-  if (template?.prerequisites_none) {
+  if (snap.participation) rows.push(["Participation", snap.participation]);
+  if (snap.assessment) rows.push(["Assessment", snap.assessment]);
+  if (snap.qaType) rows.push(["Quality assurance", snap.qaType]);
+  if (snap.prerequisitesNone) {
     rows.push(["Prerequisites", "None"]);
-  } else if (template?.prerequisites) {
-    rows.push(["Prerequisites", template.prerequisites]);
+  } else if (snap.prerequisites) {
+    rows.push(["Prerequisites", snap.prerequisites]);
   }
-  if (template?.supervision_type) {
-    rows.push(["Supervision & identity verification", template.supervision_type]);
+  if (snap.supervisionType) {
+    rows.push(["Supervision & identity verification", snap.supervisionType]);
   }
-  if (template?.stackability_type) {
-    rows.push(["Integration / stackability", template.stackability_type]);
+  if (snap.stackabilityType) {
+    rows.push(["Integration / stackability", snap.stackabilityType]);
   }
   if (cred.template_version) rows.push(["Template version", cred.template_version]);
   rows.push(["Credential ID", publicId]);
@@ -456,7 +457,7 @@ export async function buildCredentialPdf(
   }
 
   // Learning outcomes + skills ---------------------------------------------
-  const outcomes = template?.outcomes ?? [];
+  const outcomes = snap.outcomes;
   if (outcomes.length && y > 200) {
     y -= 4;
     page.drawText("Learning outcomes", {
