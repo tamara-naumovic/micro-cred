@@ -443,31 +443,16 @@ function Overview() {
 // ============ Subcomponents ============
 
 function DashboardFilters({
-  period,
-  onPeriod,
   templateFilter,
   onTemplate,
   templates,
 }: {
-  period: Period;
-  onPeriod: (p: Period) => void;
   templateFilter: string;
   onTemplate: (id: string) => void;
   templates: MicroCredentialTemplate[];
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      <Select value={period} onValueChange={(v) => onPeriod(v as Period)}>
-        <SelectTrigger className="w-[160px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="30d">Last 30 days</SelectItem>
-          <SelectItem value="6m">Last 6 months</SelectItem>
-          <SelectItem value="ay">This academic year</SelectItem>
-          <SelectItem value="all">All time</SelectItem>
-        </SelectContent>
-      </Select>
       <Select value={templateFilter} onValueChange={onTemplate}>
         <SelectTrigger className="w-[200px]">
           <SelectValue />
