@@ -3,7 +3,7 @@ import { useStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Bell, CheckCheck } from "lucide-react";
 import type { Role } from "@/lib/types";
 
@@ -21,7 +21,8 @@ function timeAgo(iso: string) {
 }
 
 export function NotificationsList({ role }: { role: Role }) {
-  const { notifications, activeUser, markAllRead } = useStore();
+  const { notifications, activeUser, markAllRead, markRead } = useStore();
+  const navigate = useNavigate();
 
   const items = useMemo(
     () =>
@@ -34,6 +35,11 @@ export function NotificationsList({ role }: { role: Role }) {
   );
 
   const unreadCount = items.filter((n) => !n.read).length;
+
+  const handleClick = (id: string, read: boolean, link?: string) => {
+    if (!read) markRead(id);
+    if (link) navigate({ to: link });
+  };
 
   return (
     <div className="space-y-4">
@@ -61,8 +67,13 @@ export function NotificationsList({ role }: { role: Role }) {
         </Card>
       ) : (
         <div className="space-y-2">
-          {items.map((n) => {
-            const content = (
+          {items.map((n) => (
+            <button
+              key={n.id}
+              type="button"
+              onClick={() => handleClick(n.id, n.read, n.link)}
+              className="block w-full text-left"
+            >
               <Card
                 className={
                   "transition hover:bg-muted/30 " +
@@ -73,7 +84,10 @@ export function NotificationsList({ role }: { role: Role }) {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
                       {!n.read && (
-                        <span className="inline-block h-2 w-2 rounded-full bg-primary" aria-label="Unread" />
+                        <span
+                          className="inline-block h-2 w-2 rounded-full bg-primary"
+                          aria-label="Unread"
+                        />
                       )}
                       <div className="font-medium">{n.title}</div>
                     </div>
@@ -86,17 +100,11 @@ export function NotificationsList({ role }: { role: Role }) {
                   )}
                 </CardContent>
               </Card>
-            );
-            return n.link ? (
-              <Link key={n.id} to={n.link} className="block">
-                {content}
-              </Link>
-            ) : (
-              <div key={n.id}>{content}</div>
-            );
-          })}
+            </button>
+          ))}
         </div>
       )}
     </div>
   );
 }
+
