@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CalendarIcon, Upload, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Upload, AlertTriangle, X } from "lucide-react";
 import { publishTemplateAndAnchor, getChainAvailabilityFn } from "@/lib/chain/anchor.functions";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -92,7 +92,8 @@ function Form() {
 
   // QA
   const [qaType, setQaType] = useState<QaType | "">("");
-  const [qaFile, setQaFile] = useState<File | null>(null);
+  const [qaFiles, setQaFiles] = useState<File[]>([]);
+  const [qaDragOver, setQaDragOver] = useState(false);
 
   // Optional new fields
   const [prereqNone, setPrereqNone] = useState(true);
@@ -129,7 +130,7 @@ function Form() {
     if (!outcomes.trim()) requiredErrors.push("Learning outcomes");
     if (!assessment.trim()) requiredErrors.push("Assessment");
     if (!qaType) requiredErrors.push("Quality assurance type");
-    if (qaType && qaType !== "not_specified" && !qaFile) requiredErrors.push("Quality assurance document");
+    if (qaType && qaType !== "not_specified" && qaFiles.length === 0) requiredErrors.push("Quality assurance document");
     if (expiryMode === "fixed_date" && !expiryDate) requiredErrors.push("Expiration date");
     if (requiredErrors.length > 0) {
       toast.error(`Required: ${requiredErrors.join(", ")}`);
@@ -138,19 +139,20 @@ function Form() {
 
     setSubmitting(true);
     const id = crypto.randomUUID();
-    let qaPath: string | undefined;
+    const qaPaths: string[] = [];
     try {
-      if (qaFile) {
-        const safeName = qaFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        qaPath = `${activeUser.organizationId}/${id}/${safeName}`;
+      for (const f of qaFiles) {
+        const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${activeUser.organizationId}/${id}/${Date.now()}-${safeName}`;
         const { error: upErr } = await supabase.storage
           .from("qa-documents")
-          .upload(qaPath, qaFile, { upsert: false, contentType: qaFile.type || undefined });
+          .upload(path, f, { upsert: false, contentType: f.type || undefined });
         if (upErr) {
-          toast.error(`Failed to upload QA document: ${upErr.message}`);
+          toast.error(`Failed to upload ${f.name}: ${upErr.message}`);
           setSubmitting(false);
           return;
         }
+        qaPaths.push(path);
       }
 
       const tpl: MicroCredentialTemplate = {
@@ -169,7 +171,8 @@ function Form() {
         participation,
         qualityAssurance: QA_OPTIONS.find((o) => o.value === qaType)?.label ?? "",
         qaType: qaType as QaType,
-        qaDocumentPath: qaPath,
+        qaDocumentPath: qaPaths[0],
+        qaDocumentPaths: qaPaths,
         prerequisites: prereqNone ? "" : prereqText.trim(),
         prerequisitesNone: prereqNone,
         supervision: supervisionType ? SUPERVISION_OPTIONS.find((o) => o.value === supervisionType)?.label ?? "" : "",
@@ -289,16 +292,58 @@ function Form() {
               </Select>
               {qaType && qaType !== "not_specified" && (
                 <div>
-                  <Label className="text-sm">QA confirmation document *</Label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Input
-                      type="file"
-                      accept="application/pdf,image/*"
-                      onChange={(e) => setQaFile(e.target.files?.[0] ?? null)}
-                    />
-                    {qaFile && <span className="text-xs text-muted-foreground"><Upload className="inline h-3 w-3 mr-1" />{qaFile.name}</span>}
+                  <Label className="text-sm">QA confirmation documents *</Label>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setQaDragOver(true); }}
+                    onDragLeave={() => setQaDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setQaDragOver(false);
+                      const dropped = Array.from(e.dataTransfer.files);
+                      if (dropped.length) setQaFiles((prev) => [...prev, ...dropped]);
+                    }}
+                    className={cn(
+                      "mt-1 flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-6 text-center transition-colors",
+                      qaDragOver ? "border-primary bg-primary/5" : "border-muted-foreground/30",
+                    )}
+                  >
+                    <Upload className="h-6 w-6 text-muted-foreground" />
+                    <div className="text-sm">
+                      Drag &amp; drop files here, or{" "}
+                      <label className="cursor-pointer text-primary underline">
+                        browse
+                        <input
+                          type="file"
+                          multiple
+                          accept="application/pdf,image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const picked = Array.from(e.target.files ?? []);
+                            if (picked.length) setQaFiles((prev) => [...prev, ...picked]);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">PDF or images. Multiple files allowed.</p>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">PDF or image, max 10 MB.</p>
+                  {qaFiles.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {qaFiles.map((f, idx) => (
+                        <li key={`${f.name}-${idx}`} className="flex items-center justify-between rounded border px-2 py-1 text-xs">
+                          <span className="truncate"><Upload className="inline h-3 w-3 mr-1" />{f.name}</span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setQaFiles((prev) => prev.filter((_, i) => i !== idx))}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
             </div>

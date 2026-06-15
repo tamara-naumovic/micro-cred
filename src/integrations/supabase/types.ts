@@ -998,6 +998,7 @@ export type Database = {
           published_at: string | null
           published_by: string | null
           qa_document_path: string | null
+          qa_document_paths: string[]
           qa_type: string
           quality_assurance: string
           required_evidence: Database["public"]["Enums"]["evidence_type"][]
@@ -1041,6 +1042,7 @@ export type Database = {
           published_at?: string | null
           published_by?: string | null
           qa_document_path?: string | null
+          qa_document_paths?: string[]
           qa_type?: string
           quality_assurance?: string
           required_evidence?: Database["public"]["Enums"]["evidence_type"][]
@@ -1084,6 +1086,7 @@ export type Database = {
           published_at?: string | null
           published_by?: string | null
           qa_document_path?: string | null
+          qa_document_paths?: string[]
           qa_type?: string
           quality_assurance?: string
           required_evidence?: Database["public"]["Enums"]["evidence_type"][]

@@ -108,11 +108,16 @@ function Detail() {
             <Field label="Quality assurance">
               <div className="space-y-1">
                 <div>{QA_LABEL[tpl.qaType] ?? tpl.qualityAssurance}</div>
-                {tpl.qaDocumentPath && (
-                  <Button size="sm" variant="outline" onClick={() => openQaDocument(tpl.qaDocumentPath!)}>
-                    <FileDown className="mr-2 h-4 w-4" />Open QA document
-                  </Button>
-                )}
+                {(() => {
+                  const paths = tpl.qaDocumentPaths && tpl.qaDocumentPaths.length > 0
+                    ? tpl.qaDocumentPaths
+                    : tpl.qaDocumentPath ? [tpl.qaDocumentPath] : [];
+                  return paths.map((p) => (
+                    <Button key={p} size="sm" variant="outline" onClick={() => openQaDocument(p)}>
+                      <FileDown className="mr-2 h-4 w-4" />{p.split("/").pop()}
+                    </Button>
+                  ));
+                })()}
               </div>
             </Field>
             <Field label="Prerequisites">
