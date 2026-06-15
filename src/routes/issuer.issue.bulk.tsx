@@ -191,7 +191,7 @@ function Bulk() {
   return (
     <PageShell
       title="Bulk Issuance"
-      description="Paste a CSV (or upload via XLSX in the production version) to issue many credentials at once."
+      description="Paste a CSV or upload a .csv file to issue many credentials at once."
     >
       <Card>
         <CardContent className="space-y-5 p-6">
@@ -207,11 +207,41 @@ function Bulk() {
             </Select>
           </div>
           <div>
-            <Label>CSV input</Label>
-            <Textarea value={csv} onChange={(e) => setCsv(e.target.value)} rows={10} className="font-mono text-xs" />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Headers: email, grade, expiryDate
-            </p>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <Label className="mb-0">CSV input</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  hidden
+                  onChange={handleFileUpload}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <FileUp className="mr-2 h-4 w-4" />
+                  Upload CSV
+                </Button>
+              </div>
+            </div>
+            <Textarea value={csv} onChange={(e) => { setCsv(e.target.value); setFileName(null); }} rows={10} className="font-mono text-xs" />
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">
+                Headers: email, grade, expiryDate. Paste CSV or upload a .csv file (UTF-8).
+              </p>
+              {fileName && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>Loaded: <span className="font-medium text-foreground">{fileName}</span></span>
+                  <Button type="button" variant="ghost" size="sm" className="h-6 px-2" onClick={clearFile}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="rounded-md border border-border p-3 text-sm space-y-1">
             <div><span className="font-medium">{rows.length}</span> recipient(s) parsed</div>
