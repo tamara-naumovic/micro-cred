@@ -10,9 +10,19 @@ const { keccak256 } = sha3;
 
 // Embed Noto Sans so non-ASCII characters (ć, š, ž, č, đ, etc.) render in PDFs.
 // Standard pdf-lib fonts use WinAnsi encoding which cannot encode these.
-import notoRegularUrl from "./fonts/NotoSans-Regular.ttf?arraybuffer";
-import notoBoldUrl from "./fonts/NotoSans-Bold.ttf?arraybuffer";
-import notoItalicUrl from "./fonts/NotoSans-Italic.ttf?arraybuffer";
+import { fontBase64 as notoRegularBase64 } from "./fonts/NotoSans-Regular";
+import { fontBase64 as notoBoldBase64 } from "./fonts/NotoSans-Bold";
+import { fontBase64 as notoItalicBase64 } from "./fonts/NotoSans-Italic";
+
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+const NOTO_REGULAR = base64ToBytes(notoRegularBase64);
+const NOTO_BOLD = base64ToBytes(notoBoldBase64);
+const NOTO_ITALIC = base64ToBytes(notoItalicBase64);
 
 import type { LoadedCredential, CredentialRow, TemplateMeta } from "./package.server";
 import {
