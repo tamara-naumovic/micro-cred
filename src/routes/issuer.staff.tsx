@@ -72,8 +72,15 @@ function StaffPage() {
 
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, [orgId]);
 
+  const isStaffSub = activeUser?.subRole === "staff";
+  useEffect(() => {
+    if (isStaffSub) {
+      toast.error("Only institution admins can manage staff.");
+    }
+  }, [isStaffSub]);
+
   if (!activeUser) return null;
-  if (activeUser.subRole !== "admin") return <Navigate to="/issuer" />;
+  if (activeUser.subRole !== "admin") return <Navigate to="/issuer" replace />;
   if (!orgId) {
     return (
       <PageShell title="Staff">
