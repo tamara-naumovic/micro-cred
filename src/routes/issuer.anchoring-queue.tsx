@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listAnchorJobs, retryAnchorJob, cancelAnchorJob } from "@/lib/chain/anchor.functions";
+import { listAnchorJobs, retryAnchorJob, cancelAnchorJob, repairCredentialChainFields } from "@/lib/chain/anchor.functions";
 import { useAuth } from "@/lib/auth";
 import {
   BLOCKCHAIN_LABEL,
@@ -30,6 +30,7 @@ import {
   AlertTriangle,
   Layers,
   Award,
+  Wrench,
 } from "lucide-react";
 
 export const Route = createFileRoute("/issuer/anchoring-queue")({
@@ -52,6 +53,7 @@ function AnchoringQueuePage() {
   const list = useServerFn(listAnchorJobs);
   const retry = useServerFn(retryAnchorJob);
   const cancel = useServerFn(cancelAnchorJob);
+  const repair = useServerFn(repairCredentialChainFields);
   const qc = useQueryClient();
   const { user, loading: authLoading } = useAuth();
 
@@ -81,6 +83,23 @@ function AnchoringQueuePage() {
       cancel({ data: { jobId, entityKind } }),
     onSuccess: () => {
       toast.success("Job cancelled");
+      qc.invalidateQueries({ queryKey: ["anchor-jobs"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const repairMut = useMutation({
+    mutationFn: (credentialId: string) => repair({ data: { credentialId } }),
+    onSuccess: (res: any) => {
+      if (res?.anchorResult?.ok) {
+        toast.success("Credential repaired and anchored");
+      } else if (res?.ok) {
+        toast.success(
+          `Credential fields repaired. ${res.anchorResult?.error ?? "Anchor will retry shortly."}`,
+        );
+      } else {
+        toast.error(res?.anchorResult?.error ?? "Repair failed");
+      }
       qc.invalidateQueries({ queryKey: ["anchor-jobs"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -262,6 +281,18 @@ function AnchoringQueuePage() {
                                   Retry
                                 </Button>
                               )}
+                            {r.entity_type === "credential" && r.status === "failed" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => repairMut.mutate(r.entity_id)}
+                                disabled={repairMut.isPending}
+                                title="Recompute missing chain fields and re-queue"
+                              >
+                                <Wrench className="mr-1 h-3.5 w-3.5" />
+                                Repair
+                              </Button>
+                            )}
                             {(r.status === "queued" || r.status === "failed") && (
                               <Button
                                 size="sm"
