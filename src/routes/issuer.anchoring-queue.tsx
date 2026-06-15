@@ -88,6 +88,23 @@ function AnchoringQueuePage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const repairMut = useMutation({
+    mutationFn: (credentialId: string) => repair({ data: { credentialId } }),
+    onSuccess: (res: any) => {
+      if (res?.anchorResult?.ok) {
+        toast.success("Credential repaired and anchored");
+      } else if (res?.ok) {
+        toast.success(
+          `Credential fields repaired. ${res.anchorResult?.error ?? "Anchor will retry shortly."}`,
+        );
+      } else {
+        toast.error(res?.anchorResult?.error ?? "Repair failed");
+      }
+      qc.invalidateQueries({ queryKey: ["anchor-jobs"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const rows = data?.rows ?? [];
   const maxAttempts = data?.maxAttempts ?? 5;
 
