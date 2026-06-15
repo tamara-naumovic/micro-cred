@@ -10,7 +10,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { enqueueAnchor } from "@/lib/chain/anchor.functions";
+
 import {
   LIFECYCLE_STAGES,
   type AppNotification,
@@ -224,6 +224,8 @@ function mapCredential(r: Row): IssuedCredential {
     },
     revocationReason: (r.revocation_reason as string | null) ?? undefined,
     renewedFromId: (r.renewed_from_id as string | null) ?? undefined,
+    lifecycle: ((r.credential_lifecycle as string | null) ?? "issued") as IssuedCredential["lifecycle"],
+    rejectionReason: (r.rejection_reason as string | null) ?? undefined,
   };
 }
 
@@ -573,6 +575,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       issued_at: issuedAt ?? nowISO(),
       expires_at: expiryDate ?? (tpl.expiryMode === "fixed_date" ? (tpl.expiryDate ?? null) : null),
       status: "active",
+      credential_lifecycle: "pending_earner_acceptance",
       source: tpl.source,
       subcategory: tpl.subcategory ?? null,
       level: tpl.level,
@@ -614,10 +617,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         actor_name: activeUserRef.current?.name ?? "Issuer",
         action: "Credential issued",
       });
-      // Fire-and-forget blockchain anchoring
-      enqueueAnchor({ data: { credentialId: cred.id as string } }).catch((e) =>
-        console.warn("[chain] enqueueAnchor failed", e),
-      );
+      // Anchoring is deferred until the earner accepts the credential.
       refetchAll();
     })();
     return null;
@@ -686,11 +686,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         insert: (r: Record<string, unknown>[]) => { select: () => Promise<{ data: { id: string }[] | null; error: unknown }> };
       }).insert(rows).select();
       if (error) console.error("[store] directIssue", error);
-      for (const c of inserted ?? []) {
-        enqueueAnchor({ data: { credentialId: c.id } }).catch((e) =>
-          console.warn("[chain] enqueueAnchor failed", e),
-        );
-      }
+      // Anchoring deferred until earner acceptance.
+      void inserted;
       refetchAll();
     })();
     return [];

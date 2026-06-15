@@ -14,6 +14,10 @@ export interface DbCredential {
   issued_at: string;
   expires_at: string | null;
   status: string;
+  credential_lifecycle: string;
+  rejection_reason: string | null;
+  rejected_at: string | null;
+  accepted_at: string | null;
   source: string;
   subcategory: string | null;
   level: string;

@@ -591,7 +591,7 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             issued_at: data.issuedAt,
             expires_at: expiresAt,
             status: "active",
-            credential_lifecycle: "issued",
+            credential_lifecycle: "pending_earner_acceptance",
             source: t.source,
             subcategory: t.subcategory ?? null,
             level: t.level,
@@ -611,7 +611,7 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
           } as never);
         if (insErr) throw new Error(insErr.message);
 
-        // Blockchain record
+        // Blockchain record stub — anchoring deferred until earner accepts.
         const contractAddress =
           process.env.CREDENTIAL_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
         await supabaseAdmin
@@ -625,63 +625,16 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             blockchain_status: "not_requested",
           } as never);
 
-        // Always insert into the credential queue so issued MCs are visible there.
-        const { error: jobInsErr } = await supabaseAdmin
-          .from("credential_anchor_jobs")
-          .insert({
-            credential_id: credentialId,
-            operation: "anchor_credential",
-            status: "queued",
-          } as never);
-        if (jobInsErr && !/duplicate/i.test(jobInsErr.message)) throw new Error(jobInsErr.message);
-        await supabase
-          .from("credentials")
-          .update({ chain_status: "queued" } as never)
-          .eq("id", credentialId);
-        await supabaseAdmin
-          .from("credential_blockchain_records")
-          .update({ blockchain_status: "queued" } as never)
-          .eq("credential_id", credentialId);
-
-        if (effectiveMode === "later") {
-          results.push({ recipientId: r.earnerId, credentialId, credentialStatus: "issued", blockchainStatus: "queued" });
-        } else {
-          // Anchor now — but only if the template is anchored on-chain.
-          const tplCheck = await isTemplateAnchored(supabaseAdmin, t.id);
-          if (!tplCheck.anchored) {
-            results.push({
-              recipientId: r.earnerId,
-              credentialId,
-              credentialStatus: "issued",
-              blockchainStatus: "queued",
-              error: tplCheck.reason,
-            });
-          } else {
-            const { processCredentialAnchor } = await import("./worker.server");
-            const res = await processCredentialAnchor(credentialId);
-            // Mark the queued job as done/failed so the queue reflects reality.
-            await supabaseAdmin
-              .from("credential_anchor_jobs")
-              .update({
-                status: res.ok ? "done" : "failed",
-                attempts: 1,
-                last_error: res.ok ? null : (res.error ?? null),
-                last_attempt_at: new Date().toISOString(),
-                transaction_hash: res.txHash ?? null,
-              } as never)
-              .eq("credential_id", credentialId)
-              .eq("operation", "anchor_credential")
-              .in("status", ["queued", "running", "failed"]);
-            results.push({
-              recipientId: r.earnerId,
-              credentialId,
-              credentialStatus: "issued",
-              blockchainStatus: res.ok ? "confirmed" : "failed",
-              txHash: res.txHash,
-              error: res.ok ? undefined : res.error,
-            });
-          }
-        }
+        // Intentionally do NOT enqueue an anchor job: it will be enqueued
+        // when the earner accepts the credential. effectiveMode (now/later)
+        // is only honoured after acceptance.
+        void effectiveMode;
+        results.push({
+          recipientId: r.earnerId,
+          credentialId,
+          credentialStatus: "pending_earner_acceptance",
+          blockchainStatus: "not_requested",
+        });
       } catch (e) {
         results.push({
           recipientId: r.earnerId,
@@ -1120,4 +1073,276 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
       .eq("id", data.jobId);
 
     return { ok: res.ok, error: res.error };
+  });
+
+// ============================================================================
+// Earner acceptance flow
+// ============================================================================
+
+async function enqueueAcceptedAnchor(credentialId: string): Promise<void> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { isChainConfigured } = await import("./bloxberg.server");
+
+  // Create the anchor job (idempotent).
+  const { error: jobErr } = await supabaseAdmin
+    .from("credential_anchor_jobs")
+    .insert({
+      credential_id: credentialId,
+      operation: "anchor_credential",
+      status: "queued",
+    } as never);
+  if (jobErr && !/duplicate/i.test(jobErr.message)) throw new Error(jobErr.message);
+
+  await supabaseAdmin
+    .from("credentials")
+    .update({ chain_status: "queued" } as never)
+    .eq("id", credentialId);
+  await supabaseAdmin
+    .from("credential_blockchain_records")
+    .update({ blockchain_status: "queued" } as never)
+    .eq("credential_id", credentialId);
+
+  if (!isChainConfigured()) return;
+
+  // Look up the credential's template and check whether it is anchored.
+  const { data: cred } = await supabaseAdmin
+    .from("credentials")
+    .select("template_id")
+    .eq("id", credentialId)
+    .maybeSingle();
+  const tplCheck = await isTemplateAnchored(supabaseAdmin, (cred as any)?.template_id);
+  if (!tplCheck.anchored) return; // Worker will retry later
+
+  const { processCredentialAnchor } = await import("./worker.server");
+  const res = await processCredentialAnchor(credentialId);
+  await supabaseAdmin
+    .from("credential_anchor_jobs")
+    .update({
+      status: res.ok ? "done" : "failed",
+      attempts: 1,
+      last_error: res.ok ? null : (res.error ?? null),
+      last_attempt_at: new Date().toISOString(),
+      transaction_hash: res.txHash ?? null,
+    } as never)
+    .eq("credential_id", credentialId)
+    .eq("operation", "anchor_credential")
+    .in("status", ["queued", "running", "failed"]);
+}
+
+/** Earner accepts a credential pending their acceptance. */
+export const acceptCredential = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { credentialId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: cred } = await supabase
+      .from("credentials")
+      .select("id, earner_id, issuer_id, title, credential_lifecycle")
+      .eq("id", data.credentialId)
+      .maybeSingle();
+    if (!cred) throw new Error("Credential not found");
+    if ((cred as any).earner_id !== userId) throw new Error("Forbidden");
+    if ((cred as any).credential_lifecycle !== "pending_earner_acceptance") {
+      throw new Error("Credential is not awaiting acceptance");
+    }
+
+    const { error: updErr } = await supabase
+      .from("credentials")
+      .update({
+        credential_lifecycle: "issued",
+        accepted_at: new Date().toISOString(),
+        rejection_reason: null,
+        rejected_at: null,
+      } as never)
+      .eq("id", data.credentialId);
+    if (updErr) throw new Error(updErr.message);
+
+    // Notify the issuer org.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("notifications").insert({
+      for_role: "issuer_admin",
+      for_org_id: (cred as any).issuer_id,
+      title: "Earner accepted credential",
+      body: `${(cred as any).title} was accepted by the earner.`,
+      link: "/issuer/credentials",
+    } as never);
+
+    // Now safe to anchor on Bloxberg.
+    await enqueueAcceptedAnchor(data.credentialId);
+
+    return { ok: true };
+  });
+
+/** Earner rejects a credential with a reason. */
+export const rejectCredential = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { credentialId: string; reason: string }) => d)
+  .handler(async ({ data, context }) => {
+    const reason = (data.reason ?? "").trim();
+    if (!reason) throw new Error("Reason is required");
+    const { supabase, userId } = context;
+    const { data: cred } = await supabase
+      .from("credentials")
+      .select("id, earner_id, issuer_id, title, credential_lifecycle")
+      .eq("id", data.credentialId)
+      .maybeSingle();
+    if (!cred) throw new Error("Credential not found");
+    if ((cred as any).earner_id !== userId) throw new Error("Forbidden");
+    if ((cred as any).credential_lifecycle !== "pending_earner_acceptance") {
+      throw new Error("Credential is not awaiting acceptance");
+    }
+
+    const { error: updErr } = await supabase
+      .from("credentials")
+      .update({
+        credential_lifecycle: "rejected",
+        rejection_reason: reason,
+        rejected_at: new Date().toISOString(),
+      } as never)
+      .eq("id", data.credentialId);
+    if (updErr) throw new Error(updErr.message);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("notifications").insert({
+      for_role: "issuer_admin",
+      for_org_id: (cred as any).issuer_id,
+      title: "Earner rejected credential",
+      body: `${(cred as any).title} was rejected. Reason: ${reason}`,
+      link: "/issuer/credentials",
+    } as never);
+
+    return { ok: true };
+  });
+
+/** Issuer resends a rejected credential with optional updates to grade/expiry. */
+export const resendCredential = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { credentialId: string; grade?: string | null; expiryDate?: string | null }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: cred } = await supabase
+      .from("credentials")
+      .select("*")
+      .eq("id", data.credentialId)
+      .maybeSingle();
+    if (!cred) throw new Error("Credential not found");
+    const c = cred as Record<string, any>;
+    if (c.credential_lifecycle !== "rejected") {
+      throw new Error("Only rejected credentials can be resent");
+    }
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: userId });
+    const { data: isOrgAdmin } = await supabase.rpc("has_role_in_org", {
+      _user_id: userId,
+      _role: "issuer_admin",
+      _org_id: c.issuer_id,
+    });
+    const { data: isAssignee } = await supabase.rpc("is_template_assignee", {
+      _user_id: userId,
+      _template_id: c.template_id,
+    });
+    if (!isAdmin && !isOrgAdmin && !isAssignee) throw new Error("Forbidden");
+
+    const newGrade = data.grade === undefined ? c.grade : (data.grade ?? null);
+    const newExpiry = data.expiryDate === undefined ? c.expires_at : (data.expiryDate ?? null);
+
+    // Recompute VC + hash + learner commitment with fresh secret.
+    const vc = (await import("./vc")).buildVcJson({
+      credentialId: c.id,
+      vcId: c.vc_id ?? `urn:microcred:${c.id}`,
+      title: c.title,
+      templateId: c.template_id,
+      templateVersion: c.template_version ?? null,
+      templateRef: c.template_ref ?? null,
+      earnerId: c.earner_id,
+      earnerName: c.earner_name,
+      issuerId: c.issuer_id,
+      issuerName: c.issuer_name,
+      issuedAt: c.issued_at,
+      expiresAt: newExpiry,
+      source: c.source,
+      subcategory: c.subcategory ?? null,
+      level: c.level,
+      ects: c.ects ?? null,
+      skills: c.skills ?? [],
+      grade: newGrade,
+      qaType: null,
+      supervisionType: null,
+      stackabilityType: null,
+      prerequisites: null,
+      prerequisitesNone: null,
+    });
+    const docHash = await sha256Hex(canonicalJson(vc));
+    const secret = randomSecretHex(32);
+    const learnerCommitment = learnerCommitmentKeccak(c.earner_id, c.id, secret);
+
+    const { error: updErr } = await supabase
+      .from("credentials")
+      .update({
+        grade: newGrade,
+        expires_at: newExpiry,
+        vc_json: vc,
+        canonical_payload: vc,
+        credential_hash: docHash,
+        learner_commitment: learnerCommitment,
+        learner_secret: secret,
+        credential_lifecycle: "pending_earner_acceptance",
+        rejection_reason: null,
+        rejected_at: null,
+        accepted_at: null,
+      } as never)
+      .eq("id", data.credentialId);
+    if (updErr) throw new Error(updErr.message);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("credential_blockchain_records")
+      .update({ document_hash: docHash, blockchain_status: "not_requested" } as never)
+      .eq("credential_id", data.credentialId);
+    await supabaseAdmin.from("notifications").insert({
+      for_user_id: c.earner_id,
+      title: "Credential resent for your acceptance",
+      body: `${c.title} was updated and resent. Please review and accept or reject it.`,
+      link: `/earner/credentials/${c.id}`,
+    } as never);
+
+    return { ok: true };
+  });
+
+/** Issuer accepts the rejection — deletes the credential entirely. */
+export const discardRejectedCredential = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { credentialId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: cred } = await supabase
+      .from("credentials")
+      .select("id, issuer_id, template_id, credential_lifecycle, chain_status")
+      .eq("id", data.credentialId)
+      .maybeSingle();
+    if (!cred) throw new Error("Credential not found");
+    const c = cred as Record<string, any>;
+    if (c.credential_lifecycle !== "rejected") {
+      throw new Error("Only rejected credentials can be discarded");
+    }
+    if (c.chain_status === "confirmed") {
+      throw new Error("Credential is anchored on-chain and cannot be deleted");
+    }
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: userId });
+    const { data: isOrgAdmin } = await supabase.rpc("has_role_in_org", {
+      _user_id: userId,
+      _role: "issuer_admin",
+      _org_id: c.issuer_id,
+    });
+    const { data: isAssignee } = await supabase.rpc("is_template_assignee", {
+      _user_id: userId,
+      _template_id: c.template_id,
+    });
+    if (!isAdmin && !isOrgAdmin && !isAssignee) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("credential_anchor_jobs").delete().eq("credential_id", data.credentialId);
+    await supabaseAdmin.from("credential_blockchain_records").delete().eq("credential_id", data.credentialId);
+    await supabaseAdmin.from("credentials").delete().eq("id", data.credentialId);
+
+    return { ok: true };
   });

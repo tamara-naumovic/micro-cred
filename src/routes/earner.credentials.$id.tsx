@@ -1,11 +1,22 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Copy, ExternalLink, Share2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Copy, ExternalLink, Share2, Check, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
 import { ShareDialog } from "@/components/ShareDialog";
@@ -18,6 +29,7 @@ import {
   updateCredentialSharing,
   type DbCredential,
 } from "@/lib/credentials";
+import { acceptCredential, rejectCredential } from "@/lib/chain/anchor.functions";
 import type { SharingSettings, IssuedCredential } from "@/lib/types";
 
 export const Route = createFileRoute("/earner/credentials/$id")({
@@ -100,6 +112,9 @@ function RealDetail({ credentialId }: { credentialId: string }) {
       verifyPath={verifyPath}
       onToggle={onToggle}
       credentialId={cred.id}
+      lifecycle={cred.credential_lifecycle as IssuedCredential["lifecycle"]}
+      rejectionReason={cred.rejection_reason ?? undefined}
+      onAcceptanceChanged={() => qc.invalidateQueries({ queryKey: ["credential", credentialId] })}
     />
   );
 }
@@ -150,6 +165,8 @@ function MockDetail({ credentialId }: { credentialId: string }) {
       verifyPath={verifyPath}
       onToggle={(patch) => Promise.resolve(updateSharing(cred.id, patch))}
       credentialId={cred.id}
+      lifecycle={cred.lifecycle}
+      rejectionReason={cred.rejectionReason}
       mockNotice
     />
   );
@@ -177,9 +194,14 @@ interface DetailLayoutProps {
   credentialId: string;
   onToggle: (patch: Partial<SharingSettings>) => Promise<void> | void;
   mockNotice?: boolean;
+  lifecycle?: IssuedCredential["lifecycle"];
+  rejectionReason?: string;
+  onAcceptanceChanged?: () => void;
 }
 
 function DetailLayout(p: DetailLayoutProps) {
+  const isPending = p.lifecycle === "pending_earner_acceptance";
+  const isRejected = p.lifecycle === "rejected";
   return (
     <PageShell
       title={p.title}
@@ -192,6 +214,24 @@ function DetailLayout(p: DetailLayoutProps) {
         </Button>
       }
     >
+      {isPending && (
+        <AcceptanceBanner
+          credentialId={p.credentialId}
+          onChanged={p.onAcceptanceChanged}
+          mockNotice={p.mockNotice}
+        />
+      )}
+      {isRejected && (
+        <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
+          <div className="font-medium text-destructive">You rejected this credential.</div>
+          {p.rejectionReason && (
+            <div className="mt-1 text-muted-foreground">Reason: {p.rejectionReason}</div>
+          )}
+          <div className="mt-1 text-xs text-muted-foreground">
+            Waiting for the issuer to update and resend, or to accept the rejection.
+          </div>
+        </div>
+      )}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <Card>
@@ -330,6 +370,96 @@ function Field({ label, value }: { label: string; value: string }) {
     <div>
       <dt className="text-xs uppercase tracking-wider text-muted-foreground">{label}</dt>
       <dd className="mt-0.5 text-sm">{value}</dd>
+    </div>
+  );
+}
+
+function AcceptanceBanner({
+  credentialId,
+  onChanged,
+  mockNotice,
+}: {
+  credentialId: string;
+  onChanged?: () => void;
+  mockNotice?: boolean;
+}) {
+  const accept = useServerFn(acceptCredential);
+  const reject = useServerFn(rejectCredential);
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const onAccept = async () => {
+    if (mockNotice) {
+      toast.info("Demo credential — acceptance is disabled.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await accept({ data: { credentialId } });
+      toast.success("Credential accepted");
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not accept");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onReject = async () => {
+    if (!reason.trim()) {
+      toast.error("Please provide a reason");
+      return;
+    }
+    setBusy(true);
+    try {
+      await reject({ data: { credentialId, reason: reason.trim() } });
+      toast.success("Credential rejected");
+      setOpen(false);
+      setReason("");
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not reject");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mb-4 rounded-md border border-warning/40 bg-warning/10 p-4">
+      <div className="font-medium text-warning-foreground">Please review and accept this credential</div>
+      <p className="mt-1 text-sm text-muted-foreground">
+        This credential is not yet valid and is not anchored on the blockchain. Once you accept it, it becomes valid in your wallet and is anchored automatically. If something is wrong, reject it with a reason for the issuer.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button size="sm" onClick={onAccept} disabled={busy}>
+          <Check className="mr-1 h-3.5 w-3.5" /> Accept credential
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => setOpen(true)} disabled={busy}>
+          <X className="mr-1 h-3.5 w-3.5" /> Reject
+        </Button>
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject credential</DialogTitle>
+            <DialogDescription>
+              Explain to the issuer why you are rejecting this credential. They can update the issuance details and resend, or accept your rejection.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. The grade is incorrect — should be 9/10."
+            rows={4}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="destructive" disabled={busy} onClick={onReject}>Reject credential</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

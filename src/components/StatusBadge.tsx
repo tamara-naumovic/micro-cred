@@ -2,11 +2,12 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { CredentialStatus, RequestStatus, TemplateStatus } from "@/lib/types";
 
-type AnyStatus = CredentialStatus | RequestStatus | TemplateStatus | "approved" | "pending" | "rejected" | "changes_requested";
+type AnyStatus = CredentialStatus | RequestStatus | TemplateStatus | "approved" | "pending" | "rejected" | "changes_requested" | "pending_earner_acceptance";
 
 const LABELS: Record<string, string> = {
   active: "Active",
   pending: "Pending",
+  pending_earner_acceptance: "Awaiting acceptance",
   processing: "Processing",
   expired: "Expired",
   revoked: "Revoked",
@@ -33,6 +34,7 @@ const TONE: Record<string, string> = {
   approved: "bg-success/15 text-success-foreground border-success/30",
   approved_by_provider: "bg-success/15 text-success-foreground border-success/30",
   pending: "bg-warning/20 text-warning-foreground border-warning/30",
+  pending_earner_acceptance: "bg-warning/20 text-warning-foreground border-warning/30",
   changes_requested: "bg-warning/20 text-warning-foreground border-warning/30",
   in_review: "bg-info/15 text-info-foreground border-info/30",
   evidence_collected: "bg-info/15 text-info-foreground border-info/30",

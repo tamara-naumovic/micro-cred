@@ -5,6 +5,7 @@ export type TemplateLifecycle = "draft" | "active" | "archived" | "published";
 export type CredentialLifecycle =
   | "draft"
   | "pending_earner_acceptance"
+  | "rejected"
   | "issued"
   | "revoked"
   | "expired"
@@ -27,7 +28,8 @@ export const TEMPLATE_LIFECYCLE_LABEL: Record<TemplateLifecycle, string> = {
 
 export const CREDENTIAL_LIFECYCLE_LABEL: Record<CredentialLifecycle, string> = {
   draft: "Draft",
-  pending_earner_acceptance: "Pending acceptance",
+  pending_earner_acceptance: "Awaiting acceptance",
+  rejected: "Rejected by earner",
   issued: "Issued",
   revoked: "Revoked",
   expired: "Expired",
