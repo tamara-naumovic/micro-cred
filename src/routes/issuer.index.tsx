@@ -1246,15 +1246,7 @@ function LearnerOverview({
                     style={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
                   />
                 </XAxis>
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={45}>
-                  <Label
-                    value={"Number of\nlearners"}
-                    angle={-90}
-                    position="left"
-                    offset={10}
-                    style={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                  />
-                </YAxis>
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={45} />
                 <Tooltip
                   contentStyle={{
                     background: "hsl(var(--popover))",
