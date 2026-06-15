@@ -241,3 +241,109 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+function QaDocumentsEditor({
+  templateId,
+  issuerId,
+  paths,
+  canEdit,
+}: {
+  templateId: string;
+  issuerId: string;
+  paths: string[];
+  canEdit: boolean;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const persist = async (next: string[]) => {
+    const { error } = await supabase
+      .from("templates")
+      .update({ qa_document_paths: next, qa_document_path: next[0] ?? null })
+      .eq("id", templateId);
+    if (error) throw new Error(error.message);
+  };
+
+  const onUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    try {
+      const newPaths: string[] = [];
+      for (const f of Array.from(files)) {
+        const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${issuerId}/${templateId}/${Date.now()}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from("qa-documents")
+          .upload(path, f, { upsert: false, contentType: f.type || undefined });
+        if (upErr) throw new Error(`Failed to upload ${f.name}: ${upErr.message}`);
+        newPaths.push(path);
+      }
+      await persist([...paths, ...newPaths]);
+      toast.success("QA documents updated");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const onRemove = async (path: string) => {
+    setBusy(true);
+    try {
+      await supabase.storage.from("qa-documents").remove([path]);
+      await persist(paths.filter((p) => p !== path));
+      toast.success("Document removed");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to remove");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {paths.length === 0 && (
+        <p className="text-xs text-muted-foreground">No documents uploaded.</p>
+      )}
+      {paths.map((p) => (
+        <div key={p} className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => openQaDocument(p)}>
+            <FileDown className="mr-2 h-4 w-4" />{p.split("/").pop()}
+          </Button>
+          {canEdit && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => onRemove(p)}
+              aria-label="Remove document"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      ))}
+      {canEdit && (
+        <div>
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => onUpload(e.target.files)}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => fileRef.current?.click()}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            {busy ? "Uploading…" : "Add documents"}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
