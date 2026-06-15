@@ -140,12 +140,22 @@ function AnchoringQueuePage() {
 
   return (
     <div className="container mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Blockchain Anchoring Queue</h1>
-        <p className="text-sm text-muted-foreground">
-          Independent of credential issuance. Templates and credentials are fully valid once
-          published or issued — anchoring only adds an external integrity proof on Bloxberg.
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Blockchain Anchoring Queue</h1>
+          <p className="text-sm text-muted-foreground">
+            Independent of credential issuance. Templates and credentials are fully valid once
+            published or issued — anchoring only adds an external integrity proof on Bloxberg.
+          </p>
+        </div>
+        <Button
+          onClick={() => processMut.mutate()}
+          disabled={processMut.isPending}
+          className="shrink-0"
+        >
+          <RefreshCcw className={`mr-2 h-4 w-4 ${processMut.isPending ? "animate-spin" : ""}`} />
+          {processMut.isPending ? "Processing…" : "Process queue now"}
+        </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">
@@ -154,6 +164,7 @@ function AnchoringQueuePage() {
         <SummaryStat label="Failed" value={counts.failed} tone="destructive" />
         <SummaryStat label="Confirmed" value={counts.done} tone="success" />
       </div>
+
 
       <Card>
         <CardHeader>
