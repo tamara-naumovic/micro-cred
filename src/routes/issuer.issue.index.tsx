@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/issuer/issue/")({
 type RecipientOverride = { grade: string; expiryDate: string };
 
 function Direct() {
-  const { activeUser, templates, users, templateAssignees } = useStore();
+  const { activeUser, templates, users, templateAssignees, credentials } = useStore();
   const isStaff = activeUser?.subRole === "staff";
   const issueBatch = useServerFn(issueCredentialsBatch);
   const assignedIds = useMemo(
@@ -43,7 +43,7 @@ function Direct() {
     ),
     [templates, activeUser, isStaff, assignedIds],
   );
-  const earners = users.filter((u) => u.role === "earner");
+  const allEarners = users.filter((u) => u.role === "earner");
   const [templateId, setTemplateId] = useState(myTemplates[0]?.id ?? "");
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [defaultGrade, setDefaultGrade] = useState("");
@@ -51,6 +51,39 @@ function Direct() {
   const [anchorMode, setAnchorMode] = useState<AnchorMode>("later");
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<IssuanceResultRow[] | null>(null);
+
+  // Earners who already have a non-revoked credential for the selected template
+  const earnersWithActive = useMemo(() => {
+    if (!templateId) return new Set<string>();
+    return new Set(
+      credentials
+        .filter((c) => c.templateId === templateId && c.status !== "revoked")
+        .map((c) => c.earnerId),
+    );
+  }, [credentials, templateId]);
+
+  // Exclude already-credentialed earners from the picker entirely
+  const earners = useMemo(
+    () => allEarners.filter((u) => !earnersWithActive.has(u.id)),
+    [allEarners, earnersWithActive],
+  );
+
+  // If template changes and some currently-selected earners now have an active
+  // credential for the new template, drop them from the selection.
+  useEffect(() => {
+    setOverrides((prev) => {
+      const filtered: Record<string, RecipientOverride> = {};
+      let changed = false;
+      for (const [id, val] of Object.entries(prev)) {
+        if (earnersWithActive.has(id)) {
+          changed = true;
+        } else {
+          filtered[id] = val;
+        }
+      }
+      return changed ? filtered : prev;
+    });
+  }, [earnersWithActive]);
 
   const selectedIds = Object.keys(overrides);
 
@@ -151,6 +184,11 @@ function Direct() {
                 placeholder="Search earners by name or email"
               />
             </div>
+            {templateId && earnersWithActive.size > 0 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {earnersWithActive.size} earner(s) already hold this credential (non-revoked) and are hidden from the list.
+              </p>
+            )}
           </div>
 
 

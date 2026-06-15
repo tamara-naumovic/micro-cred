@@ -1,35 +1,23 @@
-# Fix WinAnsi encoding error in credential PDF
+## Cilj
+Sprečiti issuer admin/staff da preko Direct ili Bulk issuance izda kredencijal earner-u koji već ima isti kredencijal (template) u ne-revoked statusu.
 
-## Problem
-`pdf-lib` standard fonts (Helvetica) use WinAnsi encoding, which cannot encode characters like `ć` (0x0107), `š`, `ž`, `č`, `đ`, Cyrillic, etc. The "Download complete package" and "Download PDF" actions throw `WinAnsi cannot encode "ć"` and fail.
+## Stanje
+- **Bulk** (`src/routes/issuer.issue.bulk.tsx`) već ima proveru — radi za i admina i staff-a (isti kod). OK, ne menja se.
+- **Direct** (`src/routes/issuer.issue.index.tsx`) nema nikakvu proveru — dozvoljava ponovno izdavanje.
 
-This is a font-embedding problem inside our PDF builder — Lovable platform itself runs UTF-8 fine; we just have to embed a real Unicode font in the PDF.
+## Izmene — samo `src/routes/issuer.issue.index.tsx`
 
-## Solution
-Embed Noto Sans (Regular + Bold + Italic) as a TTF asset and register it via `@pdf-lib/fontkit`. Replace all `StandardFonts.Helvetica*` usages.
+1. Dohvatiti `credentials` iz `useStore()`.
+2. Izračunati `earnersWithActive: Set<string>` — earner ID-evi koji već imaju kredencijal za izabrani `templateId` sa statusom različitim od `revoked` (isti kriterijum kao u Bulk-u).
+3. U `StaffPicker` listi recipient-a vizualno označiti takve earner-e (npr. badge "Already issued") i onemogućiti njihovu selekciju (disable u picker-u, ili filtrirati prikaz uz upozorenje). Postojeće selekcije koje postanu nevažeće (npr. nakon promene template-a) automatski očistiti.
+4. U `submit()`:
+   - Pre poziva server fn-a, filtrirati `recipients` izbacujući one koji su u `earnersWithActive`.
+   - Ako su svi izabrani već imaju kredencijal → `toast.error("Svi izabrani earner-i već imaju ovaj kredencijal.")` i stop.
+   - Ako su neki preskočeni → `toast.warning("X earner(s) skipped — already have this credential.")` i nastaviti sa ostalima.
+5. Mali info-blok ispod recipient liste (analogan onom u Bulk-u) sa brojem skip-ovanih.
 
-## Steps
+## Provera za admin u Bulk-u
+Pregledom Bulk fajla potvrđeno: `earnersWithActive` provera radi nezavisno od role (admin ili staff). Nije potrebna nikakva izmena.
 
-1. **Add dependency**: `bun add @pdf-lib/fontkit`.
-2. **Add font files** as server assets:
-   - `src/lib/evidence/fonts/NotoSans-Regular.ttf`
-   - `src/lib/evidence/fonts/NotoSans-Bold.ttf`
-   - `src/lib/evidence/fonts/NotoSans-Italic.ttf`
-   
-   Downloaded from Google Fonts (Noto Sans, OFL license). Imported as `?arraybuffer` so Vite bundles them into the Worker.
-3. **Update `src/lib/evidence/builders.server.ts`**:
-   - Import `fontkit` and the three TTF buffers.
-   - In `buildCredentialPdf`, call `doc.registerFontkit(fontkit)` after `PDFDocument.create()`.
-   - Replace `doc.embedFont(StandardFonts.Helvetica*)` with `doc.embedFont(notoRegularBytes, { subset: true })` and analogous for Bold/Italic. Subsetting keeps the PDF small (~30–60 KB added).
-   - Remove the now-unused `StandardFonts` import.
-4. **Sanity-check text drawing**: `wrapText` is char-count based, so widths may shift slightly with Noto vs Helvetica — acceptable, layout is forgiving.
-5. **Worker compatibility check**: `@pdf-lib/fontkit` is pure JS and works in Cloudflare Workers. TTFs imported via `?arraybuffer` are inlined at build time — no runtime fs access.
-
-## Verification
-- Issue a credential whose title/earner/issuer name contains `ć`, `š`, `đ`.
-- Download PDF and ZIP — both succeed, characters render correctly.
-- Confirm previous ASCII-only credentials still render unchanged.
-
-## Out of scope
-- Cyrillic-only or CJK glyphs (Noto Sans Latin covers all Central/Eastern European Latin; if Cyrillic is needed later, swap to `NotoSans` full or add `NotoSansSC`).
-- JSON / receipt files are already UTF-8 — no change needed there.
+## Backend
+Bez izmena. (Server fn `issueCredentialsBatch` se ne menja — ovo je UI guard. Po želji se može dodati i server-side guard u sledećoj iteraciji.)
