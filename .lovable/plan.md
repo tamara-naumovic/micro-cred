@@ -1,100 +1,46 @@
-## Šta je problem
+## Problem
 
-Kredencijal koji ti je failovao (`4037f511-…`, "Web3 Bootcamp - Solidity…", izdat 15.06. u 15:34) u bazi ima:
+Kredencijali izdati pre poslednjeg fix-a imaju sva blockchain polja `NULL`. Prethodno dodati `ensureCredentialChainFields` u `worker.server.ts` radi auto-heal samo kad cron pokrene job — ali:
 
-- `template_ref` = NULL
-- `credential_hash` = NULL
-- `learner_commitment` = NULL
-- `chain_status` = `failed`
-- `chain_error` = **`Cannot read properties of null (reading 'startsWith')`**
+1. Postojeći `credential_anchor_jobs` red je `status=failed, attempts=2` sa starom porukom; ako objavljena verzija nije svežija od fix-a, retry ponovo "padne" pre nego što auto-heal stigne da se izvrši.
+2. Ako `ensureCredentialChainFields` UPDATE iz nekog razloga ne uspe (RLS, kolona, race), niko to ne vidi jer rezultat update-a nije proveravan.
 
-Kada earner prihvati kredencijal, anchor worker (`worker.server.ts → submitCredentialAnchor`) zove `to0x(c.template_ref!)`, `to0x(c.credential_hash!)`, `to0x(c.learner_commitment!)`. `to0x` interno radi `hex.startsWith("0x")` — i puca jer je `hex` `null`.
+## Plan
 
-### Zašto je `template_ref` null
+### 1. Eksplicitan repair server fn
+Dodati `repairCredentialChainFields(credentialId)` u `src/lib/chain/anchor.functions.ts`:
+- `requireSupabaseAuth` + provera `has_role(issuer_admin/issuer_staff)` u org-u kredencijala
+- Učita kredencijal + template, izračuna `vc_json`, `credential_hash`, `learner_secret`, `learner_commitment`, `template_ref`, `template_version`, `vc_id` (ista logika kao `ensureCredentialChainFields`)
+- **Proverava grešku UPDATE-a** i baca jasnu poruku ako ne uspe (trenutno se `.update()` rezultat ignoriše)
+- Resetuje `chain_status='not_requested'`, `chain_error=NULL`
+- Resetuje postojeći `credential_anchor_jobs` red: `status='queued', attempts=0, next_attempt_at=now, last_error=NULL` (ili insert ako ne postoji)
+- Vraća rezime: koja polja su izračunata
 
-Kredencijal NIJE izdat preko ispravne putanje `issueCredentialsBatch` (server fn u `src/lib/chain/anchor.functions.ts`, linija ~579 — ona pravilno računa `vcId`, `templateRef`, `docHash`, `learnerCommitment`, `learnerSecret`).
+### 2. Bulk backfill server fn (jednokratno čišćenje)
+`backfillAllPendingCredentials()` — platform_admin only:
+- Nađe sve `credentials` gde je bilo koje od `credential_hash / learner_commitment / template_ref / vc_json` `NULL`
+- Za svaki pozove istu repair logiku
+- Vraća listu `{id, ok, error}` rezultata
 
-Umesto toga, izdat je preko jedne od tri **legacy klijent-side putanje** u `src/lib/store.tsx`:
+### 3. UI: "Repair & retry" dugme
+U `src/routes/issuer.anchoring-queue.tsx`, za svaki red kredencijala u listi (posebno one sa `failed` ili nedostajućim hash-evima) — dugme koje zove `repairCredentialChainFields` i invalidira query.
 
-- `issueFromApplication` (linija 592) — koristi se kad issuer **odobri aplikaciju** sa `/issuer/requests`
-- `directIssue` (linija 676)
-- `bulkIssue` (linija 699)
+Opciono: u admin sekciji dugme "Backfill all" koje zove bulk fn.
 
-Sve tri zovu `buildCredentialInsert` (linija 564) koji `INSERT`-uje u `credentials` samo osnovna polja (`title`, `earner_id`, `level`…) i **ne računa** `vc_id`, `template_version`, `template_ref`, `credential_hash`, `learner_commitment`, `learner_secret`, `canonical_payload`, `vc_json`. Anchor zatim puca.
+### 4. Verifikacija deploy-a
+Posle merge-a, korisnik mora ponovo da objavi (Publish), jer trenutna published verzija (`micro-credential-platform.lovable.app`) još uvek baca staru poruku `Cannot read properties of null (reading 'startsWith')`. Bez novog publish-a, ni auto-heal ni repair fn neće raditi na produkciji.
 
-Tvoj kredencijal je verovatno izašao iz "Approve application" toka.
+## Tehnički detalji
 
-## Plan popravke
+**Files to edit:**
+- `src/lib/chain/anchor.functions.ts` — dodati `repairCredentialChainFields` i `backfillAllPendingCredentials`; izdvojiti zajedničku logiku iz `ensureCredentialChainFields` u helper koji se reuse-uje
+- `src/lib/chain/worker.server.ts` — `ensureCredentialChainFields` da poziva isti helper i proverava grešku UPDATE-a
+- `src/routes/issuer.anchoring-queue.tsx` — dodati Repair dugme na red sa failed/nedostajućim hash-evima
 
-### 1. Preusmeriti legacy putanje na ispravan server fn
+**Nema migracije** — sve potrebne kolone već postoje.
 
-Dodati novi server fn `issueCredentialFromApplication(applicationId, opts)` u `src/lib/chain/anchor.functions.ts` koji deli istu logiku kao `issueCredentialsBatch` (računa `vcId`, `docHash`, `learnerCommitment`, `learnerSecret`, `templateRef`, snima `vc_json`/`canonical_payload`), pa onda update-uje `applications.status='issued'` i upisuje timeline.
-
-Izmeniti `store.tsx`:
-
-- `issueFromApplication` → poziva novi server fn umesto direktnog `supabase.from("credentials").insert`.
-- `directIssue` → poziva postojeći `issueCredentialsBatch`.
-- `bulkIssue` → poziva postojeći `issueCredentialsBatch`.
-
-Obrisati `buildCredentialInsert` ili ga ostaviti samo kao internu pomoćnu funkciju koja se više ne koristi za insert.
-
-### 2. Hardening — jasna greška umesto kriptičnog `startsWith`
-
-U `src/lib/chain/worker.server.ts → processCredentialAnchor`, pre poziva `submitCredentialAnchor` dodati guard:
-
-```ts
-if (!c.credential_hash || !c.learner_commitment || !c.template_ref) {
-  throw new Error(
-    `Credential ${credentialId} is missing chain fields ` +
-    `(credential_hash/learner_commitment/template_ref) — ` +
-    `it was issued via a legacy path that didn't compute them. Re-issue or backfill.`
-  );
-}
-```
-
-Isto u `processTemplateAnchor` za `v.template_ref` / `v.document_hash`.
-
-U `src/lib/chain/hash.ts → to0x` i `hexToBytes`, baciti čistu poruku kada uđe `null`/`undefined` (umesto da puca na `startsWith`).
-
-### 3. Backfill postojećeg failed kredencijala
-
-Jednokratan server fn `backfillCredentialChainFields(credentialId)` (poziva se ručno iz UI dugmeta "Repair" u anchoring queue ili ručno) koji:
-
-- učita kredencijal + njegov template
-- ponovo izgradi VC JSON (`buildVcJson`), izračuna `credential_hash`, generiše `learner_secret`, izračuna `learner_commitment`, koristi `template_ref` sa templejta (ili rekomputuje ako i tamo fali)
-- update-uje red kredencijala, resetuje `chain_status='not_requested'`, `chain_error=NULL`
-- earner zatim može ponovo da pokrene accept/anchor
-
-Tvoj `Web3 Bootcamp` kredencijal će biti popravljen ovim putem.
-
-### Tehnički detalji — fajlovi koje menjam
-
-```text
-src/lib/chain/anchor.functions.ts
-  + export const issueCredentialFromApplication = createServerFn(...)
-  + export const backfillCredentialChainFields = createServerFn(...)
-
-src/lib/chain/worker.server.ts
-  ~ processCredentialAnchor: dodat pre-flight guard za null hex polja
-  ~ processTemplateAnchor:   dodat pre-flight guard
-
-src/lib/chain/hash.ts
-  ~ to0x / hexToBytes: throw new Error("…expected hex string, got null") ako je null/undefined
-
-src/lib/store.tsx
-  ~ issueFromApplication → useServerFn(issueCredentialFromApplication)
-  ~ directIssue          → useServerFn(issueCredentialsBatch)
-  ~ bulkIssue            → useServerFn(issueCredentialsBatch)
-  - buildCredentialInsert (više se ne koristi za insert)
-
-src/routes/issuer.anchoring-queue.tsx  (opciono)
-  + "Repair" dugme pored failed redova → poziva backfillCredentialChainFields
-```
-
-Nema migracija — sve postojeće kolone već postoje (`credential_hash`, `learner_commitment`, `learner_secret`, `template_ref`, `vc_id`, `vc_json`, `canonical_payload`).
-
-### Šta neću dirati
-
-- `issueCredentialsBatch` (već radi ispravno).
-- Smart contract ABI, kontrakt adrese, environment secrets.
-- RLS policies (postojeće dozvoljavaju ono što treba).
+**Test plan:**
+1. Pozvati `repairCredentialChainFields("f029d7f5-654a-4f57-970c-1e221f2b2ad2")` (ručno preko UI)
+2. Proveriti da li su `credential_hash / learner_commitment / template_ref / vc_json` popunjeni u bazi
+3. Sačekati cron (ili pozvati `triggerCredentialAnchor`) — anchor bi trebalo da prođe
+4. Verifikovati `chain_status='confirmed'` i da `credential_blockchain_records.transaction_hash` postoji
