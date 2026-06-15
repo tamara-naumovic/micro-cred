@@ -64,9 +64,7 @@ function SharedProfile() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 md:px-8">
-      <Button variant="ghost" size="sm" asChild className="mb-4">
-        <Link to="/"><ArrowLeft className="mr-1 h-4 w-4" /> Back to home</Link>
-      </Button>
+      <DashboardHomeLink />
 
       <Card>
         <CardContent className="flex flex-wrap items-start gap-4 p-6">
