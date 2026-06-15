@@ -112,6 +112,9 @@ function RealDetail({ credentialId }: { credentialId: string }) {
       verifyPath={verifyPath}
       onToggle={onToggle}
       credentialId={cred.id}
+      lifecycle={cred.credential_lifecycle as IssuedCredential["lifecycle"]}
+      rejectionReason={cred.rejection_reason ?? undefined}
+      onAcceptanceChanged={() => qc.invalidateQueries({ queryKey: ["credential", credentialId] })}
     />
   );
 }
