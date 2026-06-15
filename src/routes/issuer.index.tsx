@@ -1233,42 +1233,14 @@ function LearnerOverview({
         {unique > 0 && (
           <div className="h-40 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dist}>
+              <BarChart data={dist} margin={{ left: 40, bottom: 5 }}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   stroke="hsl(var(--border))"
                 />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }}>
                   <Label
-                    value="Credentials per learner"
-                    position="insideBottom"
-                    offset={-2}
-                    style={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                  />
-                </XAxis>
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }}>
-                  <Label
-                    value="Number of learners"
-                    angle={-90}
-                    position="insideLeft"
-                    style={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                  />
-                </YAxis>
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--popover))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                />
-                <Bar
-                  dataKey="value"
-                  fill="var(--primary)"
-                  radius={[6, 6, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+]
           </div>
         )}
       </CardContent>
