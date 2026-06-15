@@ -226,7 +226,7 @@ function mapCredential(r: Row): IssuedCredential {
       documentHash: (r.credential_hash as string | null) ?? undefined,
       learnerCommitment: (r.learner_commitment as string | null) ?? undefined,
       templateRef: (r.template_ref as string | null) ?? undefined,
-      learnerSecret: (r.learner_secret as string | null) ?? undefined,
+      learnerSecret: undefined,
     },
     revocationReason: (r.revocation_reason as string | null) ?? undefined,
     renewedFromId: (r.renewed_from_id as string | null) ?? undefined,
