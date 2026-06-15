@@ -149,6 +149,10 @@ export interface SharingSettings {
   showSource: boolean;
   showExpiry: boolean;
   showSkills: boolean;
+  showLevel: boolean;
+  showPrerequisites: boolean;
+  showSupervision: boolean;
+  showIntegration: boolean;
 }
 
 export interface IssuedCredential {

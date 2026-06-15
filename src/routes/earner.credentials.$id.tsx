@@ -75,6 +75,10 @@ function RealDetail({ credentialId }: { credentialId: string }) {
     showSource: cred.share_show_source,
     showExpiry: cred.share_show_expiry,
     showSkills: cred.share_show_skills,
+    showLevel: cred.share_show_level,
+    showPrerequisites: cred.share_show_prerequisites,
+    showSupervision: cred.share_show_supervision,
+    showIntegration: cred.share_show_integration,
   };
 
   return (
@@ -300,6 +304,10 @@ function DetailLayout(p: DetailLayoutProps) {
                 ["showGrade", "Show grade"],
                 ["showExpiry", "Show expiry date"],
                 ["showSkills", "Show skills"],
+                ["showLevel", "Show level"],
+                ["showPrerequisites", "Show prerequisites"],
+                ["showSupervision", "Show supervision & ID verification"],
+                ["showIntegration", "Show integration / stackability"],
               ] as const).map(([k, label]) => (
                 <label key={k} className="flex items-center justify-between text-sm">
                   <span>{label}</span>

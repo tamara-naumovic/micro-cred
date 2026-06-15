@@ -26,6 +26,10 @@ export interface DbCredential {
   share_show_source: boolean;
   share_show_expiry: boolean;
   share_show_skills: boolean;
+  share_show_level: boolean;
+  share_show_prerequisites: boolean;
+  share_show_supervision: boolean;
+  share_show_integration: boolean;
   ebsi_status: string;
   ebsi_did: string | null;
   ebsi_vc_id: string | null;
@@ -58,7 +62,22 @@ const SHARE_KEYS: Record<keyof SharingSettings, string> = {
   showSource: "share_show_source",
   showExpiry: "share_show_expiry",
   showSkills: "share_show_skills",
+  showLevel: "share_show_level",
+  showPrerequisites: "share_show_prerequisites",
+  showSupervision: "share_show_supervision",
+  showIntegration: "share_show_integration",
 };
+
+export async function fetchCredentialVisibility(
+  shareToken: string,
+): Promise<{ exists: boolean; isPublic: boolean }> {
+  const { data, error } = await supabase.rpc("get_credential_visibility", {
+    _share_token: shareToken,
+  });
+  if (error) throw error;
+  const row = (data as Array<{ exists_flag: boolean; is_public: boolean }> | null)?.[0];
+  return { exists: !!row?.exists_flag, isPublic: !!row?.is_public };
+}
 
 export async function updateCredentialSharing(
   credentialId: string,
