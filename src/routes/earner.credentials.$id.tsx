@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ChainPendingChip } from "@/components/CredentialCard";
 import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
 import { ShareDialog } from "@/components/ShareDialog";
 import { Switch } from "@/components/ui/switch";
@@ -239,8 +240,9 @@ function DetailLayout(p: DetailLayoutProps) {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-xs uppercase tracking-wider text-muted-foreground">Status</div>
-                  <div className="mt-1">
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
                     <StatusBadge status={p.status} />
+                    {p.status === "active" && <ChainPendingChip status={p.blockchain?.chainStatus} />}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1">
