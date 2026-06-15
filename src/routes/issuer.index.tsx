@@ -1198,7 +1198,7 @@ function LearnerOverview({
                 />
                 <Bar
                   dataKey="value"
-                  fill="hsl(var(--primary))"
+                  fill="var(--primary)"
                   radius={[6, 6, 0, 0]}
                 />
               </BarChart>
