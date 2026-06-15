@@ -1,7 +1,7 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
-import { Trash2, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Trash2, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -18,8 +18,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
+import { BulkUsersUpload } from "@/components/admin/BulkUsersUpload";
 import { useStore } from "@/lib/store";
-import { orgCreateEarner, removeEarnerInstitution } from "@/lib/admin-users.functions";
+import { orgBulkCreateEarners, orgCreateEarner, removeEarnerInstitution } from "@/lib/admin-users.functions";
+
+const PAGE_SIZE = 10;
+
 
 export const Route = createFileRoute("/issuer/earners")({
   head: () => ({ meta: [{ title: "Earners — MicroCred" }] }),
@@ -32,11 +36,15 @@ export const Route = createFileRoute("/issuer/earners")({
 
 function EarnersPage() {
   const { activeUser, earnerInstitutions, users } = useStore();
+  const router = useRouter();
   const create = useServerFn(orgCreateEarner);
+  const bulk = useServerFn(orgBulkCreateEarners);
   const unlink = useServerFn(removeEarnerInstitution);
   const [open, setOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm, reset] = useProvisionState();
+  const [page, setPage] = useState(1);
 
   const orgId = activeUser?.organizationId ?? "";
 
@@ -47,6 +55,16 @@ function EarnersPage() {
     );
     return users.filter((u) => ids.has(u.id));
   }, [earnerInstitutions, users, orgId]);
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageRows = useMemo(
+    () => rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [rows, page],
+  );
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
+
 
   if (!activeUser) return null;
   if (activeUser.subRole !== "admin") return <Navigate to="/issuer" />;
@@ -99,26 +117,50 @@ function EarnersPage() {
       title="Earners"
       description="Students linked to your institution."
       actions={
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><UserPlus className="mr-2 h-4 w-4" /> Add earner</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Add earner</DialogTitle>
-              <DialogDescription>
-                Existing accounts are linked to your institution. New accounts are
-                provisioned and linked in one step.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={onCreate} className="space-y-4">
-              <ProvisionFields value={form} onChange={setForm} disabled={busy} />
-              <DialogFooter>
-                <SubmitButton busy={busy}>Add</SubmitButton>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Bulk add</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Bulk add earners</DialogTitle>
+                <DialogDescription>
+                  Provision multiple earner accounts at once with set passwords.
+                </DialogDescription>
+              </DialogHeader>
+              <BulkUsersUpload
+                label="earners"
+                onSubmit={async (rs) => {
+                  const res = await bulk({ data: { organizationId: orgId, rows: rs } });
+                  router.invalidate();
+                  if (res.failed === 0) setBulkOpen(false);
+                  return res;
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><UserPlus className="mr-2 h-4 w-4" /> Add earner</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Add earner</DialogTitle>
+                <DialogDescription>
+                  Existing accounts are linked to your institution. New accounts are
+                  provisioned and linked in one step.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={onCreate} className="space-y-4">
+                <ProvisionFields value={form} onChange={setForm} disabled={busy} />
+                <DialogFooter>
+                  <SubmitButton busy={busy}>Add</SubmitButton>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       }
     >
       <Card>
@@ -139,7 +181,7 @@ function EarnersPage() {
                   </TableCell>
                 </TableRow>
               )}
-              {rows.map((u) => (
+              {pageRows.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell>{u.name}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
@@ -152,6 +194,21 @@ function EarnersPage() {
               ))}
             </TableBody>
           </Table>
+          {rows.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between border-t p-3 text-sm">
+              <div className="text-muted-foreground">
+                Page {page} of {pageCount} · {rows.length} total
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  <ChevronLeft className="h-4 w-4" /> Prev
+                </Button>
+                <Button size="sm" variant="outline" disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>
+                  Next <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </PageShell>

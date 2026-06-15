@@ -135,3 +135,60 @@ export const removeIssuerStaff = createServerFn({ method: "POST" })
     await supabaseAdmin.from("template_assignees").delete().eq("user_id", data.userId);
     return { ok: true };
   });
+
+export const bulkAddIssuerStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: {
+      organizationId: string;
+      rows: { name: string; email: string; password: string }[];
+    }) => d,
+  )
+  .handler(async ({ data, context }) => {
+    await assertOrgAdmin(context.supabase, context.userId, data.organizationId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let created = 0;
+    const errors: string[] = [];
+
+    for (const row of data.rows) {
+      const email = row.email.trim().toLowerCase();
+      try {
+        if (!row.password || row.password.length < 6) {
+          throw new Error("password must be at least 6 chars");
+        }
+        const { data: prof } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .ilike("email", email)
+          .maybeSingle();
+        let userId: string | null = prof?.id ?? null;
+        if (!userId) {
+          const { data: c, error } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password: row.password,
+            email_confirm: true,
+            user_metadata: { display_name: row.name },
+          });
+          if (error || !c?.user) throw new Error(error?.message ?? "create failed");
+          userId = c.user.id;
+          await supabaseAdmin
+            .from("user_roles")
+            .delete()
+            .eq("user_id", userId)
+            .eq("role", "earner")
+            .is("organization_id", null);
+        }
+        const { error: insErr } = await supabaseAdmin
+          .from("user_roles")
+          .insert({ user_id: userId, role: "issuer_staff", organization_id: data.organizationId });
+        if (insErr && !String(insErr.message).toLowerCase().includes("duplicate")) {
+          throw new Error(insErr.message);
+        }
+        created++;
+      } catch (e: any) {
+        errors.push(`${email}: ${e?.message ?? "failed"}`);
+      }
+    }
+    return { created, failed: errors.length, errors };
+  });
+

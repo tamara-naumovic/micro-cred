@@ -362,3 +362,42 @@ export const orgCreateEarner = createServerFn({ method: "POST" })
     }
     return r;
   });
+
+export const orgBulkCreateEarners = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: {
+      organizationId: string;
+      rows: { name: string; email: string; password: string }[];
+    }) => d,
+  )
+  .handler(async ({ data, context }) => {
+    await assertOrgAdmin(context.supabase, context.userId, data.organizationId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let created = 0;
+    const errors: string[] = [];
+    for (const row of data.rows) {
+      try {
+        const r = await provisionUser({
+          email: row.email,
+          displayName: row.name,
+          role: "earner",
+          mode: "password",
+          password: row.password,
+        });
+        const { error } = await supabaseAdmin.from("earner_institutions").insert({
+          earner_id: r.userId,
+          organization_id: data.organizationId,
+          assigned_by: context.userId,
+        });
+        if (error && !String(error.message).toLowerCase().includes("duplicate")) {
+          throw new Error(error.message);
+        }
+        created++;
+      } catch (e: any) {
+        errors.push(`${row.email}: ${e?.message ?? "failed"}`);
+      }
+    }
+    return { created, failed: errors.length, errors };
+  });
+

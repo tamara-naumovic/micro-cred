@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
-import { Trash2, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -12,8 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
+import { BulkUsersUpload } from "@/components/admin/BulkUsersUpload";
 import { useStore } from "@/lib/store";
-import { addIssuerStaff, listIssuerStaff, removeIssuerStaff } from "@/lib/issuer-staff.functions";
+import { addIssuerStaff, bulkAddIssuerStaff, listIssuerStaff, removeIssuerStaff } from "@/lib/issuer-staff.functions";
+
+const PAGE_SIZE = 10;
+
 
 export const Route = createFileRoute("/issuer/staff")({
   head: () => ({ meta: [{ title: "Staff — MicroCred" }] }),
@@ -32,14 +36,26 @@ function StaffPage() {
   const list = useServerFn(listIssuerStaff);
   const add = useServerFn(addIssuerStaff);
   const remove = useServerFn(removeIssuerStaff);
+  const bulk = useServerFn(bulkAddIssuerStaff);
   const [rows, setRows] = useState<Row[]>([]);
-  const [tab, setTab] = useState<"existing" | "new">("existing");
+  const [tab, setTab] = useState<"existing" | "new" | "bulk">("existing");
   const [existingEmail, setExistingEmail] = useState("");
   const [form, setForm, reset] = useProvisionState();
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   const orgId = activeUser?.organizationId ?? "";
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageRows = useMemo(
+    () => rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [rows, page],
+  );
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
+
 
   async function refresh() {
     if (!orgId) return;
@@ -118,35 +134,56 @@ function StaffPage() {
     >
       <Card className="mb-6">
         <CardContent className="p-5">
-          <form onSubmit={onAdd} className="space-y-4">
-            <Tabs value={tab} onValueChange={(v) => setTab(v as "existing" | "new")}>
-              <TabsList className="grid w-full grid-cols-2 sm:w-auto">
-                <TabsTrigger value="existing">Existing user</TabsTrigger>
-                <TabsTrigger value="new">Create new account</TabsTrigger>
-              </TabsList>
-              <TabsContent value="existing" className="mt-4">
-                <Label htmlFor="staff-email">Email of existing user</Label>
-                <Input
-                  id="staff-email"
-                  type="email"
-                  placeholder="employee@institution.org"
-                  value={existingEmail}
-                  onChange={(e) => setExistingEmail(e.target.value)}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  The person must already have an account on the platform.
-                </p>
-              </TabsContent>
-              <TabsContent value="new" className="mt-4">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "existing" | "new" | "bulk")}>
+            <TabsList className="grid w-full grid-cols-3 sm:w-auto">
+              <TabsTrigger value="existing">Existing user</TabsTrigger>
+              <TabsTrigger value="new">Create new account</TabsTrigger>
+              <TabsTrigger value="bulk">Bulk add</TabsTrigger>
+            </TabsList>
+            <TabsContent value="existing" className="mt-4">
+              <form onSubmit={onAdd} className="space-y-4">
+                <div>
+                  <Label htmlFor="staff-email">Email of existing user</Label>
+                  <Input
+                    id="staff-email"
+                    type="email"
+                    placeholder="employee@institution.org"
+                    value={existingEmail}
+                    onChange={(e) => setExistingEmail(e.target.value)}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    The person must already have an account on the platform.
+                  </p>
+                </div>
+                <div className="flex justify-end">
+                  <SubmitButton busy={busy}>
+                    <UserPlus className="mr-2 h-4 w-4" />Add staff
+                  </SubmitButton>
+                </div>
+              </form>
+            </TabsContent>
+            <TabsContent value="new" className="mt-4">
+              <form onSubmit={onAdd} className="space-y-4">
                 <ProvisionFields value={form} onChange={setForm} disabled={busy} />
-              </TabsContent>
-            </Tabs>
-            <div className="flex justify-end">
-              <SubmitButton busy={busy}>
-                <UserPlus className="mr-2 h-4 w-4" />Add staff
-              </SubmitButton>
-            </div>
-          </form>
+                <div className="flex justify-end">
+                  <SubmitButton busy={busy}>
+                    <UserPlus className="mr-2 h-4 w-4" />Add staff
+                  </SubmitButton>
+                </div>
+              </form>
+            </TabsContent>
+            <TabsContent value="bulk" className="mt-4">
+              <BulkUsersUpload
+                label="staff"
+                onSubmit={async (rs) => {
+                  const res = await bulk({ data: { organizationId: orgId, rows: rs } });
+                  await refresh();
+                  router.invalidate();
+                  return res;
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
@@ -168,7 +205,7 @@ function StaffPage() {
               {!loading && rows.length === 0 && (
                 <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">No staff yet.</TableCell></TableRow>
               )}
-              {rows.map((r) => (
+              {pageRows.map((r) => (
                 <TableRow key={r.userId}>
                   <TableCell>{r.displayName || "—"}</TableCell>
                   <TableCell>{r.email}</TableCell>
@@ -184,6 +221,21 @@ function StaffPage() {
               ))}
             </TableBody>
           </Table>
+          {rows.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between border-t p-3 text-sm">
+              <div className="text-muted-foreground">
+                Page {page} of {pageCount} · {rows.length} total
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  <ChevronLeft className="h-4 w-4" /> Prev
+                </Button>
+                <Button size="sm" variant="outline" disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>
+                  Next <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </PageShell>
