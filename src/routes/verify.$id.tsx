@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -104,9 +104,7 @@ function RealVerify({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 md:px-8">
-      <Button variant="ghost" size="sm" asChild className="mb-4">
-        <Link to="/"><ArrowLeft className="mr-1 h-4 w-4" /> Back to home</Link>
-      </Button>
+      <DashboardHomeLink />
 
       <Card>
         <CardContent className="space-y-5 p-6 md:p-8">
@@ -197,9 +195,7 @@ function MockVerify({ cred }: { cred: NonNullable<ReturnType<typeof useStore>["c
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 md:px-8">
-      <Button variant="ghost" size="sm" asChild className="mb-4">
-        <Link to="/"><ArrowLeft className="mr-1 h-4 w-4" /> Back to home</Link>
-      </Button>
+      <DashboardHomeLink />
 
       <Card>
         <CardContent className="space-y-5 p-6 md:p-8">
