@@ -36,11 +36,15 @@ export const Route = createFileRoute("/issuer/earners")({
 
 function EarnersPage() {
   const { activeUser, earnerInstitutions, users } = useStore();
+  const router = useRouter();
   const create = useServerFn(orgCreateEarner);
+  const bulk = useServerFn(orgBulkCreateEarners);
   const unlink = useServerFn(removeEarnerInstitution);
   const [open, setOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm, reset] = useProvisionState();
+  const [page, setPage] = useState(1);
 
   const orgId = activeUser?.organizationId ?? "";
 
@@ -51,6 +55,16 @@ function EarnersPage() {
     );
     return users.filter((u) => ids.has(u.id));
   }, [earnerInstitutions, users, orgId]);
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageRows = useMemo(
+    () => rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [rows, page],
+  );
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
+
 
   if (!activeUser) return null;
   if (activeUser.subRole !== "admin") return <Navigate to="/issuer" />;
