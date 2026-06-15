@@ -660,54 +660,85 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const tpl = state.templates.find((t) => t.id === templateId);
     if (!tpl) return [];
     (async () => {
-      const rows = recipients
-        .map((r) => {
-          const u = state.users.find((x) => x.id === r.earnerId);
-          if (!u) return null;
-          return buildCredentialInsert(tpl, { id: u.id, name: u.name }, r.grade, r.expiryDate, issueDate);
-        })
-        .filter((x): x is Record<string, unknown> => !!x);
-      if (rows.length === 0) return;
-      const { data: inserted, error } = await (supabase.from("credentials") as unknown as {
-        insert: (r: Record<string, unknown>[]) => { select: () => Promise<{ data: { id: string }[] | null; error: unknown }> };
-      }).insert(rows).select();
-      if (error) console.error("[store] directIssue", error);
-      // Anchoring deferred until earner acceptance.
-      void inserted;
+      try {
+        const recips = recipients
+          .map((r) => {
+            const u = state.users.find((x) => x.id === r.earnerId);
+            if (!u) return null;
+            return {
+              earnerId: u.id,
+              earnerName: u.name,
+              grade: r.grade ?? null,
+              expiresAt: r.expiryDate ?? null,
+            };
+          })
+          .filter((x): x is NonNullable<typeof x> => !!x);
+        if (recips.length === 0) return;
+        const res = await issueCredentialsBatch({
+          data: {
+            templateId: tpl.id,
+            issuedAt: issueDate ?? nowISO(),
+            recipients: recips,
+            anchorMode: "later",
+          },
+        });
+        const failed = res.results.filter((r) => r.error);
+        if (failed.length > 0) {
+          console.error("[store] directIssue partial failure", failed);
+          toast.error(`${failed.length} of ${res.results.length} failed: ${failed[0].error}`);
+        }
+      } catch (e) {
+        console.error("[store] directIssue", e);
+        toast.error((e as Error).message || "Issuance failed");
+      }
       refetchAll();
     })();
     return [];
-  }, [state.templates, state.users, buildCredentialInsert, refetchAll]);
+  }, [state.templates, state.users, refetchAll]);
 
   const bulkIssue: StoreCtx["bulkIssue"] = useCallback((templateId, rows) => {
-    // Bulk issuance to non-existent earners is not supported with real auth.
-    // We attempt to match by email; unmatched rows are skipped.
     const tpl = state.templates.find((t) => t.id === templateId);
     if (!tpl) return [];
     (async () => {
-      const inserts: Record<string, unknown>[] = [];
-      for (const r of rows) {
-        const u = state.users.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
-        if (!u) continue;
-        inserts.push(
-          buildCredentialInsert(
-            tpl,
-            { id: u.id, name: u.name },
-            r.grade,
-            r.expiryDate,
-          ),
-        );
+      try {
+        const recips: { earnerId: string; earnerName: string; grade: string | null; expiresAt: string | null }[] = [];
+        for (const r of rows) {
+          const u = state.users.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
+          if (!u) continue;
+          recips.push({
+            earnerId: u.id,
+            earnerName: u.name,
+            grade: r.grade ?? null,
+            expiresAt: r.expiryDate ?? null,
+          });
+        }
+        if (recips.length === 0) {
+          console.warn("[store] bulkIssue: no matching earners found by email");
+          toast.warning("No matching earners found by email");
+          return;
+        }
+        const res = await issueCredentialsBatch({
+          data: {
+            templateId: tpl.id,
+            issuedAt: nowISO(),
+            recipients: recips,
+            anchorMode: "later",
+          },
+        });
+        const failed = res.results.filter((r) => r.error);
+        if (failed.length > 0) {
+          console.error("[store] bulkIssue partial failure", failed);
+          toast.error(`${failed.length} of ${res.results.length} failed: ${failed[0].error}`);
+        }
+      } catch (e) {
+        console.error("[store] bulkIssue", e);
+        toast.error((e as Error).message || "Bulk issuance failed");
       }
-      if (inserts.length === 0) {
-        console.warn("[store] bulkIssue: no matching earners found by email");
-        return;
-      }
-      const { error } = await (supabase.from("credentials") as unknown as { insert: (r: Record<string, unknown>[]) => Promise<{ error: unknown }> }).insert(inserts);
-      if (error) console.error("[store] bulkIssue", error);
       refetchAll();
     })();
     return [];
-  }, [state.templates, state.users, buildCredentialInsert, refetchAll]);
+  }, [state.templates, state.users, refetchAll]);
+
 
   const revokeCredential: StoreCtx["revokeCredential"] = useCallback((id, reason) => {
     (async () => {
