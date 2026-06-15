@@ -24,6 +24,7 @@ import { Route as IssuerSettingsRouteImport } from './routes/issuer.settings'
 import { Route as IssuerRevocationsRouteImport } from './routes/issuer.revocations'
 import { Route as IssuerRequestsRouteImport } from './routes/issuer.requests'
 import { Route as IssuerProfileRouteImport } from './routes/issuer.profile'
+import { Route as IssuerNotificationsRouteImport } from './routes/issuer.notifications'
 import { Route as IssuerEarnersRouteImport } from './routes/issuer.earners'
 import { Route as IssuerCredentialsRouteImport } from './routes/issuer.credentials'
 import { Route as IssuerAnchoringQueueRouteImport } from './routes/issuer.anchoring-queue'
@@ -47,6 +48,7 @@ import { Route as IssuerMicrocredentialTemplatesIdRouteImport } from './routes/i
 import { Route as IssuerIssueBulkRouteImport } from './routes/issuer.issue.bulk'
 import { Route as EarnerCredentialsIdRouteImport } from './routes/earner.credentials.$id'
 import { Route as ApiPublicHooksProcessChainAnchorsRouteImport } from './routes/api/public/hooks/process-chain-anchors'
+import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
 
 const SetPasswordRoute = SetPasswordRouteImport.update({
   id: '/set-password',
@@ -121,6 +123,11 @@ const IssuerRequestsRoute = IssuerRequestsRouteImport.update({
 const IssuerProfileRoute = IssuerProfileRouteImport.update({
   id: '/issuer/profile',
   path: '/issuer/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerNotificationsRoute = IssuerNotificationsRouteImport.update({
+  id: '/issuer/notifications',
+  path: '/issuer/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IssuerEarnersRoute = IssuerEarnersRouteImport.update({
@@ -242,6 +249,12 @@ const ApiPublicHooksProcessChainAnchorsRoute =
     path: '/api/public/hooks/process-chain-anchors',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksExpiryRemindersRoute =
+  ApiPublicHooksExpiryRemindersRouteImport.update({
+    id: '/api/public/hooks/expiry-reminders',
+    path: '/api/public/hooks/expiry-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -262,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/issuer/anchoring-queue': typeof IssuerAnchoringQueueRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
+  '/issuer/notifications': typeof IssuerNotificationsRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
   '/issuer/revocations': typeof IssuerRevocationsRoute
@@ -281,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/earner/credentials/': typeof EarnerCredentialsIndexRoute
   '/issuer/issue/': typeof IssuerIssueIndexRoute
   '/issuer/microcredential-templates/': typeof IssuerMicrocredentialTemplatesIndexRoute
+  '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/process-chain-anchors': typeof ApiPublicHooksProcessChainAnchorsRoute
 }
 export interface FileRoutesByTo {
@@ -302,6 +317,7 @@ export interface FileRoutesByTo {
   '/issuer/anchoring-queue': typeof IssuerAnchoringQueueRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
+  '/issuer/notifications': typeof IssuerNotificationsRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
   '/issuer/revocations': typeof IssuerRevocationsRoute
@@ -321,6 +337,7 @@ export interface FileRoutesByTo {
   '/earner/credentials': typeof EarnerCredentialsIndexRoute
   '/issuer/issue': typeof IssuerIssueIndexRoute
   '/issuer/microcredential-templates': typeof IssuerMicrocredentialTemplatesIndexRoute
+  '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/process-chain-anchors': typeof ApiPublicHooksProcessChainAnchorsRoute
 }
 export interface FileRoutesById {
@@ -343,6 +360,7 @@ export interface FileRoutesById {
   '/issuer/anchoring-queue': typeof IssuerAnchoringQueueRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
+  '/issuer/notifications': typeof IssuerNotificationsRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
   '/issuer/revocations': typeof IssuerRevocationsRoute
@@ -362,6 +380,7 @@ export interface FileRoutesById {
   '/earner/credentials/': typeof EarnerCredentialsIndexRoute
   '/issuer/issue/': typeof IssuerIssueIndexRoute
   '/issuer/microcredential-templates/': typeof IssuerMicrocredentialTemplatesIndexRoute
+  '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/process-chain-anchors': typeof ApiPublicHooksProcessChainAnchorsRoute
 }
 export interface FileRouteTypes {
@@ -385,6 +404,7 @@ export interface FileRouteTypes {
     | '/issuer/anchoring-queue'
     | '/issuer/credentials'
     | '/issuer/earners'
+    | '/issuer/notifications'
     | '/issuer/profile'
     | '/issuer/requests'
     | '/issuer/revocations'
@@ -404,6 +424,7 @@ export interface FileRouteTypes {
     | '/earner/credentials/'
     | '/issuer/issue/'
     | '/issuer/microcredential-templates/'
+    | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/process-chain-anchors'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -425,6 +446,7 @@ export interface FileRouteTypes {
     | '/issuer/anchoring-queue'
     | '/issuer/credentials'
     | '/issuer/earners'
+    | '/issuer/notifications'
     | '/issuer/profile'
     | '/issuer/requests'
     | '/issuer/revocations'
@@ -444,6 +466,7 @@ export interface FileRouteTypes {
     | '/earner/credentials'
     | '/issuer/issue'
     | '/issuer/microcredential-templates'
+    | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/process-chain-anchors'
   id:
     | '__root__'
@@ -465,6 +488,7 @@ export interface FileRouteTypes {
     | '/issuer/anchoring-queue'
     | '/issuer/credentials'
     | '/issuer/earners'
+    | '/issuer/notifications'
     | '/issuer/profile'
     | '/issuer/requests'
     | '/issuer/revocations'
@@ -484,6 +508,7 @@ export interface FileRouteTypes {
     | '/earner/credentials/'
     | '/issuer/issue/'
     | '/issuer/microcredential-templates/'
+    | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/process-chain-anchors'
   fileRoutesById: FileRoutesById
 }
@@ -506,6 +531,7 @@ export interface RootRouteChildren {
   IssuerAnchoringQueueRoute: typeof IssuerAnchoringQueueRoute
   IssuerCredentialsRoute: typeof IssuerCredentialsRoute
   IssuerEarnersRoute: typeof IssuerEarnersRoute
+  IssuerNotificationsRoute: typeof IssuerNotificationsRoute
   IssuerProfileRoute: typeof IssuerProfileRoute
   IssuerRequestsRoute: typeof IssuerRequestsRoute
   IssuerRevocationsRoute: typeof IssuerRevocationsRoute
@@ -525,6 +551,7 @@ export interface RootRouteChildren {
   EarnerCredentialsIndexRoute: typeof EarnerCredentialsIndexRoute
   IssuerIssueIndexRoute: typeof IssuerIssueIndexRoute
   IssuerMicrocredentialTemplatesIndexRoute: typeof IssuerMicrocredentialTemplatesIndexRoute
+  ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksProcessChainAnchorsRoute: typeof ApiPublicHooksProcessChainAnchorsRoute
 }
 
@@ -633,6 +660,13 @@ declare module '@tanstack/react-router' {
       path: '/issuer/profile'
       fullPath: '/issuer/profile'
       preLoaderRoute: typeof IssuerProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/notifications': {
+      id: '/issuer/notifications'
+      path: '/issuer/notifications'
+      fullPath: '/issuer/notifications'
+      preLoaderRoute: typeof IssuerNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/issuer/earners': {
@@ -796,6 +830,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksProcessChainAnchorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/expiry-reminders': {
+      id: '/api/public/hooks/expiry-reminders'
+      path: '/api/public/hooks/expiry-reminders'
+      fullPath: '/api/public/hooks/expiry-reminders'
+      preLoaderRoute: typeof ApiPublicHooksExpiryRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -818,6 +859,7 @@ const rootRouteChildren: RootRouteChildren = {
   IssuerAnchoringQueueRoute: IssuerAnchoringQueueRoute,
   IssuerCredentialsRoute: IssuerCredentialsRoute,
   IssuerEarnersRoute: IssuerEarnersRoute,
+  IssuerNotificationsRoute: IssuerNotificationsRoute,
   IssuerProfileRoute: IssuerProfileRoute,
   IssuerRequestsRoute: IssuerRequestsRoute,
   IssuerRevocationsRoute: IssuerRevocationsRoute,
@@ -839,6 +881,7 @@ const rootRouteChildren: RootRouteChildren = {
   IssuerIssueIndexRoute: IssuerIssueIndexRoute,
   IssuerMicrocredentialTemplatesIndexRoute:
     IssuerMicrocredentialTemplatesIndexRoute,
+  ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
   ApiPublicHooksProcessChainAnchorsRoute:
     ApiPublicHooksProcessChainAnchorsRoute,
 }
