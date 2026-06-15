@@ -55,7 +55,7 @@ function matches(c: IssuedCredential, tab: TabKey): boolean {
 }
 
 function List() {
-  const { activeUser, credentials, refetchAll } = useStore();
+  const { activeUser, credentials } = useStore();
   const [src, setSrc] = useState<"all" | "formal" | "non_formal">("all");
   const [rejectTarget, setRejectTarget] = useState<IssuedCredential | null>(null);
   const [rejectReason, setRejectReason] = useState("");
