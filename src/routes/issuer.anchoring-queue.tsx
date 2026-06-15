@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listAnchorJobs, retryAnchorJob, cancelAnchorJob } from "@/lib/chain/anchor.functions";
+import { useAuth } from "@/lib/auth";
 import {
   BLOCKCHAIN_LABEL,
   BLOCKCHAIN_BADGE_CLASS,
@@ -52,11 +53,13 @@ function AnchoringQueuePage() {
   const retry = useServerFn(retryAnchorJob);
   const cancel = useServerFn(cancelAnchorJob);
   const qc = useQueryClient();
+  const { user, loading: authLoading } = useAuth();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["anchor-jobs"],
     queryFn: () => list(),
     refetchInterval: 8000,
+    enabled: !authLoading && !!user,
   });
 
   const [entityFilter, setEntityFilter] = useState<EntityFilter>("all");
