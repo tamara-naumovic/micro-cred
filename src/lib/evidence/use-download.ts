@@ -15,7 +15,8 @@ function base64ToBytes(b64: string): Uint8Array {
 }
 
 export function triggerDownload(file: ServerFile) {
-  const blob = new Blob([base64ToBytes(file.base64)], { type: file.contentType });
+  const bytes = base64ToBytes(file.base64);
+  const blob = new Blob([bytes.buffer as ArrayBuffer], { type: file.contentType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
