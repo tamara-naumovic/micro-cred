@@ -217,12 +217,6 @@ function Overview() {
     queuedAnchors.length +
     failedAnchors.length;
 
-  // Time-series
-  const series = useMemo(
-    () => buildTimeSeries(orgCredsAll, period),
-    [orgCredsAll, period],
-  );
-
   // Lifecycle counts
   const lifecycleCounts = useMemo(() => {
     const counts = {
