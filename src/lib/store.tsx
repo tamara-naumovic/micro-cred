@@ -84,11 +84,17 @@ interface StoreCtx extends State {
   createApplication: (templateId: string) => CredentialApplication | null;
   updateSharing: (credentialId: string, settings: Partial<SharingSettings>) => void;
 
-  advanceApplicationStatus: (applicationId: string) => CredentialApplication | null;
+  advanceApplicationStatus: (
+    applicationId: string,
+    opts?: { grade?: string; expiryDate?: string },
+  ) => CredentialApplication | null;
   rejectApplication: (applicationId: string, reason: string) => void;
   addReviewerComment: (applicationId: string, text: string) => void;
 
-  issueFromApplication: (applicationId: string) => IssuedCredential | null;
+  issueFromApplication: (
+    applicationId: string,
+    opts?: { grade?: string; expiryDate?: string },
+  ) => IssuedCredential | null;
   directIssue: (
     templateId: string,
     recipients: { earnerId: string; grade?: string; expiryDate?: string }[],
@@ -581,7 +587,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const issueFromApplication: StoreCtx["issueFromApplication"] = useCallback((appId) => {
+  const issueFromApplication: StoreCtx["issueFromApplication"] = useCallback((appId, opts) => {
     const app = state.applications.find((a) => a.id === appId);
     if (!app) return null;
     const tpl = state.templates.find((t) => t.id === app.templateId);
@@ -589,7 +595,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (async () => {
       const { data: cred, error } = await supabase
         .from("credentials")
-        .insert(buildCredentialInsert(tpl, { id: app.earnerId, name: app.earnerName }) as unknown as never)
+        .insert(
+          buildCredentialInsert(
+            tpl,
+            { id: app.earnerId, name: app.earnerName },
+            opts?.grade,
+            opts?.expiryDate,
+          ) as unknown as never,
+        )
         .select()
         .single();
       if (error) {
@@ -614,14 +627,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return null;
   }, [state.applications, state.templates, buildCredentialInsert, refetchAll]);
 
-  const advanceApplicationStatus: StoreCtx["advanceApplicationStatus"] = useCallback((appId) => {
+  const advanceApplicationStatus: StoreCtx["advanceApplicationStatus"] = useCallback((appId, opts) => {
     const app = state.applications.find((a) => a.id === appId);
     if (!app) return null;
     const idx = LIFECYCLE_STAGES.indexOf(app.status);
     if (idx < 0 || idx >= LIFECYCLE_STAGES.length - 1) return null;
     const next = LIFECYCLE_STAGES[idx + 1];
     if (next === "issued") {
-      issueFromApplication(appId);
+      issueFromApplication(appId, opts);
       return app;
     }
     (async () => {
