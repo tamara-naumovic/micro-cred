@@ -280,6 +280,12 @@ export async function processTemplateAnchor(
     .eq("template_version", version);
 
   try {
+    if (!v.template_ref || !v.document_hash) {
+      throw new Error(
+        `Template version ${templateId}@${version} is missing template_ref/document_hash. ` +
+        `Re-publish the template to recompute them.`,
+      );
+    }
     const res = await submitTemplateAnchor({
       templateRefHex: v.template_ref,
       documentHashHex: v.document_hash,
