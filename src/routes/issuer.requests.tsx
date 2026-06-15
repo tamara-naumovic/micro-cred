@@ -83,7 +83,7 @@ function Queue() {
       grade: grade.trim() || undefined,
       expiryDate: expiry ? new Date(expiry).toISOString() : undefined,
     });
-    if (u) toast.success("Credential issued & signed");
+    if (u) toast.success("Sent to earner for acceptance");
     setIssueDialog(null);
   };
 
