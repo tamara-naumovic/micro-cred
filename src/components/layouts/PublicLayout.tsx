@@ -26,7 +26,7 @@ export function PublicLayout() {
           <nav className="hidden items-center gap-1 md:flex">
             <NavLink to="/" label="Home" exact />
             <NavLink to="/issuers" label="Issuers" />
-            <NavLink to="/login" label="Sign in" />
+            {!activeUser && <NavLink to="/login" label="Sign in" />}
           </nav>
           <div className="flex items-center gap-2">
             {activeUser ? (
