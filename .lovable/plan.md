@@ -1,27 +1,42 @@
-## Plan: Vratiti EXECUTE na helper RLS funkcije
+# Issuer Staff permissions — audit i dopune
 
-### Problem
+## Trenutno stanje (provereno)
 
-Svi `SELECT`/queriji vraćaju `42501 permission denied for function is_platform_admin`. Razlog: helper SECURITY DEFINER funkcije koje koriste RLS policy-ji nemaju `EXECUTE` granted za `authenticated` (ni `anon`) — verovatno usled ranijeg lint "fix"-a koji je revoked EXECUTE. Login se desi (`/token` 200), ali bridge `profiles`/`user_roles` queriji 403-uju, `activeUser` ostaje `null`, login stranica zaglavi na "Sign in" spinner-u.
+### Backend (DB RLS) — već ispravno, ne menja se
+- `templates`: INSERT / UPDATE / DELETE dozvoljeno samo `issuer_admin` (iste org) ili `platform_admin`. Staff je blokiran na DB nivou. SELECT je javan, ali UI lista filtrira po dodeli.
+- `template_assignees`: INSERT/DELETE samo admin. SELECT za staff vraća samo njegove redove.
+- `organizations`: UPDATE samo `issuer_admin` (iste org) ili `platform_admin`.
+- Server fn `publishTemplateAndAnchor` poziva `assertIssuerForTemplate`, koja zahteva `issuer_admin` ili `platform_admin` i baca `Forbidden` ako staff pokuša.
 
-### Migracija
+### Frontend — već implementirano
+- Sidebar (`AppSidebarLayout`): staff nav nema "Create Micro-credential" ni "Staff" stavku.
+- `/issuer/microcredential-templates` (lista): za staff prikazuje samo dodeljene template (filter po `template_assignees`); skriva "Create" i "Archive" dugmad.
+- `/issuer/microcredential-templates/$id`: staff koji nije dodeljen biva preusmeren; `QaDocumentsEditor` i `TemplateBlockchainProofCard` su read-only za staff; `AssigneesCard` je read-only prikaz.
+- `/issuer/microcredential-templates/new`: `Guarded` blok preusmeri staff na listu.
+- `/issuer/staff`: staff preusmeren na `/issuer`.
+- `/issuer/settings`: polja Website/About/Accreditation onemogućena za staff; DB RLS dodatno blokira pisanje.
 
-`GRANT EXECUTE` na sledeće helper funkcije za `authenticated` (i `anon` gde im je potrebno za public flow-e — npr. RLS policy-ji na `templates`/`organizations` koje anon čita):
+## Manje izmene (cilj: jasna 403 poruka umesto tihog redirect-a)
 
-- `public.is_platform_admin(uuid)`
-- `public.has_role(uuid, app_role)`
-- `public.has_role_in_org(uuid, app_role, uuid)`
-- `public.is_org_member(uuid, uuid)`
-- `public.is_template_assignee(uuid, uuid)`
-- `public.template_issuer_org(uuid)`
-- `public.can_access_application(uuid)`
+Backend zaštita je već potpuna; izmene su čisto UX kako bi staff dobio eksplicitnu poruku po direktnom pristupu zabranjenoj ruti.
 
-Trigger funkcije (`notify_on_*`, `handle_new_user`, `sync_credential_status_from_lifecycle`, `set_updated_at`) NE diramo — pozivaju se isključivo iz triggera, ne preko Data API-ja.
+1. **`src/routes/issuer.microcredential-templates.new.tsx`** — `Guarded` komponenta:
+   - Pre `<Navigate>` prikazati `toast.error("You don't have permission to create micro-credentials.")` jednom (useEffect) i preusmeriti na `/issuer/microcredential-templates`.
 
-### Security memory
+2. **`src/routes/issuer.microcredential-templates.$id.tsx`** — staff bez dodele:
+   - Pre `<Navigate>` prikazati `toast.error("This micro-credential is not assigned to you.")` (useEffect, jednom).
 
-Dodati napomenu: te helper funkcije MORAJU imati EXECUTE za `authenticated`/`anon`, inače RLS pada — ne tretirati ih kao kandidate za 0029/0028 lint remediation. Ostaju SECURITY DEFINER (čitaju `user_roles` bez davanja širokog SELECT-a), to je namera.
+3. **`src/routes/issuer.staff.tsx`** — staff koji direktno otvori `/issuer/staff`:
+   - Dodati isti toast pattern ("Only institution admins can manage staff.") pre redirect-a.
 
-### Verifikacija
+## Tehnički detalji
 
-Nakon migracije: ponoviti login u preview-u i potvrditi da se navigira na `/issuer` (Tamara je `issuer_admin`).
+- Implementacija toast-a u render-time `Navigate` granama: pomeriti poziv u `useEffect(() => { toast.error(...); }, [])` i renderovati `<Navigate to=... replace />`. Time se izbegava upozorenje React-a o set-state-during-render i toast se prikazuje tačno jednom.
+- Nikakve izmene na DB-u, RLS-u, server funkcijama, niti na store layeru.
+- Nikakve izmene na admin nav-u (Issuer Admin zadržava pun pristup).
+
+## Šta NEĆE biti urađeno
+
+- Promene RLS-a (nije potrebno — pokriveno).
+- Skrivanje `templates` SELECT-a za staff (lista mora moći da pročita dodeljene; UI filter to obavlja, a `template_assignees` SELECT je već scoped).
+- Izmena `publishTemplateAndAnchor` (već vraća Forbidden za staff).
