@@ -49,6 +49,7 @@ interface State {
   audit: AuditEvent[];
   events: PlatformEvent[];
   users: MockUser[];
+  userRolesById: Record<string, string[]>;
   templateAssignees: TemplateAssignment[];
   earnerInstitutions: EarnerInstitution[];
 }
@@ -63,6 +64,7 @@ const emptyState: State = {
   audit: [],
   events: [],
   users: [],
+  userRolesById: {},
   templateAssignees: [],
   earnerInstitutions: [],
 };
@@ -257,6 +259,7 @@ function mapOrg(r: Row): Organization {
     about: (r.about as string | null) ?? undefined,
     website: (r.website as string | null) ?? undefined,
     accreditations: (r.accreditations as string[]) ?? [],
+    accreditationDocumentUrl: (r.accreditation_document_url as string | null) ?? undefined,
     registeredAt: r.registered_at as string,
   };
 }
@@ -454,6 +457,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         organizationId: (r as Row).organization_id as string,
       }));
 
+      const userRolesById: Record<string, string[]> = {};
+      for (const [uid, rs] of rolesByUser.entries()) {
+        userRolesById[uid] = rs.map((r) => r.role as string);
+      }
+
       setState({
         templates,
         credentials,
@@ -464,6 +472,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         audit,
         events,
         users,
+        userRolesById,
         templateAssignees,
         earnerInstitutions,
       });

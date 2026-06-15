@@ -46,7 +46,7 @@ function parseCsv(input: string): BulkRow[] {
 }
 
 function Bulk() {
-  const { activeUser, templates, users, templateAssignees, credentials } = useStore();
+  const { activeUser, templates, users, userRolesById, templateAssignees, credentials } = useStore();
   const issueBatch = useServerFn(issueCredentialsBatch);
   const isStaff = activeUser?.subRole === "staff";
   const assignedIds = useMemo(
@@ -78,22 +78,26 @@ function Bulk() {
     );
   }, [credentials, templateId]);
 
-  // Pre-resolve emails to earner IDs and detect duplicates
+  // Pre-resolve emails to earner IDs and detect duplicates / staff conflicts
   const resolved = useMemo(() => {
     return rows.map((r) => {
       const u = users.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
+      const roles = u ? (userRolesById[u.id] ?? []) : [];
+      const isStaffOrAdmin =
+        roles.includes("issuer_admin") || roles.includes("issuer_staff");
       const alreadyHas = u ? earnersWithActive.has(u.id) : false;
-      return { row: r, user: u, alreadyHas };
+      return { row: r, user: u, alreadyHas, isStaffOrAdmin };
     });
-  }, [rows, users, earnersWithActive]);
+  }, [rows, users, userRolesById, earnersWithActive]);
   const unmatched = resolved.filter((r) => !r.user).length;
   const duplicates = resolved.filter((r) => r.user && r.alreadyHas).length;
+  const staffConflicts = resolved.filter((r) => r.user && r.isStaffOrAdmin).length;
 
   const submit = async () => {
     if (!templateId) return toast.error("Pick a micro-credential");
     if (rows.length === 0) return toast.error("CSV is empty or malformed");
     const recipients = resolved
-      .filter((r) => r.user && !r.alreadyHas)
+      .filter((r) => r.user && !r.alreadyHas && !r.isStaffOrAdmin)
       .map((r) => ({
         earnerId: r.user!.id,
         earnerName: r.user!.name,
@@ -139,6 +143,18 @@ function Bulk() {
             error: "Earner already has an active (non-revoked) credential for this micro-credential",
           });
         });
+      // Include staff/admin conflicts as not-issued
+      resolved
+        .filter((r) => r.user && r.isStaffOrAdmin)
+        .forEach((r) => {
+          rowsOut.push({
+            recipientId: r.user!.id,
+            recipientName: r.user!.name,
+            credentialStatus: "not_issued",
+            blockchainStatus: "not_requested",
+            error: "This account belongs to issuer staff or admin and cannot receive credentials",
+          });
+        });
       setResults(rowsOut);
     } catch (e: any) {
       toast.error(e?.message ?? "Issuance failed");
@@ -182,6 +198,11 @@ function Bulk() {
             {duplicates > 0 && (
               <div className="text-xs text-warning-foreground">
                 {duplicates} earner(s) already have an active (non-revoked) credential for this micro-credential and will be skipped.
+              </div>
+            )}
+            {staffConflicts > 0 && (
+              <div className="text-xs text-warning-foreground">
+                {staffConflicts} email(s) belong to issuer staff or admin accounts and will be skipped.
               </div>
             )}
           </div>

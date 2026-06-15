@@ -28,7 +28,7 @@ export const Route = createFileRoute("/issuer/issue/")({
 type RecipientOverride = { grade: string; expiryDate: string };
 
 function Direct() {
-  const { activeUser, templates, users, templateAssignees, credentials } = useStore();
+  const { activeUser, templates, users, userRolesById, templateAssignees, credentials } = useStore();
   const isStaff = activeUser?.subRole === "staff";
   const issueBatch = useServerFn(issueCredentialsBatch);
   const assignedIds = useMemo(
@@ -43,7 +43,13 @@ function Direct() {
     ),
     [templates, activeUser, isStaff, assignedIds],
   );
-  const allEarners = users.filter((u) => u.role === "earner");
+  // Exclude any user who is also issuer staff or issuer admin anywhere on the
+  // platform — they cannot be credential recipients.
+  const allEarners = users.filter((u) => {
+    if (u.role !== "earner") return false;
+    const roles = userRolesById[u.id] ?? [];
+    return !roles.includes("issuer_admin") && !roles.includes("issuer_staff");
+  });
   const [templateId, setTemplateId] = useState(myTemplates[0]?.id ?? "");
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [defaultGrade, setDefaultGrade] = useState("");

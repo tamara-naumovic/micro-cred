@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -159,9 +159,7 @@ function List() {
                             </Button>
                           </>
                         ) : (
-                          <Link to="/verify/$id" params={{ id: c.id }} className="inline-flex items-center text-sm text-primary hover:underline">
-                            Verify <ExternalLink className="ml-1 h-3 w-3" />
-                          </Link>
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </div>
                     </TableCell>

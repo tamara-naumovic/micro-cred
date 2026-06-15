@@ -93,6 +93,7 @@ export interface Organization {
   about?: string;
   website?: string;
   accreditations?: string[];
+  accreditationDocumentUrl?: string;
   registeredAt: string;
 }
 
