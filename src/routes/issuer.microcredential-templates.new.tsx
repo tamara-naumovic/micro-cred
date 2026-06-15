@@ -264,8 +264,30 @@ function Form() {
               </Select>
             </div>
             <div>
-              <Label>ECTS *</Label>
-              <Input value={ects} onChange={(e) => setEcts(e.target.value)} type="number" min={0} max={60} />
+              <Label>ECTS {source === "formal" ? "*" : "(optional)"}</Label>
+              <Input
+                value={ectsNotApplicable ? "" : ects}
+                onChange={(e) => setEcts(e.target.value)}
+                type="number"
+                min={0}
+                max={60}
+                disabled={source === "non_formal" && ectsNotApplicable}
+                placeholder={source === "non_formal" && ectsNotApplicable ? "Does not apply" : undefined}
+              />
+              {source === "non_formal" && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Checkbox
+                    id="ects-na"
+                    checked={ectsNotApplicable}
+                    onCheckedChange={(c) => {
+                      const v = !!c;
+                      setEctsNotApplicable(v);
+                      if (v) setEcts("");
+                    }}
+                  />
+                  <Label htmlFor="ects-na" className="font-normal cursor-pointer">Does not apply</Label>
+                </div>
+              )}
             </div>
             <div className="md:col-span-2">
               <Label>Skills * (comma-separated)</Label>
