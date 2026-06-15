@@ -223,6 +223,38 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
   });
 
 // ============================================================================
+// Any signed-in user: update their own profile (about text, etc.)
+// ============================================================================
+export const updateMyProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { about?: string }) => d)
+  .handler(async ({ data, context }) => {
+    const about = (data.about ?? "").slice(0, 1000);
+    const { error } = await context.supabase
+      .from("profiles")
+      .update({ about })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getMyProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("profiles")
+      .select("about, display_name, email")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return {
+      about: (data?.about as string | null) ?? "",
+      displayName: (data?.display_name as string | null) ?? "",
+      email: (data?.email as string | null) ?? "",
+    };
+  });
+
+// ============================================================================
 // Platform admin: create institution + its admin in a single step
 // ============================================================================
 export const adminCreateInstitution = createServerFn({ method: "POST" })
