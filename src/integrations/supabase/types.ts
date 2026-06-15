@@ -334,6 +334,32 @@ export type Database = {
           },
         ]
       }
+      credential_secrets: {
+        Row: {
+          created_at: string
+          credential_id: string
+          secret: string
+        }
+        Insert: {
+          created_at?: string
+          credential_id: string
+          secret: string
+        }
+        Update: {
+          created_at?: string
+          credential_id?: string
+          secret?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credential_secrets_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: true
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credentials: {
         Row: {
           accepted_at: string | null
@@ -366,7 +392,6 @@ export type Database = {
           issuer_name: string
           issuer_name_snapshot: string | null
           learner_commitment: string | null
-          learner_secret: string | null
           level: Database["public"]["Enums"]["cred_level"]
           pdf_storage_path: string | null
           rejected_at: string | null
@@ -428,7 +453,6 @@ export type Database = {
           issuer_name: string
           issuer_name_snapshot?: string | null
           learner_commitment?: string | null
-          learner_secret?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
           pdf_storage_path?: string | null
           rejected_at?: string | null
@@ -490,7 +514,6 @@ export type Database = {
           issuer_name?: string
           issuer_name_snapshot?: string | null
           learner_commitment?: string | null
-          learner_secret?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
           pdf_storage_path?: string | null
           rejected_at?: string | null
