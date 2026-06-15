@@ -132,7 +132,42 @@ function List() {
     <PageShell
       title="Issued Credentials"
       description="All micro-credentials your organisation has issued."
-      actions={<Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="w-56" />}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            placeholder="Search…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="w-56"
+          />
+          <Select value={templateFilter} onValueChange={setTemplateFilter}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="All templates" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All templates</SelectItem>
+              {availableTemplates.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={lifecycleFilter} onValueChange={setLifecycleFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All lifecycle statuses</SelectItem>
+              {LIFECYCLE_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      }
     >
       <Card>
         <CardContent className="p-0">
