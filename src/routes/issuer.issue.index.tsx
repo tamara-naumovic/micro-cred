@@ -184,6 +184,11 @@ function Direct() {
                 placeholder="Search earners by name or email"
               />
             </div>
+            {templateId && earnersWithActive.size > 0 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {earnersWithActive.size} earner(s) already hold this credential (non-revoked) and are hidden from the list.
+              </p>
+            )}
           </div>
 
 
