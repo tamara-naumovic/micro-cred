@@ -126,7 +126,7 @@ function Form() {
     const requiredErrors: string[] = [];
     if (!title.trim()) requiredErrors.push("Title");
     if (!description.trim()) requiredErrors.push("Description");
-    if (!ects.trim()) requiredErrors.push("ECTS");
+    if (source === "formal" && !ects.trim()) requiredErrors.push("ECTS");
     if (!skills.trim()) requiredErrors.push("Skills");
     if (!outcomes.trim()) requiredErrors.push("Learning outcomes");
     if (!assessment.trim()) requiredErrors.push("Assessment");
