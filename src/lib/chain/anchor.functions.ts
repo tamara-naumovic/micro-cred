@@ -54,6 +54,17 @@ async function computeAndPersistHashes(
   supabase: { from: (t: string) => any },
   cred: CredentialRow,
 ): Promise<CredentialRow> {
+  // Load any existing learner secret from the locked-down secrets table.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  if (!cred.learner_secret) {
+    const { data: secRow } = await supabaseAdmin
+      .from("credential_secrets")
+      .select("secret")
+      .eq("credential_id", cred.id)
+      .maybeSingle();
+    cred.learner_secret = ((secRow as { secret: string } | null)?.secret) ?? null;
+  }
+
   // Already populated? Nothing to do.
   if (
     cred.credential_hash &&
@@ -114,10 +125,16 @@ async function computeAndPersistHashes(
       vc_json: vc,
       credential_hash: docHash,
       learner_commitment: commit,
-      learner_secret: secret,
       template_ref: tref,
     })
     .eq("id", cred.id);
+
+  // Persist the secret to the earner-only table (admin client; RLS bypassed).
+  await supabaseAdmin
+    .from("credential_secrets")
+    .upsert({ credential_id: cred.id, secret } as never, {
+      onConflict: "credential_id",
+    } as never);
 
   return {
     ...cred,
@@ -128,6 +145,7 @@ async function computeAndPersistHashes(
     template_ref: tref,
   };
 }
+
 
 /** Enqueue a credential for async on-chain anchoring. Idempotent. */
 export const enqueueAnchor = createServerFn({ method: "POST" })
