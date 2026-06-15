@@ -591,7 +591,7 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             issued_at: data.issuedAt,
             expires_at: expiresAt,
             status: "active",
-            credential_lifecycle: "issued",
+            credential_lifecycle: "pending_earner_acceptance",
             source: t.source,
             subcategory: t.subcategory ?? null,
             level: t.level,
@@ -611,7 +611,7 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
           } as never);
         if (insErr) throw new Error(insErr.message);
 
-        // Blockchain record
+        // Blockchain record stub — anchoring deferred until earner accepts.
         const contractAddress =
           process.env.CREDENTIAL_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
         await supabaseAdmin
@@ -625,63 +625,16 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             blockchain_status: "not_requested",
           } as never);
 
-        // Always insert into the credential queue so issued MCs are visible there.
-        const { error: jobInsErr } = await supabaseAdmin
-          .from("credential_anchor_jobs")
-          .insert({
-            credential_id: credentialId,
-            operation: "anchor_credential",
-            status: "queued",
-          } as never);
-        if (jobInsErr && !/duplicate/i.test(jobInsErr.message)) throw new Error(jobInsErr.message);
-        await supabase
-          .from("credentials")
-          .update({ chain_status: "queued" } as never)
-          .eq("id", credentialId);
-        await supabaseAdmin
-          .from("credential_blockchain_records")
-          .update({ blockchain_status: "queued" } as never)
-          .eq("credential_id", credentialId);
-
-        if (effectiveMode === "later") {
-          results.push({ recipientId: r.earnerId, credentialId, credentialStatus: "issued", blockchainStatus: "queued" });
-        } else {
-          // Anchor now — but only if the template is anchored on-chain.
-          const tplCheck = await isTemplateAnchored(supabaseAdmin, t.id);
-          if (!tplCheck.anchored) {
-            results.push({
-              recipientId: r.earnerId,
-              credentialId,
-              credentialStatus: "issued",
-              blockchainStatus: "queued",
-              error: tplCheck.reason,
-            });
-          } else {
-            const { processCredentialAnchor } = await import("./worker.server");
-            const res = await processCredentialAnchor(credentialId);
-            // Mark the queued job as done/failed so the queue reflects reality.
-            await supabaseAdmin
-              .from("credential_anchor_jobs")
-              .update({
-                status: res.ok ? "done" : "failed",
-                attempts: 1,
-                last_error: res.ok ? null : (res.error ?? null),
-                last_attempt_at: new Date().toISOString(),
-                transaction_hash: res.txHash ?? null,
-              } as never)
-              .eq("credential_id", credentialId)
-              .eq("operation", "anchor_credential")
-              .in("status", ["queued", "running", "failed"]);
-            results.push({
-              recipientId: r.earnerId,
-              credentialId,
-              credentialStatus: "issued",
-              blockchainStatus: res.ok ? "confirmed" : "failed",
-              txHash: res.txHash,
-              error: res.ok ? undefined : res.error,
-            });
-          }
-        }
+        // Intentionally do NOT enqueue an anchor job: it will be enqueued
+        // when the earner accepts the credential. effectiveMode (now/later)
+        // is only honoured after acceptance.
+        void effectiveMode;
+        results.push({
+          recipientId: r.earnerId,
+          credentialId,
+          credentialStatus: "pending_earner_acceptance",
+          blockchainStatus: "not_requested",
+        });
       } catch (e) {
         results.push({
           recipientId: r.earnerId,
