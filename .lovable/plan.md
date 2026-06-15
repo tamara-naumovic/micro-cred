@@ -1,9 +1,20 @@
-## Plan: Ignore accreditation_docs_public_read finding
+## Plan: Lock down `registration_requests` inserts
 
-1. Mark `accreditation_docs_public_read` (scanner: `supabase_lov`) as **ignored** with explanation: bucket is intentionally public via signed URLs to support public organization verification on `/issuers/$id`.
-2. Update security memory (`security--update_memory`) to document:
-   - `accreditation-docs` bucket is intentionally public-readable (verification flow)
-   - Accreditation certificates are public documents by nature
-   - Future scans should not re-flag this pattern
+External self-registration is disabled — only platform admins and issuer admins create users. The anon INSERT policy `regreq_insert_anyone` is unused and should be removed.
 
-No code or migration changes.
+### Migration
+
+1. `DROP POLICY "regreq_insert_anyone" ON public.registration_requests;`
+2. Add a replacement INSERT policy restricted to platform admins (the only role that manages this pipeline today):
+   ```sql
+   CREATE POLICY regreq_insert_platform_admin
+     ON public.registration_requests FOR INSERT
+     TO authenticated
+     WITH CHECK (public.is_platform_admin(auth.uid()));
+   ```
+3. Revoke `INSERT` on the table from `anon` (cleanup; matches the new policy).
+
+### After
+
+- Mark `registration_requests_anon_insert` as fixed.
+- No app code changes — `store.tsx` only reads/updates registration requests as admin.
