@@ -1,11 +1,22 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Copy, ExternalLink, Share2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Copy, ExternalLink, Share2, Check, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
 import { ShareDialog } from "@/components/ShareDialog";
@@ -18,6 +29,7 @@ import {
   updateCredentialSharing,
   type DbCredential,
 } from "@/lib/credentials";
+import { acceptCredential, rejectCredential } from "@/lib/chain/anchor.functions";
 import type { SharingSettings, IssuedCredential } from "@/lib/types";
 
 export const Route = createFileRoute("/earner/credentials/$id")({
