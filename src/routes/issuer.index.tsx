@@ -413,11 +413,11 @@ function Overview() {
               Credentials issued over time
             </CardTitle>
             <CardDescription>
-              Internally issued vs confirmed on Bloxberg
+              {`Number of credentials issued per ${period === "30d" ? "day" : period === "6m" ? "week" : "month"}, and how many of those are confirmed on Bloxberg.`}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {series.length === 0 ? (
+            {series.every((p) => p.issued === 0 && p.confirmed === 0) ? (
               <EmptyBlock label="No credentials have been issued in this period." />
             ) : (
               <div className="h-72 w-full">
@@ -443,6 +443,12 @@ function Overview() {
                         border: "1px solid hsl(var(--border))",
                         borderRadius: 8,
                         fontSize: 12,
+                      }}
+                      labelFormatter={(_label, payload) => {
+                        const p = payload?.[0]?.payload as
+                          | { rangeLabel?: string; label?: string }
+                          | undefined;
+                        return p?.rangeLabel ?? p?.label ?? "";
                       }}
                     />
                     <Line
@@ -580,59 +586,89 @@ function DashboardFilters({
 
 function buildTimeSeries(creds: IssuedCredential[], period: Period) {
   const start = periodStart(period);
-  const buckets = new Map<string, { issued: number; confirmed: number }>();
   const granularity =
     period === "30d" ? "day" : period === "6m" ? "week" : "month";
 
-  const fmt = (d: Date) => {
-    if (granularity === "day")
-      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    if (granularity === "month")
-      return d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
-    return `W${Math.ceil(d.getDate() / 7)} ${d.toLocaleDateString(undefined, { month: "short" })}`;
+  type Bucket = { issued: number; confirmed: number; bucketStart: Date };
+  const buckets = new Map<string, Bucket>();
+
+  // Normalize a date to its bucket-start (week = Monday)
+  const toBucketStart = (d: Date): Date => {
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if (granularity === "day") return x;
+    if (granularity === "month") return new Date(x.getFullYear(), x.getMonth(), 1);
+    const day = x.getDay(); // 0=Sun..6=Sat
+    const diff = (day + 6) % 7; // days since Monday
+    x.setDate(x.getDate() - diff);
+    return x;
   };
 
-  const bucketKey = (d: Date) => {
+  const bucketKey = (d: Date) =>
+    `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+  const advance = (d: Date) => {
+    if (granularity === "day") d.setDate(d.getDate() + 1);
+    else if (granularity === "week") d.setDate(d.getDate() + 7);
+    else d.setMonth(d.getMonth() + 1);
+  };
+
+  const fmtLabel = (d: Date) => {
+    if (granularity === "month")
+      return d.toLocaleDateString(undefined, { month: "short", year: "numeric" });
+    // day and week → use the bucket-start date
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
+
+  const fmtRange = (d: Date) => {
     if (granularity === "day")
-      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    if (granularity === "month") return `${d.getFullYear()}-${d.getMonth()}`;
-    return `${d.getFullYear()}-${d.getMonth()}-${Math.floor(d.getDate() / 7)}`;
+      return d.toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    if (granularity === "month")
+      return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    const end = new Date(d);
+    end.setDate(end.getDate() + 6);
+    const left = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const right = end.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    return `${left} – ${right}`;
   };
 
   // Seed buckets
-  const cursor = new Date(start);
+  const cursor = toBucketStart(new Date(start));
   const end = new Date();
   while (cursor <= end) {
     const key = bucketKey(cursor);
     if (!buckets.has(key))
-      buckets.set(key, { issued: 0, confirmed: 0 });
-    if (granularity === "day") cursor.setDate(cursor.getDate() + 1);
-    else if (granularity === "week") cursor.setDate(cursor.getDate() + 7);
-    else cursor.setMonth(cursor.getMonth() + 1);
+      buckets.set(key, { issued: 0, confirmed: 0, bucketStart: new Date(cursor) });
+    advance(cursor);
   }
 
   for (const c of creds) {
     const d = new Date(c.issuedAt);
     if (d < start) continue;
-    const k = bucketKey(d);
-    const b = buckets.get(k) ?? { issued: 0, confirmed: 0 };
+    const bs = toBucketStart(d);
+    const k = bucketKey(bs);
+    const b = buckets.get(k) ?? { issued: 0, confirmed: 0, bucketStart: bs };
     b.issued += 1;
     if (c.blockchain.chainStatus === "confirmed") b.confirmed += 1;
     buckets.set(k, b);
   }
 
-  // Convert
-  const cursor2 = new Date(start);
-  const out: { label: string; issued: number; confirmed: number }[] = [];
-  while (cursor2 <= end) {
-    const k = bucketKey(cursor2);
-    const b = buckets.get(k) ?? { issued: 0, confirmed: 0 };
-    out.push({ label: fmt(cursor2), ...b });
-    if (granularity === "day") cursor2.setDate(cursor2.getDate() + 1);
-    else if (granularity === "week") cursor2.setDate(cursor2.getDate() + 7);
-    else cursor2.setMonth(cursor2.getMonth() + 1);
-  }
-  return out;
+  return Array.from(buckets.values())
+    .sort((a, b) => a.bucketStart.getTime() - b.bucketStart.getTime())
+    .map((b) => ({
+      label: fmtLabel(b.bucketStart),
+      rangeLabel: fmtRange(b.bucketStart),
+      issued: b.issued,
+      confirmed: b.confirmed,
+    }));
 }
 
 function LifecycleChart({
