@@ -3,7 +3,7 @@ import {
   ArrowRight,
   Award,
   BadgeCheck,
-  ClipboardCheck,
+  
   GraduationCap,
   Hexagon,
   Search,
@@ -38,7 +38,6 @@ export const Route = createFileRoute("/")({
 
 const ROLES = [
   { icon: GraduationCap, label: "Earners", desc: "Apply, collect, share micro-credentials." },
-  { icon: ClipboardCheck, label: "Course Providers", desc: "Review evidence, validate achievement." },
   { icon: Award, label: "Issuers", desc: "Design templates, issue and revoke credentials." },
   { icon: ShieldQuestion, label: "Verifiers", desc: "Verify a credential or open a shared profile." },
 ];
@@ -103,7 +102,7 @@ function Home() {
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
         <div className="mb-8">
           <div className="text-xs uppercase tracking-widest text-muted-foreground">Roles</div>
-          <h2 className="mt-2 font-display text-3xl font-semibold">One platform, five perspectives</h2>
+          <h2 className="mt-2 font-display text-3xl font-semibold">One platform, three perspectives</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {ROLES.map((r) => {
