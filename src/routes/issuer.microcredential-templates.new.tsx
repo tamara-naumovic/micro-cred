@@ -83,6 +83,7 @@ function Form() {
   const [level, setLevel] = useState<Level>("Foundation");
   const [participation, setParticipation] = useState<Participation>("hybrid");
   const [ects, setEcts] = useState<string>("");
+  const [ectsNotApplicable, setEctsNotApplicable] = useState(false);
   const [skills, setSkills] = useState("");
   const [outcomes, setOutcomes] = useState("");
   const [assessment, setAssessment] = useState("");
