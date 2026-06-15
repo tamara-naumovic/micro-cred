@@ -105,7 +105,7 @@ const ISSUER_ADMIN_NAV: NavGroups = [
     group: "Network",
     items: [
       { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck },
-      
+      { to: "/issuer/notifications", label: "Notifications", icon: Bell },
       { to: "/issuer/settings", label: "Settings", icon: Settings },
     ],
   },
@@ -132,6 +132,7 @@ const ISSUER_STAFF_NAV: NavGroups = [
   {
     group: "Account",
     items: [
+      { to: "/issuer/notifications", label: "Notifications", icon: Bell },
       { to: "/issuer/settings", label: "Settings", icon: Settings },
     ],
   },
@@ -255,7 +256,7 @@ export function AppSidebarLayout() {
                 onClick={() => {
                   const map: Record<Role, string> = {
                     earner: "/earner/notifications",
-                    issuer: "/issuer",
+                    issuer: "/issuer/notifications",
                     admin: "/admin",
                   };
                   navigate({ to: map[activeUser.role] });

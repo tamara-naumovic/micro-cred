@@ -3,12 +3,12 @@ import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { NotificationsList } from "@/components/NotificationsList";
 
-export const Route = createFileRoute("/earner/notifications")({
+export const Route = createFileRoute("/issuer/notifications")({
   head: () => ({ meta: [{ title: "Notifications — MicroCred" }] }),
   component: () => (
-    <RoleGuard role="earner">
-      <PageShell title="Notifications" description="Updates about your credentials, applications and institutions.">
-        <NotificationsList role="earner" />
+    <RoleGuard role="issuer">
+      <PageShell title="Notifications" description="Updates about applications, issuance and assignments.">
+        <NotificationsList role="issuer" />
       </PageShell>
     </RoleGuard>
   ),
