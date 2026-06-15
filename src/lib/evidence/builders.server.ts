@@ -1,11 +1,18 @@
 // Server-only file builders for credential evidence downloads.
 // Pure JS / Worker-safe: pdf-lib, qrcode, fflate, js-sha3.
 
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import QRCode from "qrcode";
 import { zipSync, strToU8 } from "fflate";
 import sha3 from "js-sha3";
 const { keccak256 } = sha3;
+
+// Embed Noto Sans so non-ASCII characters (ć, š, ž, č, đ, etc.) render in PDFs.
+// Standard pdf-lib fonts use WinAnsi encoding which cannot encode these.
+import notoRegularUrl from "./fonts/NotoSans-Regular.ttf?arraybuffer";
+import notoBoldUrl from "./fonts/NotoSans-Bold.ttf?arraybuffer";
+import notoItalicUrl from "./fonts/NotoSans-Italic.ttf?arraybuffer";
 
 import type { LoadedCredential, CredentialRow, TemplateMeta } from "./package.server";
 import {
