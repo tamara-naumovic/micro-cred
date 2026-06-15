@@ -843,14 +843,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })();
   }, [refetchAll]);
 
-  const markAllRead: StoreCtx["markAllRead"] = useCallback((_role, userId) => {
+  const markAllRead: StoreCtx["markAllRead"] = useCallback((role, userId) => {
+    const uid = userId ?? activeUserRef.current?.id;
+    const ids = stateRef.current.notifications
+      .filter(
+        (n) =>
+          !n.read &&
+          n.forRole === role &&
+          (!n.forUserId || n.forUserId === uid),
+      )
+      .map((n) => n.id);
+    if (ids.length === 0) return;
+    setState((s) => ({
+      ...s,
+      notifications: s.notifications.map((n) =>
+        ids.includes(n.id) ? { ...n, read: true } : n,
+      ),
+    }));
     (async () => {
-      const uid = userId ?? activeUserRef.current?.id;
-      if (!uid) return;
-      await supabase.from("notifications").update({ read: true }).eq("for_user_id", uid);
-      refetchAll();
+      await supabase.from("notifications").update({ read: true }).in("id", ids);
     })();
-  }, [refetchAll]);
+  }, []);
+
+  const markRead: StoreCtx["markRead"] = useCallback((id) => {
+    setState((s) => ({
+      ...s,
+      notifications: s.notifications.map((n) =>
+        n.id === id ? { ...n, read: true } : n,
+      ),
+    }));
+    (async () => {
+      await supabase.from("notifications").update({ read: true }).eq("id", id);
+    })();
+  }, []);
 
   const reset = useCallback(() => {
     refetchAll();
