@@ -327,13 +327,14 @@ export async function buildCredentialPdf(
 ): Promise<Uint8Array> {
   const { cred, template, verifyUrl, publicId } = loaded;
   const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
   const page = doc.addPage([595.28, 841.89]); // A4 portrait
   const { width, height } = page.getSize();
 
   const fonts: PdfFonts = {
-    regular: await doc.embedFont(StandardFonts.Helvetica),
-    bold: await doc.embedFont(StandardFonts.HelveticaBold),
-    italic: await doc.embedFont(StandardFonts.HelveticaOblique),
+    regular: await doc.embedFont(NOTO_REGULAR, { subset: true }),
+    bold: await doc.embedFont(NOTO_BOLD, { subset: true }),
+    italic: await doc.embedFont(NOTO_ITALIC, { subset: true }),
   };
 
   const margin = 48;
