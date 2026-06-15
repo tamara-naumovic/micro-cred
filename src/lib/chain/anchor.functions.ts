@@ -282,10 +282,20 @@ import {
 } from "./hash";
 import { buildTemplateCanonicalPayload } from "./vc";
 
-export const getChainAvailabilityFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { getChainAvailability } = await import("./bloxberg.server");
-  return getChainAvailability();
-});
+export const getChainAvailabilityFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const allowed = new Set(["issuer_admin", "issuer_staff", "platform_admin"]);
+    const ok = (roles ?? []).some((r: { role: string }) => allowed.has(r.role));
+    if (!ok) throw new Error("Forbidden");
+    const { getChainAvailability } = await import("./bloxberg.server");
+    return getChainAvailability();
+  });
 
 async function assertIssuerForTemplate(
   supabase: any,
