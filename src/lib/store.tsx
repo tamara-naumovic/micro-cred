@@ -615,10 +615,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         actor_name: activeUserRef.current?.name ?? "Issuer",
         action: "Credential issued",
       });
-      // Fire-and-forget blockchain anchoring
-      enqueueAnchor({ data: { credentialId: cred.id as string } }).catch((e) =>
-        console.warn("[chain] enqueueAnchor failed", e),
-      );
+      // Anchoring is deferred until the earner accepts the credential.
       refetchAll();
     })();
     return null;
