@@ -599,13 +599,14 @@ function drawField(
 
 export async function buildInstructionsPdf(): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
   const page = doc.addPage([595.28, 841.89]);
   const { width, height } = page.getSize();
   const margin = 48;
   let y = height - margin;
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const regular = await doc.embedFont(StandardFonts.Helvetica);
-  const italic = await doc.embedFont(StandardFonts.HelveticaOblique);
+  const bold = await doc.embedFont(NOTO_BOLD, { subset: true });
+  const regular = await doc.embedFont(NOTO_REGULAR, { subset: true });
+  const italic = await doc.embedFont(NOTO_ITALIC, { subset: true });
   const muted = rgb(0.45, 0.48, 0.55);
   const text = rgb(0.13, 0.15, 0.2);
   const primary = rgb(0.09, 0.18, 0.36);
