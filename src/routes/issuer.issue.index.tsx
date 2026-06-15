@@ -143,18 +143,16 @@ function Direct() {
 
           <div>
             <Label>Recipients ({selectedIds.length} selected)</Label>
-            <div className="mt-2 grid max-h-72 gap-2 overflow-auto rounded-md border border-border p-2 sm:grid-cols-2">
-              {earners.map((e) => (
-                <label key={e.id} className="flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm hover:bg-muted">
-                  <Checkbox checked={!!overrides[e.id]} onCheckedChange={() => toggle(e.id)} />
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">{e.name}</div>
-                    <div className="text-xs text-muted-foreground">{e.studentId} · {e.email}</div>
-                  </div>
-                </label>
-              ))}
+            <div className="mt-2">
+              <StaffPicker
+                staff={earners}
+                selected={selectedIds}
+                onChange={setSelectedIds}
+                placeholder="Search earners by name or email"
+              />
             </div>
           </div>
+
 
           {selectedIds.length > 0 && (
             <div>
