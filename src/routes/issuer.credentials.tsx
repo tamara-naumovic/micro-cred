@@ -159,9 +159,7 @@ function List() {
                             </Button>
                           </>
                         ) : (
-                          <Link to="/verify/$id" params={{ id: c.id }} className="inline-flex items-center text-sm text-primary hover:underline">
-                            Verify <ExternalLink className="ml-1 h-3 w-3" />
-                          </Link>
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </div>
                     </TableCell>
