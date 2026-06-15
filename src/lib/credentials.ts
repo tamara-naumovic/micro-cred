@@ -57,7 +57,20 @@ export async function fetchMyCredential(id: string): Promise<DbCredential | null
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return (data as DbCredential | null) ?? null;
+  if (!data) return null;
+
+  // Learner secret is stored in a separate, earner-only table. RLS restricts
+  // SELECT to the credential owner; this simply tells us whether the private
+  // ownership proof is downloadable for the viewer.
+  const { data: secRow } = await supabase
+    .from("credential_secrets")
+    .select("secret")
+    .eq("credential_id", id)
+    .maybeSingle();
+
+  const cred = data as unknown as DbCredential;
+  cred.learner_secret = ((secRow as { secret: string } | null)?.secret) ?? null;
+  return cred;
 }
 
 const SHARE_KEYS: Record<keyof SharingSettings, string> = {
