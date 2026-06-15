@@ -106,8 +106,18 @@ function AnchoringQueuePage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const processMut = useMutation({
+    mutationFn: () => processQueue(),
+    onSuccess: (res: { processed: number }) => {
+      toast.success(`Processed ${res.processed} job(s)`);
+      qc.invalidateQueries({ queryKey: ["anchor-jobs"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const rows = data?.rows ?? [];
   const maxAttempts = data?.maxAttempts ?? 5;
+
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
