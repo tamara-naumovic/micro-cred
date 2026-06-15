@@ -65,9 +65,16 @@ function Detail() {
     [templateAssignees, id, activeUser?.id],
   );
 
+  useEffect(() => {
+    if (isStaff && tpl && !assignedToMe) {
+      toast.error("This micro-credential is not assigned to you.");
+    }
+  }, [isStaff, tpl, assignedToMe]);
+
   if (!activeUser) return null;
   // Staff may only open templates assigned to them
-  if (isStaff && tpl && !assignedToMe) return <Navigate to="/issuer/microcredential-templates" />;
+  if (isStaff && tpl && !assignedToMe)
+    return <Navigate to="/issuer/microcredential-templates" replace />;
 
   if (!tpl) {
     return (
