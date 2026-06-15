@@ -156,7 +156,7 @@ export const enqueueAnchor = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase
       .from("credentials")
       .select(
-        "id, template_id, title, earner_id, earner_name, issuer_id, issuer_name, issued_at, expires_at, status, source, subcategory, level, ects, skills, grade, credential_hash, learner_commitment, learner_secret, template_ref, vc_json, chain_status",
+        "id, template_id, title, earner_id, earner_name, issuer_id, issuer_name, issued_at, expires_at, status, source, subcategory, level, ects, skills, grade, credential_hash, learner_commitment, template_ref, vc_json, chain_status",
       )
       .eq("id", data.credentialId)
       .maybeSingle();
