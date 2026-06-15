@@ -644,22 +644,22 @@ function LifecycleChart({
   };
 }) {
   const data = [
-    { name: "Active", value: counts.active, color: "hsl(var(--primary))" },
+    { name: "Active", value: counts.active, color: "var(--primary)" },
     {
       name: "Pending acceptance",
       value: counts.pending,
-      color: "hsl(var(--warning, 38 92% 50%))",
+      color: "var(--info)",
     },
-    { name: "Expired", value: counts.expired, color: "hsl(var(--muted-foreground))" },
+    { name: "Expired", value: counts.expired, color: "var(--muted-foreground)" },
     {
       name: "Revoked",
       value: counts.revoked,
-      color: "hsl(var(--destructive))",
+      color: "var(--destructive)",
     },
     {
       name: "Superseded",
       value: counts.superseded,
-      color: "hsl(var(--accent-foreground))",
+      color: "var(--chart-2)",
     },
   ];
   const total = data.reduce((s, d) => s + d.value, 0);
