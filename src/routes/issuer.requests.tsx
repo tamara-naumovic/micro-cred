@@ -42,6 +42,7 @@ function Queue() {
     applications,
     templates,
     templateAssignees,
+    users,
     advanceApplicationStatus,
     rejectApplication,
   } = useStore();
