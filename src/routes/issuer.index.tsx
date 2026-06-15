@@ -801,13 +801,35 @@ function ActionsCard({
   );
 }
 
+type ChainAvail =
+  | { status: "ok"; chainId: number; rpcUrl: string; credentialAddress: string; templateAddress: string; issuerAddress: string; balanceWei: string }
+  | { status: "missing_config"; reason: string }
+  | { status: "rpc_unavailable"; reason: string }
+  | { status: "insufficient_balance"; reason: string; issuerAddress: string }
+  | { status: "missing_role"; reason: string; issuerAddress: string; missingOn: ("template" | "credential")[] }
+  | { status: "loading" };
+
+function formatBalance(wei: string): string {
+  try {
+    const v = BigInt(wei);
+    const whole = v / 10n ** 18n;
+    const frac = v % 10n ** 18n;
+    const fracStr = (frac.toString().padStart(18, "0")).slice(0, 6).replace(/0+$/, "");
+    return fracStr ? `${whole}.${fracStr} BLXBRG` : `${whole} BLXBRG`;
+  } catch {
+    return "—";
+  }
+}
+
+function explorerTxUrl(_addr: string) {
+  return `https://blockexplorer.bloxberg.org/address/${_addr}`;
+}
+
 function BloxbergCard({
   queued,
   failed,
   confirmed,
   lastConfirmedAt,
-  issuerAddress,
-  contractAddress,
 }: {
   queued: number;
   failed: number;
@@ -816,72 +838,98 @@ function BloxbergCard({
   issuerAddress?: string;
   contractAddress?: string;
 }) {
-  const rpcOk = confirmed > 0 || queued > 0;
+  const checkAvail = useServerFn(getChainAvailabilityFn);
+  const [avail, setAvail] = useState<ChainAvail>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    checkAvail()
+      .then((r) => { if (!cancelled) setAvail(r as ChainAvail); })
+      .catch((e: unknown) => { if (!cancelled) setAvail({ status: "rpc_unavailable", reason: (e as Error).message }); });
+    return () => { cancelled = true; };
+  }, [checkAvail]);
+
+  const isOk = avail.status === "ok";
+  const issuerAddr = "issuerAddress" in avail ? (avail as { issuerAddress?: string }).issuerAddress : undefined;
+  const credAddr = isOk ? avail.credentialAddress : undefined;
+  const tplAddr = isOk ? avail.templateAddress : undefined;
+
+  const rpcBadge = (() => {
+    switch (avail.status) {
+      case "ok": return <Badge variant="default">Operational</Badge>;
+      case "loading": return <Badge variant="secondary">Checking…</Badge>;
+      case "missing_config": return <Badge variant="destructive">Not configured</Badge>;
+      case "rpc_unavailable": return <Badge variant="destructive">RPC unreachable</Badge>;
+      case "insufficient_balance": return <Badge variant="destructive">No balance</Badge>;
+      case "missing_role": return <Badge variant="destructive">Missing role</Badge>;
+    }
+  })();
+
+  const credBadge = isOk
+    ? <Badge variant="default">Connected</Badge>
+    : avail.status === "missing_role" && avail.missingOn.includes("credential")
+      ? <Badge variant="destructive">No ISSUER_ROLE</Badge>
+      : <Badge variant="secondary">{avail.status === "missing_config" ? "Not configured" : "Unknown"}</Badge>;
+  const tplBadge = isOk
+    ? <Badge variant="default">Connected</Badge>
+    : avail.status === "missing_role" && avail.missingOn.includes("template")
+      ? <Badge variant="destructive">No ISSUER_ROLE</Badge>
+      : <Badge variant="secondary">{avail.status === "missing_config" ? "Not configured" : "Unknown"}</Badge>;
+
   const warnings: { label: string; tone: "warn" | "err" }[] = [];
-  if (failed > 0)
-    warnings.push({ label: "Failed operations require retry", tone: "err" });
-  if (!rpcOk && queued === 0 && confirmed === 0)
-    warnings.push({ label: "No recent blockchain activity", tone: "warn" });
+  if (avail.status === "missing_config") warnings.push({ label: avail.reason, tone: "err" });
+  if (avail.status === "rpc_unavailable") warnings.push({ label: `RPC unreachable: ${avail.reason}`, tone: "err" });
+  if (avail.status === "insufficient_balance") warnings.push({ label: "Issuer wallet balance is 0 — fund it on Bloxberg faucet", tone: "err" });
+  if (avail.status === "missing_role") warnings.push({ label: avail.reason, tone: "err" });
+  if (failed > 0) warnings.push({ label: "Failed operations require retry", tone: "err" });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Bloxberg status</CardTitle>
-        <CardDescription>
-          Blockchain integration scoped to your institution
-        </CardDescription>
+        <CardDescription>Blockchain integration scoped to your institution</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="grid grid-cols-2 gap-2">
           <StatRow label="Network" value="Bloxberg" />
-          <StatRow label="Chain ID" value="8995" />
-          <StatRow
-            label="RPC connection"
-            value={
-              <Badge variant={rpcOk ? "default" : "secondary"}>
-                {rpcOk ? "Operational" : "Unknown"}
-              </Badge>
-            }
-          />
-          <StatRow
-            label="TemplateRegistry"
-            value={
-              <Badge variant={contractAddress ? "default" : "secondary"}>
-                {contractAddress ? "Connected" : "Not configured"}
-              </Badge>
-            }
-          />
-          <StatRow
-            label="CredentialRegistry"
-            value={
-              <Badge variant={contractAddress ? "default" : "secondary"}>
-                {contractAddress ? "Connected" : "Not configured"}
-              </Badge>
-            }
-          />
+          <StatRow label="Chain ID" value={isOk ? String(avail.chainId) : "8995"} />
+          <StatRow label="RPC connection" value={rpcBadge} />
+          <StatRow label="Wallet balance" value={isOk ? formatBalance(avail.balanceWei) : "—"} />
+          <StatRow label="TemplateRegistry" value={tplBadge} />
+          <StatRow label="CredentialRegistry" value={credBadge} />
           <StatRow
             label="Issuer wallet"
             value={
-              <span className="font-mono text-xs">
-                {maskAddress(issuerAddress)}
-              </span>
+              issuerAddr ? (
+                <a href={explorerTxUrl(issuerAddr)} target="_blank" rel="noreferrer" className="font-mono text-xs hover:underline">
+                  {maskAddress(issuerAddr)}
+                </a>
+              ) : <span className="text-muted-foreground">—</span>
             }
           />
-          <StatRow
-            label="Wallet balance"
-            value={<span className="text-muted-foreground">—</span>}
-          />
-          <StatRow
-            label="Last confirmed"
-            value={lastConfirmedAt ? timeAgo(lastConfirmedAt) : "—"}
-          />
+          <StatRow label="Last confirmed" value={lastConfirmedAt ? timeAgo(lastConfirmedAt) : "—"} />
         </div>
+
+        {(credAddr || tplAddr) && (
+          <div className="space-y-1 pt-1 text-xs">
+            {tplAddr && (
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground">Template contract</span>
+                <a href={explorerTxUrl(tplAddr)} target="_blank" rel="noreferrer" className="font-mono hover:underline">{maskAddress(tplAddr)}</a>
+              </div>
+            )}
+            {credAddr && (
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground">Credential contract</span>
+                <a href={explorerTxUrl(credAddr)} target="_blank" rel="noreferrer" className="font-mono hover:underline">{maskAddress(credAddr)}</a>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex gap-2 pt-2">
           <Badge variant="outline">Queued: {queued}</Badge>
-          <Badge variant={failed > 0 ? "destructive" : "outline"}>
-            Failed: {failed}
-          </Badge>
+          <Badge variant={failed > 0 ? "destructive" : "outline"}>Failed: {failed}</Badge>
           <Badge variant="outline">Confirmed: {confirmed}</Badge>
         </div>
 
@@ -913,6 +961,7 @@ function BloxbergCard({
     </Card>
   );
 }
+
 
 function StatRow({
   label,
