@@ -178,6 +178,8 @@ export interface IssuedCredential {
   blockchain: BlockchainPlaceholder;
   revocationReason?: string;
   renewedFromId?: string;
+  lifecycle?: "draft" | "pending_earner_acceptance" | "rejected" | "issued" | "revoked" | "expired" | "superseded";
+  rejectionReason?: string;
 }
 
 export interface TimelineEvent {
