@@ -26,8 +26,6 @@ import {
   CartesianGrid,
   Cell,
   Label,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -82,27 +80,6 @@ export const Route = createFileRoute("/issuer/")({
 
 // ============ Helpers ============
 
-type Period = "30d" | "6m" | "ay" | "all";
-
-function periodStart(p: Period): Date {
-  const now = new Date();
-  if (p === "30d") {
-    const d = new Date(now);
-    d.setDate(d.getDate() - 30);
-    return d;
-  }
-  if (p === "6m") {
-    const d = new Date(now);
-    d.setMonth(d.getMonth() - 6);
-    return d;
-  }
-  if (p === "ay") {
-    // Academic year: Oct 1 - Sep 30
-    const y = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
-    return new Date(y, 9, 1);
-  }
-  return new Date(0);
-}
 
 function maskAddress(addr?: string) {
   if (!addr) return "Not configured";
@@ -142,7 +119,6 @@ function Overview() {
     audit,
     loading,
   } = useStore();
-  const [period, setPeriod] = useState<Period>("6m");
   const [templateFilter, setTemplateFilter] = useState<string>("all");
 
   if (!activeUser) return null;
@@ -241,12 +217,6 @@ function Overview() {
     queuedAnchors.length +
     failedAnchors.length;
 
-  // Time-series
-  const series = useMemo(
-    () => buildTimeSeries(orgCredsAll, period),
-    [orgCredsAll, period],
-  );
-
   // Lifecycle counts
   const lifecycleCounts = useMemo(() => {
     const counts = {
@@ -331,8 +301,6 @@ function Overview() {
       actions={
         <>
           <DashboardFilters
-            period={period}
-            onPeriod={setPeriod}
             templateFilter={templateFilter}
             onTemplate={setTemplateFilter}
             templates={orgTemplates}
@@ -405,75 +373,8 @@ function Overview() {
         />
       </div>
 
-      {/* Row 2 — Time series + Lifecycle */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">
-              Credentials issued over time
-            </CardTitle>
-            <CardDescription>
-              {`Number of credentials issued per ${period === "30d" ? "day" : period === "6m" ? "week" : "month"}, and how many of those are confirmed on Bloxberg.`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {series.every((p) => p.issued === 0 && p.confirmed === 0) ? (
-              <EmptyBlock label="No credentials have been issued in this period." />
-            ) : (
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={series}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="hsl(var(--border))"
-                    />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                    />
-                    <YAxis
-                      allowDecimals={false}
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                      labelFormatter={(_label, payload) => {
-                        const p = payload?.[0]?.payload as
-                          | { rangeLabel?: string; label?: string }
-                          | undefined;
-                        return p?.rangeLabel ?? p?.label ?? "";
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="issued"
-                      name="Issued"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="confirmed"
-                      name="Confirmed"
-                      stroke="hsl(var(--success, 142 71% 45%))"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
+      {/* Row 2 — Lifecycle */}
+      <div className="mt-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Credential lifecycle</CardTitle>
@@ -542,31 +443,16 @@ function Overview() {
 // ============ Subcomponents ============
 
 function DashboardFilters({
-  period,
-  onPeriod,
   templateFilter,
   onTemplate,
   templates,
 }: {
-  period: Period;
-  onPeriod: (p: Period) => void;
   templateFilter: string;
   onTemplate: (id: string) => void;
   templates: MicroCredentialTemplate[];
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      <Select value={period} onValueChange={(v) => onPeriod(v as Period)}>
-        <SelectTrigger className="w-[160px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="30d">Last 30 days</SelectItem>
-          <SelectItem value="6m">Last 6 months</SelectItem>
-          <SelectItem value="ay">This academic year</SelectItem>
-          <SelectItem value="all">All time</SelectItem>
-        </SelectContent>
-      </Select>
       <Select value={templateFilter} onValueChange={onTemplate}>
         <SelectTrigger className="w-[200px]">
           <SelectValue />
@@ -584,92 +470,6 @@ function DashboardFilters({
   );
 }
 
-function buildTimeSeries(creds: IssuedCredential[], period: Period) {
-  const start = periodStart(period);
-  const granularity =
-    period === "30d" ? "day" : period === "6m" ? "week" : "month";
-
-  type Bucket = { issued: number; confirmed: number; bucketStart: Date };
-  const buckets = new Map<string, Bucket>();
-
-  // Normalize a date to its bucket-start (week = Monday)
-  const toBucketStart = (d: Date): Date => {
-    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    if (granularity === "day") return x;
-    if (granularity === "month") return new Date(x.getFullYear(), x.getMonth(), 1);
-    const day = x.getDay(); // 0=Sun..6=Sat
-    const diff = (day + 6) % 7; // days since Monday
-    x.setDate(x.getDate() - diff);
-    return x;
-  };
-
-  const bucketKey = (d: Date) =>
-    `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-
-  const advance = (d: Date) => {
-    if (granularity === "day") d.setDate(d.getDate() + 1);
-    else if (granularity === "week") d.setDate(d.getDate() + 7);
-    else d.setMonth(d.getMonth() + 1);
-  };
-
-  const fmtLabel = (d: Date) => {
-    if (granularity === "month")
-      return d.toLocaleDateString(undefined, { month: "short", year: "numeric" });
-    // day and week → use the bucket-start date
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  };
-
-  const fmtRange = (d: Date) => {
-    if (granularity === "day")
-      return d.toLocaleDateString(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    if (granularity === "month")
-      return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-    const end = new Date(d);
-    end.setDate(end.getDate() + 6);
-    const left = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    const right = end.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    return `${left} – ${right}`;
-  };
-
-  // Seed buckets
-  const cursor = toBucketStart(new Date(start));
-  const end = new Date();
-  while (cursor <= end) {
-    const key = bucketKey(cursor);
-    if (!buckets.has(key))
-      buckets.set(key, { issued: 0, confirmed: 0, bucketStart: new Date(cursor) });
-    advance(cursor);
-  }
-
-  for (const c of creds) {
-    const d = new Date(c.issuedAt);
-    if (d < start) continue;
-    const bs = toBucketStart(d);
-    const k = bucketKey(bs);
-    const b = buckets.get(k) ?? { issued: 0, confirmed: 0, bucketStart: bs };
-    b.issued += 1;
-    if (c.blockchain.chainStatus === "confirmed") b.confirmed += 1;
-    buckets.set(k, b);
-  }
-
-  return Array.from(buckets.values())
-    .sort((a, b) => a.bucketStart.getTime() - b.bucketStart.getTime())
-    .map((b) => ({
-      label: fmtLabel(b.bucketStart),
-      rangeLabel: fmtRange(b.bucketStart),
-      issued: b.issued,
-      confirmed: b.confirmed,
-    }));
-}
 
 function LifecycleChart({
   counts,
