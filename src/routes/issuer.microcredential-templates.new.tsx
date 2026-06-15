@@ -166,7 +166,7 @@ function Form() {
         source,
         outcomes: outcomes.split("\n").map((s) => s.trim()).filter(Boolean),
         skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-        ects: Number(ects),
+        ects: source === "non_formal" && (ectsNotApplicable || !ects.trim()) ? undefined : Number(ects),
         level,
         assessment,
         participation,
