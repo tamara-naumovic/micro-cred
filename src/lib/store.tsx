@@ -84,11 +84,17 @@ interface StoreCtx extends State {
   createApplication: (templateId: string) => CredentialApplication | null;
   updateSharing: (credentialId: string, settings: Partial<SharingSettings>) => void;
 
-  advanceApplicationStatus: (applicationId: string) => CredentialApplication | null;
+  advanceApplicationStatus: (
+    applicationId: string,
+    opts?: { grade?: string; expiryDate?: string },
+  ) => CredentialApplication | null;
   rejectApplication: (applicationId: string, reason: string) => void;
   addReviewerComment: (applicationId: string, text: string) => void;
 
-  issueFromApplication: (applicationId: string) => IssuedCredential | null;
+  issueFromApplication: (
+    applicationId: string,
+    opts?: { grade?: string; expiryDate?: string },
+  ) => IssuedCredential | null;
   directIssue: (
     templateId: string,
     recipients: { earnerId: string; grade?: string; expiryDate?: string }[],
