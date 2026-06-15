@@ -68,11 +68,7 @@ const emptyState: State = {
 
 export interface BulkRow {
   email: string;
-  firstName: string;
-  lastName: string;
-  studentId: string;
   grade?: string;
-  issueDate?: string;
   expiryDate?: string;
 }
 
@@ -713,7 +709,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         inserts.push(
           buildCredentialInsert(
             tpl,
-            { id: u.id, name: `${r.firstName} ${r.lastName}` },
+            { id: u.id, name: u.name },
             r.grade,
             r.expiryDate,
           ),
