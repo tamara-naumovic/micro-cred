@@ -1,20 +1,17 @@
-## Plan: Lock down `registration_requests` inserts
+## Plan: Authorize `/api/public/hooks/expiry-reminders`
 
-External self-registration is disabled — only platform admins and issuer admins create users. The anon INSERT policy `regreq_insert_anyone` is unused and should be removed.
+Endpoint trenutno koristi service-role klijenta bez ikakve provere. Dodajemo shared secret.
 
-### Migration
+### Koraci
 
-1. `DROP POLICY "regreq_insert_anyone" ON public.registration_requests;`
-2. Add a replacement INSERT policy restricted to platform admins (the only role that manages this pipeline today):
-   ```sql
-   CREATE POLICY regreq_insert_platform_admin
-     ON public.registration_requests FOR INSERT
-     TO authenticated
-     WITH CHECK (public.is_platform_admin(auth.uid()));
-   ```
-3. Revoke `INSERT` on the table from `anon` (cleanup; matches the new policy).
+1. **Tražim od korisnika novi secret `CRON_SECRET`** (preko `secrets--add_secret`) — server-side env var.
+2. **Update `src/routes/api/public/hooks/expiry-reminders.ts`**:
+   - Pre bilo kakvog rada, pročitati `Authorization: Bearer <token>` header (ili `x-cron-secret`).
+   - Uporediti sa `process.env.CRON_SECRET` koristeći `timingSafeEqual`.
+   - Ako se ne poklapa ili nedostaje → vratiti `401`.
+3. **Update pg_cron job-a** (ako postoji) — proslediti `Authorization: Bearer <CRON_SECRET>` header. Ako cron još nije zakazan, pripremiti SQL snippet koji korisnik može pokrenuti.
+4. Mark security finding `expiry_reminders_no_auth` kao fixed.
 
-### After
+### Napomena
 
-- Mark `registration_requests_anon_insert` as fixed.
-- No app code changes — `store.tsx` only reads/updates registration requests as admin.
+Service-role ključ se i dalje koristi unutar handlera (potrebno za masovni read/insert preko earnera), ali sada samo autentifikovani cron poziv može doći do te logike.
