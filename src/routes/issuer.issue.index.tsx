@@ -28,7 +28,7 @@ export const Route = createFileRoute("/issuer/issue/")({
 type RecipientOverride = { grade: string; expiryDate: string };
 
 function Direct() {
-  const { activeUser, templates, users, templateAssignees } = useStore();
+  const { activeUser, templates, users, templateAssignees, credentials } = useStore();
   const isStaff = activeUser?.subRole === "staff";
   const issueBatch = useServerFn(issueCredentialsBatch);
   const assignedIds = useMemo(
@@ -43,7 +43,7 @@ function Direct() {
     ),
     [templates, activeUser, isStaff, assignedIds],
   );
-  const earners = users.filter((u) => u.role === "earner");
+  const allEarners = users.filter((u) => u.role === "earner");
   const [templateId, setTemplateId] = useState(myTemplates[0]?.id ?? "");
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [defaultGrade, setDefaultGrade] = useState("");
