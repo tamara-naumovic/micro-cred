@@ -1370,7 +1370,6 @@ export const resendCredential = createServerFn({ method: "POST" })
         canonical_payload: vc,
         credential_hash: docHash,
         learner_commitment: learnerCommitment,
-        learner_secret: secret,
         credential_lifecycle: "pending_earner_acceptance",
         rejection_reason: null,
         rejected_at: null,
@@ -1380,6 +1379,11 @@ export const resendCredential = createServerFn({ method: "POST" })
     if (updErr) throw new Error(updErr.message);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("credential_secrets")
+      .upsert({ credential_id: data.credentialId, secret } as never, {
+        onConflict: "credential_id",
+      } as never);
     await supabaseAdmin
       .from("credential_blockchain_records")
       .update({ document_hash: docHash, blockchain_status: "not_requested" } as never)
