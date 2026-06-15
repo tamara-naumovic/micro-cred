@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, GraduationCap, FileWarning } from "lucide-react";
+import { GraduationCap, FileWarning } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { fetchPublicProfile } from "@/lib/credentials";
+import { DashboardHomeLink } from "@/components/DashboardHomeLink";
 
 export const Route = createFileRoute("/profile/$token")({
   head: () => ({
@@ -64,9 +64,7 @@ function SharedProfile() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 md:px-8">
-      <Button variant="ghost" size="sm" asChild className="mb-4">
-        <Link to="/"><ArrowLeft className="mr-1 h-4 w-4" /> Back to home</Link>
-      </Button>
+      <DashboardHomeLink />
 
       <Card>
         <CardContent className="flex flex-wrap items-start gap-4 p-6">
