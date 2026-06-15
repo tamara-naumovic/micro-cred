@@ -83,6 +83,7 @@ function Form() {
   const [level, setLevel] = useState<Level>("Foundation");
   const [participation, setParticipation] = useState<Participation>("hybrid");
   const [ects, setEcts] = useState<string>("");
+  const [ectsNotApplicable, setEctsNotApplicable] = useState(false);
   const [skills, setSkills] = useState("");
   const [outcomes, setOutcomes] = useState("");
   const [assessment, setAssessment] = useState("");
@@ -125,7 +126,7 @@ function Form() {
     const requiredErrors: string[] = [];
     if (!title.trim()) requiredErrors.push("Title");
     if (!description.trim()) requiredErrors.push("Description");
-    if (!ects.trim()) requiredErrors.push("ECTS");
+    if (source === "formal" && !ects.trim()) requiredErrors.push("ECTS");
     if (!skills.trim()) requiredErrors.push("Skills");
     if (!outcomes.trim()) requiredErrors.push("Learning outcomes");
     if (!assessment.trim()) requiredErrors.push("Assessment");
@@ -165,7 +166,7 @@ function Form() {
         source,
         outcomes: outcomes.split("\n").map((s) => s.trim()).filter(Boolean),
         skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
-        ects: Number(ects),
+        ects: source === "non_formal" && (ectsNotApplicable || !ects.trim()) ? undefined : Number(ects),
         level,
         assessment,
         participation,
@@ -263,8 +264,30 @@ function Form() {
               </Select>
             </div>
             <div>
-              <Label>ECTS *</Label>
-              <Input value={ects} onChange={(e) => setEcts(e.target.value)} type="number" min={0} max={60} />
+              <Label>ECTS {source === "formal" ? "*" : "(optional)"}</Label>
+              <Input
+                value={ectsNotApplicable ? "" : ects}
+                onChange={(e) => setEcts(e.target.value)}
+                type="number"
+                min={0}
+                max={60}
+                disabled={source === "non_formal" && ectsNotApplicable}
+                placeholder={source === "non_formal" && ectsNotApplicable ? "Does not apply" : undefined}
+              />
+              {source === "non_formal" && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Checkbox
+                    id="ects-na"
+                    checked={ectsNotApplicable}
+                    onCheckedChange={(c) => {
+                      const v = !!c;
+                      setEctsNotApplicable(v);
+                      if (v) setEcts("");
+                    }}
+                  />
+                  <Label htmlFor="ects-na" className="font-normal cursor-pointer">Does not apply</Label>
+                </div>
+              )}
             </div>
             <div className="md:col-span-2">
               <Label>Skills * (comma-separated)</Label>
