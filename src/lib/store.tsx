@@ -771,6 +771,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         quality_assurance: t.qualityAssurance,
         qa_type: t.qaType,
         qa_document_path: t.qaDocumentPath ?? null,
+        qa_document_paths: t.qaDocumentPaths ?? [],
         prerequisites: t.prerequisites,
         prerequisites_none: t.prerequisitesNone,
         supervision: t.supervision,
