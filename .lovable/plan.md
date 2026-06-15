@@ -1,42 +1,50 @@
-# Issuer Staff permissions — audit i dopune
+# "Credentials issued over time" — popravka grafika
 
-## Trenutno stanje (provereno)
+## Šta grafik treba da prikazuje
 
-### Backend (DB RLS) — već ispravno, ne menja se
-- `templates`: INSERT / UPDATE / DELETE dozvoljeno samo `issuer_admin` (iste org) ili `platform_admin`. Staff je blokiran na DB nivou. SELECT je javan, ali UI lista filtrira po dodeli.
-- `template_assignees`: INSERT/DELETE samo admin. SELECT za staff vraća samo njegove redove.
-- `organizations`: UPDATE samo `issuer_admin` (iste org) ili `platform_admin`.
-- Server fn `publishTemplateAndAnchor` poziva `assertIssuerForTemplate`, koja zahteva `issuer_admin` ili `platform_admin` i baca `Forbidden` ako staff pokuša.
+Linijski grafik sa dve serije po vremenskim "bucket"-ima:
+- **Issued** — broj kredencijala koje je tvoja institucija izdala u tom periodu (po datumu `issued_at`).
+- **Confirmed** — koliko od njih je do sada potvrđeno na Bloxberg blockchain-u.
 
-### Frontend — već implementirano
-- Sidebar (`AppSidebarLayout`): staff nav nema "Create Micro-credential" ni "Staff" stavku.
-- `/issuer/microcredential-templates` (lista): za staff prikazuje samo dodeljene template (filter po `template_assignees`); skriva "Create" i "Archive" dugmad.
-- `/issuer/microcredential-templates/$id`: staff koji nije dodeljen biva preusmeren; `QaDocumentsEditor` i `TemplateBlockchainProofCard` su read-only za staff; `AssigneesCard` je read-only prikaz.
-- `/issuer/microcredential-templates/new`: `Guarded` blok preusmeri staff na listu.
-- `/issuer/staff`: staff preusmeren na `/issuer`.
-- `/issuer/settings`: polja Website/About/Accreditation onemogućena za staff; DB RLS dodatno blokira pisanje.
+Granularnost bucket-a zavisi od izabranog perioda (gornji-desni Select):
+- `Last 30 days` → po danu
+- `Last 6 months` → po nedelji
+- `This academic year` / `All time` → po mesecu
 
-## Manje izmene (cilj: jasna 403 poruka umesto tihog redirect-a)
+## Problemi koje vidiš
 
-Backend zaštita je već potpuna; izmene su čisto UX kako bi staff dobio eksplicitnu poruku po direktnom pristupu zabranjenoj ruti.
+1. **Grafik izgleda prazno** — bucket-i su uvek pre-seedovani na 0, pa kad nemaš izdate kredencijale u tom periodu, obe linije sede na y=0 (vizuelno se gube uz X-osu, a poruka "No credentials…" se nikad ne prikaže jer uslov `series.length === 0` nije ispunjen).
+2. **Nejasne oznake na X-osi** — za period "Last 6 months" se generiše `W2 Jun`, `W4 Jun` (broj nedelje u mesecu 1–5). To je nestandardno i ume da se ponovi kroz mesece.
 
-1. **`src/routes/issuer.microcredential-templates.new.tsx`** — `Guarded` komponenta:
-   - Pre `<Navigate>` prikazati `toast.error("You don't have permission to create micro-credentials.")` jednom (useEffect) i preusmeriti na `/issuer/microcredential-templates`.
+## Izmene
 
-2. **`src/routes/issuer.microcredential-templates.$id.tsx`** — staff bez dodele:
-   - Pre `<Navigate>` prikazati `toast.error("This micro-credential is not assigned to you.")` (useEffect, jednom).
+### 1. Empty state radi i kad su sve vrednosti 0
+U `issuer.index.tsx` (oko linije 420), zameniti uslov:
+```
+series.length === 0
+```
+sa:
+```
+series.every((p) => p.issued === 0 && p.confirmed === 0)
+```
+Tako će se uredna poruka "No credentials have been issued in this period." prikazati kad nema podataka, umesto prazne mreže.
 
-3. **`src/routes/issuer.staff.tsx`** — staff koji direktno otvori `/issuer/staff`:
-   - Dodati isti toast pattern ("Only institution admins can manage staff.") pre redirect-a.
+### 2. Čitljive oznake na X-osi
+U `buildTimeSeries` (`fmt` funkcija, oko linije 587):
+- **day** (30d): zadržati `Jun 14`.
+- **week** (6m): umesto `W2 Jun`, koristiti datum početka nedelje u formatu `Jun 8` (kratko, hronološki rastuće, bez ponavljanja "W1/W2" po mesecima). Tooltip može da pokazuje pun raspon (`Jun 8 – Jun 14`).
+- **month** (ay/all): umesto `Jun 25` (2-digit godina deluje kao dan), koristiti `Jun 2026` (pun mesec + 4-cifrena godina).
 
-## Tehnički detalji
+### 3. Pojašnjenje naslova i opisa kartice
+- Naslov ostaje `Credentials issued over time`.
+- Opis menjamo iz `Internally issued vs confirmed on Bloxberg` u nešto eksplicitnije, npr.:
+  `Number of credentials issued per {day|week|month} and how many are confirmed on Bloxberg.` (granularnost se popunjava dinamički na osnovu izabranog perioda).
 
-- Implementacija toast-a u render-time `Navigate` granama: pomeriti poziv u `useEffect(() => { toast.error(...); }, [])` i renderovati `<Navigate to=... replace />`. Time se izbegava upozorenje React-a o set-state-during-render i toast se prikazuje tačno jednom.
-- Nikakve izmene na DB-u, RLS-u, server funkcijama, niti na store layeru.
-- Nikakve izmene na admin nav-u (Issuer Admin zadržava pun pristup).
+### 4. Tooltip sa rasponom bucket-a (za nedelje i mesece)
+Dodati `rangeLabel` polje u svaku tačku serije (npr. `Jun 8 – Jun 14` za nedelju, `June 2026` za mesec) i prikazati ga kao naslov tooltip-a preko `labelFormatter` u Recharts `Tooltip`-u. Time se uklanja svaka dvosmislenost oko toga šta `Jun 8` zapravo pokriva.
 
-## Šta NEĆE biti urađeno
+## Šta NEĆE biti menjano
 
-- Promene RLS-a (nije potrebno — pokriveno).
-- Skrivanje `templates` SELECT-a za staff (lista mora moći da pročita dodeljene; UI filter to obavlja, a `template_assignees` SELECT je već scoped).
-- Izmena `publishTemplateAndAnchor` (već vraća Forbidden za staff).
+- Logika autorizacije, dovlačenje podataka, ni RLS.
+- Filter po template-u i selektor perioda — ostaju.
+- Druge kartice na dashboard-u.
