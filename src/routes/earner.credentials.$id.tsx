@@ -396,8 +396,14 @@ function AcceptanceBanner({
     }
     setBusy(true);
     try {
-      await accept({ data: { credentialId } });
-      toast.success("Credential accepted");
+      const res = await accept({ data: { credentialId } });
+      if ((res as any)?.chainPending) {
+        toast.success("Credential accepted", {
+          description: "Blockchain confirmation is pending — it will appear once anchored.",
+        });
+      } else {
+        toast.success("Credential accepted");
+      }
       onChanged?.();
     } catch (e: any) {
       toast.error(e?.message ?? "Could not accept");
