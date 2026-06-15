@@ -200,6 +200,11 @@ function Bulk() {
                 {duplicates} earner(s) already have an active (non-revoked) credential for this micro-credential and will be skipped.
               </div>
             )}
+            {staffConflicts > 0 && (
+              <div className="text-xs text-warning-foreground">
+                {staffConflicts} email(s) belong to issuer staff or admin accounts and will be skipped.
+              </div>
+            )}
           </div>
 
           <AnchorModeSelector value={anchorMode} onChange={setAnchorMode} scope="credential" />
