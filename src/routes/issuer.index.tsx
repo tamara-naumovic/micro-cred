@@ -119,7 +119,6 @@ function Overview() {
     audit,
     loading,
   } = useStore();
-  const [period, setPeriod] = useState<Period>("6m");
   const [templateFilter, setTemplateFilter] = useState<string>("all");
 
   if (!activeUser) return null;
