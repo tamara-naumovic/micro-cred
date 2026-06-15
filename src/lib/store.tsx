@@ -10,6 +10,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { issueCredentialsBatch } from "@/lib/chain/anchor.functions";
 
 import {
   LIFECYCLE_STAGES,
