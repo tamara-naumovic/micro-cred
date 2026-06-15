@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { getChainAvailabilityFn } from "@/lib/chain/anchor.functions";
 import {
   Activity,
   AlertTriangle,
