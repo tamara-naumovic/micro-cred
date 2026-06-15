@@ -179,6 +179,15 @@ export const bulkAddIssuerStaff = createServerFn({ method: "POST" })
           });
           if (error || !c?.user) throw new Error(error?.message ?? "create failed");
           userId = c.user.id;
+
+          // Ensure profile exists even if the auth trigger didn't run
+          await supabaseAdmin
+            .from("profiles")
+            .upsert(
+              { id: userId, email, display_name: row.name },
+              { onConflict: "id" },
+            );
+
           await supabaseAdmin
             .from("user_roles")
             .delete()
