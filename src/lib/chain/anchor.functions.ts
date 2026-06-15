@@ -1551,3 +1551,152 @@ export const backfillAllPendingCredentials = createServerFn({ method: "POST" })
     }
     return { processed: results.length, results };
   });
+
+/**
+ * Drain the chain anchor queues. Restricted to issuer admins, issuer staff,
+ * and platform admins — triggered manually from the Blockchain Queue page.
+ */
+export const processAnchorQueueFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+
+    const [{ data: isAdmin }, { data: roles }] = await Promise.all([
+      supabase.rpc("is_platform_admin", { _user_id: userId }),
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+    ]);
+    const roleSet = new Set(((roles as { role: string }[] | null) ?? []).map((r) => r.role));
+    if (!isAdmin && !roleSet.has("issuer_admin") && !roleSet.has("issuer_staff")) {
+      throw new Error("Forbidden");
+    }
+
+    const MAX_PER_RUN = 10;
+    const MAX_ATTEMPTS = 5;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const nowIso = new Date().toISOString();
+
+    const [tplRes, credRes] = await Promise.all([
+      (supabaseAdmin as any)
+        .from("template_anchor_jobs")
+        .select("*")
+        .in("status", ["queued", "failed"])
+        .lt("attempts", MAX_ATTEMPTS)
+        .order("created_at", { ascending: true })
+        .limit(MAX_PER_RUN),
+      (supabaseAdmin as any)
+        .from("credential_anchor_jobs")
+        .select("*")
+        .in("status", ["queued", "failed"])
+        .lt("attempts", MAX_ATTEMPTS)
+        .order("created_at", { ascending: true })
+        .limit(MAX_PER_RUN),
+    ]);
+    if (tplRes.error) throw new Error(tplRes.error.message);
+    if (credRes.error) throw new Error(credRes.error.message);
+
+    const { processCredentialAnchor, processTemplateAnchor } = await import(
+      "@/lib/chain/worker.server"
+    );
+
+    const results: { jobId: string; entity: string; ok: boolean; error?: string }[] = [];
+
+    for (const job of (tplRes.data ?? []) as Record<string, any>[]) {
+      if (job.next_attempt_at && new Date(job.next_attempt_at) > new Date()) continue;
+      await (supabaseAdmin as any)
+        .from("template_anchor_jobs")
+        .update({ status: "running", attempts: (job.attempts ?? 0) + 1, last_attempt_at: nowIso } as never)
+        .eq("id", job.id);
+
+      let res: { ok: boolean; error?: string; txHash?: string };
+      try {
+        res = await processTemplateAnchor(job.template_id, job.template_version ?? "1.0");
+      } catch (e) {
+        res = { ok: false, error: (e as Error).message };
+      }
+
+      const attempts = (job.attempts ?? 0) + 1;
+      const backoffMs = Math.min(60_000 * 2 ** attempts, 60 * 60_000);
+      await (supabaseAdmin as any)
+        .from("template_anchor_jobs")
+        .update({
+          status: res.ok ? "done" : "failed",
+          last_error: res.ok ? null : (res.error ?? "unknown error"),
+          transaction_hash: res.txHash ?? job.transaction_hash ?? null,
+          next_attempt_at: res.ok ? null : new Date(Date.now() + backoffMs).toISOString(),
+        } as never)
+        .eq("id", job.id);
+
+      results.push({ jobId: job.id, entity: "template", ok: res.ok, error: res.error });
+    }
+
+    for (const job of (credRes.data ?? []) as Record<string, any>[]) {
+      if (job.next_attempt_at && new Date(job.next_attempt_at) > new Date()) continue;
+
+      const { data: cred } = await supabaseAdmin
+        .from("credentials")
+        .select("template_id")
+        .eq("id", job.credential_id)
+        .maybeSingle();
+      const templateId = (cred as any)?.template_id as string | null | undefined;
+      let templateBlocked = false;
+      let blockReason = "Waiting for template to be anchored on blockchain.";
+      if (!templateId) {
+        templateBlocked = true;
+        blockReason = "Credential has no template";
+      } else {
+        const { data: tpl } = await supabaseAdmin
+          .from("templates")
+          .select("blockchain_status")
+          .eq("id", templateId)
+          .maybeSingle();
+        if ((tpl as any)?.blockchain_status !== "confirmed") {
+          templateBlocked = true;
+        }
+      }
+
+      if (templateBlocked) {
+        const attempts = (job.attempts ?? 0) + 1;
+        const backoffMs = 2 * 60_000;
+        await (supabaseAdmin as any)
+          .from("credential_anchor_jobs")
+          .update({
+            status: "failed",
+            attempts,
+            last_error: blockReason,
+            last_attempt_at: nowIso,
+            next_attempt_at: new Date(Date.now() + backoffMs).toISOString(),
+          } as never)
+          .eq("id", job.id);
+        results.push({ jobId: job.id, entity: "credential", ok: false, error: blockReason });
+        continue;
+      }
+
+      await (supabaseAdmin as any)
+        .from("credential_anchor_jobs")
+        .update({ status: "running", attempts: (job.attempts ?? 0) + 1, last_attempt_at: nowIso } as never)
+        .eq("id", job.id);
+
+      let res: { ok: boolean; error?: string; txHash?: string };
+      try {
+        res = await processCredentialAnchor(job.credential_id);
+      } catch (e) {
+        res = { ok: false, error: (e as Error).message };
+      }
+
+      const attempts = (job.attempts ?? 0) + 1;
+      const backoffMs = Math.min(60_000 * 2 ** attempts, 60 * 60_000);
+      await (supabaseAdmin as any)
+        .from("credential_anchor_jobs")
+        .update({
+          status: res.ok ? "done" : "failed",
+          last_error: res.ok ? null : (res.error ?? "unknown error"),
+          transaction_hash: res.txHash ?? job.transaction_hash ?? null,
+          next_attempt_at: res.ok ? null : new Date(Date.now() + backoffMs).toISOString(),
+        } as never)
+        .eq("id", job.id);
+
+      results.push({ jobId: job.id, entity: "credential", ok: res.ok, error: res.error });
+    }
+
+    return { processed: results.length, results };
+  });
