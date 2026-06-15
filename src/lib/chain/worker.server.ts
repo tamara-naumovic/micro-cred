@@ -3,11 +3,143 @@
 // by the cron route /api/public/hooks/process-chain-anchors.
 
 import { isChainConfigured, submitCredentialAnchor, submitTemplateAnchor, ChainNotConfiguredError } from "./bloxberg.server";
+import {
+  canonicalJson,
+  sha256Hex,
+  randomSecretHex,
+  learnerCommitmentKeccak,
+  templateRefKeccak,
+} from "./hash";
+import { buildVcJson } from "./vc";
 
 const STATUS_ACTIVE = 0;
 const STATUS_REVOKED = 1;
 const STATUS_EXPIRED = 2;
 const STATUS_PUBLISHED = 0;
+
+/**
+ * Backfill missing chain fields on a credential row.
+ * Some credentials were inserted via legacy client-side paths (store.tsx
+ * directIssue / bulkIssue / issueFromApplication) that didn't compute
+ * vc_json / credential_hash / learner_commitment / learner_secret /
+ * template_ref. Without these the on-chain submit would receive null
+ * hex strings and crash with "Cannot read properties of null (reading 'startsWith')".
+ */
+async function ensureCredentialChainFields(
+  supabaseAdmin: any,
+  cred: Record<string, any>,
+): Promise<Record<string, any>> {
+  const hasAll =
+    cred.credential_hash &&
+    cred.learner_commitment &&
+    cred.learner_secret &&
+    cred.template_ref &&
+    cred.vc_json;
+  if (hasAll) return cred;
+
+  let tpl: Record<string, any> | null = null;
+  if (cred.template_id) {
+    const { data } = await supabaseAdmin
+      .from("templates")
+      .select("*")
+      .eq("id", cred.template_id)
+      .maybeSingle();
+    tpl = (data as Record<string, any> | null) ?? null;
+  }
+
+  const templateVersion: string =
+    (cred.template_version as string | null) ?? (tpl?.version as string | null) ?? "1.0";
+  const vcId: string = (cred.vc_id as string | null) ?? `urn:microcred:${cred.id}`;
+
+  const templateRef: string =
+    (cred.template_ref as string | null) ??
+    (tpl?.template_ref as string | null) ??
+    templateRefKeccak(
+      cred.template_id ?? cred.id,
+      templateVersion,
+      (tpl?.document_hash as string | null) ?? "",
+    );
+
+  const vc =
+    (cred.vc_json as Record<string, unknown> | null) ??
+    buildVcJson({
+      credentialId: cred.id,
+      vcId,
+      title: cred.title,
+      templateId: cred.template_id,
+      templateVersion,
+      templateRef,
+      earnerId: cred.earner_id,
+      earnerName: cred.earner_name,
+      issuerId: cred.issuer_id,
+      issuerName: (cred.issuer_name_snapshot as string | null) ?? cred.issuer_name,
+      issuedAt: cred.issued_at,
+      expiresAt: cred.expires_at,
+      source: (cred.source as string | null) ?? (tpl?.source as string | null) ?? null,
+      subcategory: (cred.subcategory as string | null) ?? (tpl?.subcategory as string | null) ?? null,
+      level: (cred.level as string | null) ?? (tpl?.level as string | null) ?? null,
+      ects: (cred.ects as number | null) ?? (tpl?.ects as number | null) ?? null,
+      skills: (cred.skills as string[] | null) ?? (tpl?.skills as string[] | null) ?? [],
+      grade: (cred.grade as string | null) ?? null,
+      qaType: (tpl?.qa_type as string | null) ?? null,
+      supervisionType: (tpl?.supervision_type as string | null) ?? null,
+      stackabilityType: (tpl?.stackability_type as string | null) ?? null,
+      prerequisites: (tpl?.prerequisites as string | null) ?? null,
+      prerequisitesNone: !!(tpl?.prerequisites_none as boolean | null),
+      outcomes: (tpl?.outcomes as string[] | null) ?? [],
+      assessment: (tpl?.assessment as string | null) ?? null,
+      participation: (tpl?.participation as string | null) ?? null,
+    });
+
+  const docHash: string =
+    (cred.credential_hash as string | null) ?? (await sha256Hex(canonicalJson(vc)));
+  const learnerSecret: string =
+    (cred.learner_secret as string | null) ?? randomSecretHex(32);
+  const learnerCommitment: string =
+    (cred.learner_commitment as string | null) ??
+    learnerCommitmentKeccak(cred.earner_id, cred.id, learnerSecret);
+
+  await supabaseAdmin
+    .from("credentials")
+    .update({
+      vc_id: vcId,
+      vc_json: vc,
+      canonical_payload: vc,
+      template_version: templateVersion,
+      template_ref: templateRef,
+      credential_hash: docHash,
+      learner_secret: learnerSecret,
+      learner_commitment: learnerCommitment,
+    } as never)
+    .eq("id", cred.id);
+
+  const contractAddress =
+    process.env.CREDENTIAL_REGISTRY_ADDRESS || process.env.BLOXBERG_CONTRACT_ADDRESS || "";
+  await supabaseAdmin
+    .from("credential_blockchain_records")
+    .upsert(
+      {
+        credential_id: cred.id,
+        network: "bloxberg",
+        chain_id: Number(process.env.BLOXBERG_CHAIN_ID || "8995"),
+        contract_address: contractAddress,
+        document_hash: docHash,
+        blockchain_status: cred.chain_status ?? "not_requested",
+      } as never,
+      { onConflict: "credential_id" } as never,
+    );
+
+  return {
+    ...cred,
+    vc_id: vcId,
+    vc_json: vc,
+    template_version: templateVersion,
+    template_ref: templateRef,
+    credential_hash: docHash,
+    learner_secret: learnerSecret,
+    learner_commitment: learnerCommitment,
+  };
+}
 
 export async function processCredentialAnchor(credentialId: string): Promise<{
   ok: boolean;
@@ -36,7 +168,10 @@ export async function processCredentialAnchor(credentialId: string): Promise<{
     return { ok: false, skipped: true, error: "Chain not configured" };
   }
 
-  const c = cred as Record<string, any>;
+  // Auto-heal: legacy credentials may be missing the hex fields we need below.
+  // Backfill before computing anything else; throws a clear error if it can't.
+  const c = await ensureCredentialChainFields(supabaseAdmin, cred as Record<string, any>);
+
   const issuedAtSec = Math.floor(new Date(c.issued_at).getTime() / 1000);
   const expiresAtSec = c.expires_at ? Math.floor(new Date(c.expires_at).getTime() / 1000) : 0;
   const statusInt = c.credential_lifecycle === "revoked"
@@ -145,6 +280,12 @@ export async function processTemplateAnchor(
     .eq("template_version", version);
 
   try {
+    if (!v.template_ref || !v.document_hash) {
+      throw new Error(
+        `Template version ${templateId}@${version} is missing template_ref/document_hash. ` +
+        `Re-publish the template to recompute them.`,
+      );
+    }
     const res = await submitTemplateAnchor({
       templateRefHex: v.template_ref,
       documentHashHex: v.document_hash,

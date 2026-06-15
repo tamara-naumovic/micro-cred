@@ -10,6 +10,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { issueCredentialsBatch } from "@/lib/chain/anchor.functions";
 
 import {
   LIFECYCLE_STAGES,
@@ -561,70 +562,52 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const buildCredentialInsert = useCallback(
-    (
-      tpl: MicroCredentialTemplate,
-      earner: { id: string; name: string },
-      grade?: string,
-      expiryDate?: string,
-      issuedAt?: string,
-    ): Record<string, unknown> => ({
-      template_id: tpl.id,
-      title: tpl.title,
-      earner_id: earner.id,
-      earner_name: earner.name,
-      issuer_id: tpl.issuerId,
-      issuer_name: tpl.issuerName,
-      issued_at: issuedAt ?? nowISO(),
-      expires_at: expiryDate ?? (tpl.expiryMode === "fixed_date" ? (tpl.expiryDate ?? null) : null),
-      status: "active",
-      credential_lifecycle: "pending_earner_acceptance",
-      source: tpl.source,
-      subcategory: tpl.subcategory ?? null,
-      level: tpl.level,
-      ects: tpl.ects ?? null,
-      skills: tpl.skills,
-      grade: grade ?? null,
-    }),
-    [],
-  );
-
   const issueFromApplication: StoreCtx["issueFromApplication"] = useCallback((appId, opts) => {
     const app = state.applications.find((a) => a.id === appId);
     if (!app) return null;
     const tpl = state.templates.find((t) => t.id === app.templateId);
     if (!tpl) return null;
     (async () => {
-      const { data: cred, error } = await supabase
-        .from("credentials")
-        .insert(
-          buildCredentialInsert(
-            tpl,
-            { id: app.earnerId, name: app.earnerName },
-            opts?.grade,
-            opts?.expiryDate,
-          ) as unknown as never,
-        )
-        .select()
-        .single();
-      if (error) {
-        console.error("[store] issueFromApplication", error);
-        return;
+      try {
+        const res = await issueCredentialsBatch({
+          data: {
+            templateId: tpl.id,
+            issuedAt: nowISO(),
+            recipients: [
+              {
+                earnerId: app.earnerId,
+                earnerName: app.earnerName,
+                grade: opts?.grade ?? null,
+                expiresAt: opts?.expiryDate ?? null,
+              },
+            ],
+            anchorMode: "later",
+          },
+        });
+        const first = res.results[0];
+        if (!first?.credentialId) {
+          console.error("[store] issueFromApplication", first?.error);
+          toast.error(first?.error || "Issuance failed");
+          return;
+        }
+        await supabase
+          .from("applications")
+          .update({ status: "issued", resulting_credential_id: first.credentialId })
+          .eq("id", appId);
+        await supabase.from("application_timeline").insert({
+          application_id: appId,
+          actor_name: activeUserRef.current?.name ?? "Issuer",
+          action: "Credential issued",
+        });
+      } catch (e) {
+        console.error("[store] issueFromApplication", e);
+        toast.error((e as Error).message || "Issuance failed");
       }
-      await supabase
-        .from("applications")
-        .update({ status: "issued", resulting_credential_id: cred.id })
-        .eq("id", appId);
-      await supabase.from("application_timeline").insert({
-        application_id: appId,
-        actor_name: activeUserRef.current?.name ?? "Issuer",
-        action: "Credential issued",
-      });
-      // Anchoring is deferred until the earner accepts the credential.
       refetchAll();
     })();
     return null;
-  }, [state.applications, state.templates, buildCredentialInsert, refetchAll]);
+  }, [state.applications, state.templates, refetchAll]);
+
 
   const advanceApplicationStatus: StoreCtx["advanceApplicationStatus"] = useCallback((appId, opts) => {
     const app = state.applications.find((a) => a.id === appId);
@@ -677,54 +660,85 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const tpl = state.templates.find((t) => t.id === templateId);
     if (!tpl) return [];
     (async () => {
-      const rows = recipients
-        .map((r) => {
-          const u = state.users.find((x) => x.id === r.earnerId);
-          if (!u) return null;
-          return buildCredentialInsert(tpl, { id: u.id, name: u.name }, r.grade, r.expiryDate, issueDate);
-        })
-        .filter((x): x is Record<string, unknown> => !!x);
-      if (rows.length === 0) return;
-      const { data: inserted, error } = await (supabase.from("credentials") as unknown as {
-        insert: (r: Record<string, unknown>[]) => { select: () => Promise<{ data: { id: string }[] | null; error: unknown }> };
-      }).insert(rows).select();
-      if (error) console.error("[store] directIssue", error);
-      // Anchoring deferred until earner acceptance.
-      void inserted;
+      try {
+        const recips = recipients
+          .map((r) => {
+            const u = state.users.find((x) => x.id === r.earnerId);
+            if (!u) return null;
+            return {
+              earnerId: u.id,
+              earnerName: u.name,
+              grade: r.grade ?? null,
+              expiresAt: r.expiryDate ?? null,
+            };
+          })
+          .filter((x): x is NonNullable<typeof x> => !!x);
+        if (recips.length === 0) return;
+        const res = await issueCredentialsBatch({
+          data: {
+            templateId: tpl.id,
+            issuedAt: issueDate ?? nowISO(),
+            recipients: recips,
+            anchorMode: "later",
+          },
+        });
+        const failed = res.results.filter((r) => r.error);
+        if (failed.length > 0) {
+          console.error("[store] directIssue partial failure", failed);
+          toast.error(`${failed.length} of ${res.results.length} failed: ${failed[0].error}`);
+        }
+      } catch (e) {
+        console.error("[store] directIssue", e);
+        toast.error((e as Error).message || "Issuance failed");
+      }
       refetchAll();
     })();
     return [];
-  }, [state.templates, state.users, buildCredentialInsert, refetchAll]);
+  }, [state.templates, state.users, refetchAll]);
 
   const bulkIssue: StoreCtx["bulkIssue"] = useCallback((templateId, rows) => {
-    // Bulk issuance to non-existent earners is not supported with real auth.
-    // We attempt to match by email; unmatched rows are skipped.
     const tpl = state.templates.find((t) => t.id === templateId);
     if (!tpl) return [];
     (async () => {
-      const inserts: Record<string, unknown>[] = [];
-      for (const r of rows) {
-        const u = state.users.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
-        if (!u) continue;
-        inserts.push(
-          buildCredentialInsert(
-            tpl,
-            { id: u.id, name: u.name },
-            r.grade,
-            r.expiryDate,
-          ),
-        );
+      try {
+        const recips: { earnerId: string; earnerName: string; grade: string | null; expiresAt: string | null }[] = [];
+        for (const r of rows) {
+          const u = state.users.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
+          if (!u) continue;
+          recips.push({
+            earnerId: u.id,
+            earnerName: u.name,
+            grade: r.grade ?? null,
+            expiresAt: r.expiryDate ?? null,
+          });
+        }
+        if (recips.length === 0) {
+          console.warn("[store] bulkIssue: no matching earners found by email");
+          toast.warning("No matching earners found by email");
+          return;
+        }
+        const res = await issueCredentialsBatch({
+          data: {
+            templateId: tpl.id,
+            issuedAt: nowISO(),
+            recipients: recips,
+            anchorMode: "later",
+          },
+        });
+        const failed = res.results.filter((r) => r.error);
+        if (failed.length > 0) {
+          console.error("[store] bulkIssue partial failure", failed);
+          toast.error(`${failed.length} of ${res.results.length} failed: ${failed[0].error}`);
+        }
+      } catch (e) {
+        console.error("[store] bulkIssue", e);
+        toast.error((e as Error).message || "Bulk issuance failed");
       }
-      if (inserts.length === 0) {
-        console.warn("[store] bulkIssue: no matching earners found by email");
-        return;
-      }
-      const { error } = await (supabase.from("credentials") as unknown as { insert: (r: Record<string, unknown>[]) => Promise<{ error: unknown }> }).insert(inserts);
-      if (error) console.error("[store] bulkIssue", error);
       refetchAll();
     })();
     return [];
-  }, [state.templates, state.users, buildCredentialInsert, refetchAll]);
+  }, [state.templates, state.users, refetchAll]);
+
 
   const revokeCredential: StoreCtx["revokeCredential"] = useCallback((id, reason) => {
     (async () => {

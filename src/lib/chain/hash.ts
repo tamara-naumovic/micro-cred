@@ -40,6 +40,9 @@ export function bytesToHex(bytes: Uint8Array): string {
 }
 
 export function hexToBytes(hex: string): Uint8Array {
+  if (hex == null) {
+    throw new Error("hexToBytes: expected hex string, got null/undefined");
+  }
   const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
   const out = new Uint8Array(clean.length / 2);
   for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.substr(i * 2, 2), 16);
@@ -53,9 +56,13 @@ export function randomSecretHex(byteLength = 32): string {
 }
 
 export function to0x(hex: string): `0x${string}` {
+  if (hex == null) {
+    throw new Error("to0x: expected hex string, got null/undefined");
+  }
   const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
   return ("0x" + clean) as `0x${string}`;
 }
+
 
 /** Keccak-256 of a UTF-8 string, returns 64-char lower-case hex (no 0x). */
 export function keccak256Hex(input: string | Uint8Array): string {

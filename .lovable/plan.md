@@ -1,49 +1,100 @@
+## Šta je problem
 
-# Trenutni problemi i predlog rešenja
+Kredencijal koji ti je failovao (`4037f511-…`, "Web3 Bootcamp - Solidity…", izdat 15.06. u 15:34) u bazi ima:
 
-## 1. `Unauthorized: No authorization header provided` (glavna greška u overlay-u)
+- `template_ref` = NULL
+- `credential_hash` = NULL
+- `learner_commitment` = NULL
+- `chain_status` = `failed`
+- `chain_error` = **`Cannot read properties of null (reading 'startsWith')`**
 
-**Šta se dešava**
-- Stranica `/issuer/anchoring-queue` (i sve ostale `issuer.*`, `admin.*`, `earner.*`) je top-level ruta sa SSR uključenim, **van** `_authenticated/` foldera.
-- Komponenta odmah na mount zove `listAnchorJobs` (zaštićenu serverFn). `useQuery` se pokreće pre nego što `supabase.auth.getSession()` u `auth-attacher.ts` ima sesiju iz `localStorage`.
-- `attacher` šalje request bez `Authorization` headera → `requireSupabaseAuth` baci 401 → React baci runtime error overlay.
-- Posle ~1s sesija se učita, polling na 8s prolazi i sve normalno radi (vidi se u session replay-u: "Anchor retry submitted / Confirmed").
+Kada earner prihvati kredencijal, anchor worker (`worker.server.ts → submitCredentialAnchor`) zove `to0x(c.template_ref!)`, `to0x(c.credential_hash!)`, `to0x(c.learner_commitment!)`. `to0x` interno radi `hex.startsWith("0x")` — i puca jer je `hex` `null`.
 
-**Plan popravke (minimalno invazivno)**
-- U `src/routes/issuer.anchoring-queue.tsx`, pročitaj `useAuth()` i gate-uj `useQuery`:
-  ```ts
-  const { user, loading } = useAuth();
-  useQuery({ ..., enabled: !loading && !!user });
-  ```
-- Isti pattern (samo gating) primeniti i u drugim `issuer.*` stranicama koje pucaju pri hard-refresh-u na zaštićenom URL-u: `issuer.index.tsx`, `issuer.credentials.tsx`, `issuer.microcredential-templates.*`, `issuer.requests.tsx`, `issuer.revocations.tsx`, `issuer.earners.tsx`, `issuer.staff.tsx`, `issuer.notifications.tsx`, `issuer.profile.tsx`, `issuer.settings.tsx`, `issuer.issue.*`.
-- Mutacije (`retry`, `cancel`) ne diramo — one se zovu iz event handlera, sesija je tad sigurno tu.
+### Zašto je `template_ref` null
 
-**Alternativa (veći refactor, NE preporučujem sada)**: prebaciti sve zaštićene rute u `src/routes/_authenticated/`. Ispravnije po TanStack konvenciji, ali traži preimenovanje ~25 fajlova i ažuriranje svih `<Link>` putanja — radićemo zasebno ako poželiš.
+Kredencijal NIJE izdat preko ispravne putanje `issueCredentialsBatch` (server fn u `src/lib/chain/anchor.functions.ts`, linija ~579 — ona pravilno računa `vcId`, `templateRef`, `docHash`, `learnerCommitment`, `learnerSecret`).
 
-## 2. Auto-enqueue kredencijala posle template anchor-a resetuje `attempts`
+Umesto toga, izdat je preko jedne od tri **legacy klijent-side putanje** u `src/lib/store.tsx`:
 
-**Šta se dešava** (`src/lib/chain/worker.server.ts`, `processTemplateAnchor`)
-Kad se template potvrdi, kod sve nepotvrđene kredencijale tog template-a vraća na `status='queued', attempts=0` — uključujući i one koji su trajno failovali (npr. nedostaje `learner_commitment`). To zaobilazi `MAX_ATTEMPTS=5` zaštitu i može da napravi beskonačne retry petlje.
+- `issueFromApplication` (linija 592) — koristi se kad issuer **odobri aplikaciju** sa `/issuer/requests`
+- `directIssue` (linija 676)
+- `bulkIssue` (linija 699)
 
-**Plan popravke**
-- `attempts=0` reset raditi samo za jobove čiji je `status='failed'` zbog "Chain not configured" greške (ili samo za `status='queued'`), a ostavljati `failed` jobove sa stvarnim greškama netaknute. Dodati `.eq("last_error", "Chain not configured")` ili `.eq("status", "queued")` u `update`.
+Sve tri zovu `buildCredentialInsert` (linija 564) koji `INSERT`-uje u `credentials` samo osnovna polja (`title`, `earner_id`, `level`…) i **ne računa** `vc_id`, `template_version`, `template_ref`, `credential_hash`, `learner_commitment`, `learner_secret`, `canonical_payload`, `vc_json`. Anchor zatim puca.
 
-## 3. `learnerCommitment` šema — sanity check (nije bug, samo provera)
+Tvoj kredencijal je verovatno izašao iz "Approve application" toka.
 
-- `anchor.functions.ts` koristi `commitmentHex(earner_id, secret)` (sha256). Ranije smo pominjali `learnerCommitmentKeccak` (keccak nad `earnerIdHash || credentialIdHash || secret`).
-- Smart contract čuva proizvoljnih 32 bajta, tako da je opaque OK. Ali ako verifikacija na `/verify/:id` rekonstruše commitment, mora da koristi **istu** funkciju. Plan: pregledati `verify.$id.tsx` i `CredentialBlockchainVerificationCard.tsx` i potvrditi da rekonstrukcija odgovara onome što se piše u DB.
+## Plan popravke
 
-## 4. SSR + ostali toast-ovi
+### 1. Preusmeriti legacy putanje na ispravan server fn
 
-Nije greška u kodu — samo napomena: pošto su rute top-level SSR, prvi server render za `/issuer/*` URL-ove pokušava da hidruje sa praznom sesijom. Trenutno radimo data-fetch isključivo u komponenti (`useQuery`), ne u loader-u, pa SSR neće rušiti build. Ostaviti tako; opcija (1) rešava UX.
+Dodati novi server fn `issueCredentialFromApplication(applicationId, opts)` u `src/lib/chain/anchor.functions.ts` koji deli istu logiku kao `issueCredentialsBatch` (računa `vcId`, `docHash`, `learnerCommitment`, `learnerSecret`, `templateRef`, snima `vc_json`/`canonical_payload`), pa onda update-uje `applications.status='issued'` i upisuje timeline.
 
----
+Izmeniti `store.tsx`:
 
-## Šta menjam (build mode)
+- `issueFromApplication` → poziva novi server fn umesto direktnog `supabase.from("credentials").insert`.
+- `directIssue` → poziva postojeći `issueCredentialsBatch`.
+- `bulkIssue` → poziva postojeći `issueCredentialsBatch`.
 
-1. Dodajem `enabled` gate na sve `useQuery` u `issuer.*` stranicama koje koriste protected serverFn.
-2. U `worker.server.ts` ograničavam reset `attempts/status` samo na `Chain not configured` slučaj (ili samo `queued`).
-3. Pregledam `verify.$id.tsx` i potvrđujem da je learner-commitment rekonstrukcija konzistentna; ako nije — uskladim.
-4. Brzo testiram: hard-refresh `/issuer/anchoring-queue` (više nema 401 overlay-a), pa retry jednog joba (kao u tvom poslednjem testu — i dalje treba da završi "Confirmed").
+Obrisati `buildCredentialInsert` ili ga ostaviti samo kao internu pomoćnu funkciju koja se više ne koristi za insert.
 
-Reci samo "ok" pa krećem.
+### 2. Hardening — jasna greška umesto kriptičnog `startsWith`
+
+U `src/lib/chain/worker.server.ts → processCredentialAnchor`, pre poziva `submitCredentialAnchor` dodati guard:
+
+```ts
+if (!c.credential_hash || !c.learner_commitment || !c.template_ref) {
+  throw new Error(
+    `Credential ${credentialId} is missing chain fields ` +
+    `(credential_hash/learner_commitment/template_ref) — ` +
+    `it was issued via a legacy path that didn't compute them. Re-issue or backfill.`
+  );
+}
+```
+
+Isto u `processTemplateAnchor` za `v.template_ref` / `v.document_hash`.
+
+U `src/lib/chain/hash.ts → to0x` i `hexToBytes`, baciti čistu poruku kada uđe `null`/`undefined` (umesto da puca na `startsWith`).
+
+### 3. Backfill postojećeg failed kredencijala
+
+Jednokratan server fn `backfillCredentialChainFields(credentialId)` (poziva se ručno iz UI dugmeta "Repair" u anchoring queue ili ručno) koji:
+
+- učita kredencijal + njegov template
+- ponovo izgradi VC JSON (`buildVcJson`), izračuna `credential_hash`, generiše `learner_secret`, izračuna `learner_commitment`, koristi `template_ref` sa templejta (ili rekomputuje ako i tamo fali)
+- update-uje red kredencijala, resetuje `chain_status='not_requested'`, `chain_error=NULL`
+- earner zatim može ponovo da pokrene accept/anchor
+
+Tvoj `Web3 Bootcamp` kredencijal će biti popravljen ovim putem.
+
+### Tehnički detalji — fajlovi koje menjam
+
+```text
+src/lib/chain/anchor.functions.ts
+  + export const issueCredentialFromApplication = createServerFn(...)
+  + export const backfillCredentialChainFields = createServerFn(...)
+
+src/lib/chain/worker.server.ts
+  ~ processCredentialAnchor: dodat pre-flight guard za null hex polja
+  ~ processTemplateAnchor:   dodat pre-flight guard
+
+src/lib/chain/hash.ts
+  ~ to0x / hexToBytes: throw new Error("…expected hex string, got null") ako je null/undefined
+
+src/lib/store.tsx
+  ~ issueFromApplication → useServerFn(issueCredentialFromApplication)
+  ~ directIssue          → useServerFn(issueCredentialsBatch)
+  ~ bulkIssue            → useServerFn(issueCredentialsBatch)
+  - buildCredentialInsert (više se ne koristi za insert)
+
+src/routes/issuer.anchoring-queue.tsx  (opciono)
+  + "Repair" dugme pored failed redova → poziva backfillCredentialChainFields
+```
+
+Nema migracija — sve postojeće kolone već postoje (`credential_hash`, `learner_commitment`, `learner_secret`, `template_ref`, `vc_id`, `vc_json`, `canonical_payload`).
+
+### Šta neću dirati
+
+- `issueCredentialsBatch` (već radi ispravno).
+- Smart contract ABI, kontrakt adrese, environment secrets.
+- RLS policies (postojeće dozvoljavaju ono što treba).
