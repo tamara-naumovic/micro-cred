@@ -281,6 +281,18 @@ function AnchoringQueuePage() {
                                   Retry
                                 </Button>
                               )}
+                            {r.entity_type === "credential" && r.status === "failed" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => repairMut.mutate(r.entity_id)}
+                                disabled={repairMut.isPending}
+                                title="Recompute missing chain fields and re-queue"
+                              >
+                                <Wrench className="mr-1 h-3.5 w-3.5" />
+                                Repair
+                              </Button>
+                            )}
                             {(r.status === "queued" || r.status === "failed") && (
                               <Button
                                 size="sm"
