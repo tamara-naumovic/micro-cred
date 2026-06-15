@@ -1,11 +1,28 @@
 // Server-only file builders for credential evidence downloads.
 // Pure JS / Worker-safe: pdf-lib, qrcode, fflate, js-sha3.
 
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import QRCode from "qrcode";
 import { zipSync, strToU8 } from "fflate";
 import sha3 from "js-sha3";
 const { keccak256 } = sha3;
+
+// Embed Noto Sans so non-ASCII characters (ć, š, ž, č, đ, etc.) render in PDFs.
+// Standard pdf-lib fonts use WinAnsi encoding which cannot encode these.
+import { fontBase64 as notoRegularBase64 } from "./fonts/NotoSans-Regular";
+import { fontBase64 as notoBoldBase64 } from "./fonts/NotoSans-Bold";
+import { fontBase64 as notoItalicBase64 } from "./fonts/NotoSans-Italic";
+
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+const NOTO_REGULAR = base64ToBytes(notoRegularBase64);
+const NOTO_BOLD = base64ToBytes(notoBoldBase64);
+const NOTO_ITALIC = base64ToBytes(notoItalicBase64);
 
 import type { LoadedCredential, CredentialRow, TemplateMeta } from "./package.server";
 import {
@@ -310,13 +327,14 @@ export async function buildCredentialPdf(
 ): Promise<Uint8Array> {
   const { cred, template, verifyUrl, publicId } = loaded;
   const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
   const page = doc.addPage([595.28, 841.89]); // A4 portrait
   const { width, height } = page.getSize();
 
   const fonts: PdfFonts = {
-    regular: await doc.embedFont(StandardFonts.Helvetica),
-    bold: await doc.embedFont(StandardFonts.HelveticaBold),
-    italic: await doc.embedFont(StandardFonts.HelveticaOblique),
+    regular: await doc.embedFont(NOTO_REGULAR, { subset: true }),
+    bold: await doc.embedFont(NOTO_BOLD, { subset: true }),
+    italic: await doc.embedFont(NOTO_ITALIC, { subset: true }),
   };
 
   const margin = 48;
@@ -581,13 +599,14 @@ function drawField(
 
 export async function buildInstructionsPdf(): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
   const page = doc.addPage([595.28, 841.89]);
   const { width, height } = page.getSize();
   const margin = 48;
   let y = height - margin;
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const regular = await doc.embedFont(StandardFonts.Helvetica);
-  const italic = await doc.embedFont(StandardFonts.HelveticaOblique);
+  const bold = await doc.embedFont(NOTO_BOLD, { subset: true });
+  const regular = await doc.embedFont(NOTO_REGULAR, { subset: true });
+  const italic = await doc.embedFont(NOTO_ITALIC, { subset: true });
   const muted = rgb(0.45, 0.48, 0.55);
   const text = rgb(0.13, 0.15, 0.2);
   const primary = rgb(0.09, 0.18, 0.36);
