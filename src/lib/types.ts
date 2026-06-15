@@ -13,6 +13,7 @@ export interface MockUser {
   organizationId?: string;
   organization?: string;
   studentId?: string;
+  shareToken?: string;
 }
 
 export interface TemplateAssignment {

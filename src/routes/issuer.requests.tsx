@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -42,6 +42,7 @@ function Queue() {
     applications,
     templates,
     templateAssignees,
+    users,
     advanceApplicationStatus,
     rejectApplication,
   } = useStore();
@@ -101,6 +102,8 @@ function Queue() {
         {queue.map((a) => {
           const next = nextLabel(a.status);
           const isFinal = a.status === "verified_by_provider";
+          const earner = users.find((u) => u.id === a.earnerId);
+          const earnerToken = earner?.shareToken;
           return (
             <Card key={a.id}>
               <CardContent className="grid gap-4 p-5 md:grid-cols-3">
@@ -110,8 +113,21 @@ function Queue() {
                     <StatusBadge status={a.status} />
                   </div>
                   <div className="mt-1 text-sm text-muted-foreground">
-                    Earner: <span className="text-foreground">{a.earnerName}</span>
+                    Earner:{" "}
+                    {earnerToken ? (
+                      <Link
+                        to="/profile/$token"
+                        params={{ token: earnerToken }}
+                        className="text-foreground underline-offset-4 hover:underline"
+                        title="View earner's public profile"
+                      >
+                        {a.earnerName}
+                      </Link>
+                    ) : (
+                      <span className="text-foreground">{a.earnerName}</span>
+                    )}
                   </div>
+
                   <div className="mt-4 flex flex-wrap gap-2">
                     {next && (
                       <Button

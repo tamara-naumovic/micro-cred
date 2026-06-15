@@ -391,6 +391,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ? orgName.get(primary.organization_id as string)
             : undefined,
           studentId: (p.student_id as string | null) ?? undefined,
+          shareToken: (p.share_token as string | null) ?? undefined,
         };
       });
 
