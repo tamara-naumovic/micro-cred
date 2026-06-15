@@ -72,29 +72,83 @@ function fmtDateLong(iso: string | null | undefined): string {
 // JSON builders
 // ---------------------------------------------------------------------------
 
+interface SnapshotAchievement {
+  outcomes?: string[] | null;
+  assessment?: string | null;
+  participation?: string | null;
+  level?: string | null;
+  ects?: number | null;
+  skills?: string[] | null;
+  grade?: string | null;
+  source?: string | null;
+  subcategory?: string | null;
+  name?: string | null;
+}
+
+interface SnapshotEuMeta {
+  qaType?: string | null;
+  supervisionType?: string | null;
+  stackabilityType?: string | null;
+  prerequisites?: string | null;
+  prerequisitesNone?: boolean | null;
+}
+
+interface SnapshotSubject {
+  achievement?: SnapshotAchievement;
+  euMetadata?: SnapshotEuMeta;
+}
+
+interface Snapshot {
+  credentialSubject?: SnapshotSubject;
+}
+
+/** Read snapshot fields from canonical_payload when present, otherwise
+ *  fall back to live template metadata. Snapshot is authoritative — this
+ *  guarantees historical accuracy when templates change. */
+function snapshotAchievement(
+  cred: CredentialRow,
+  template: TemplateMeta | null,
+) {
+  const snap = (cred.canonical_payload as Snapshot | null)?.credentialSubject;
+  const a = snap?.achievement ?? {};
+  const eu = snap?.euMetadata ?? {};
+  return {
+    outcomes: a.outcomes ?? template?.outcomes ?? [],
+    assessment: a.assessment ?? template?.assessment ?? null,
+    participation: a.participation ?? template?.participation ?? null,
+    qaType: eu.qaType ?? template?.qa_type ?? null,
+    supervisionType: eu.supervisionType ?? template?.supervision_type ?? null,
+    stackabilityType: eu.stackabilityType ?? template?.stackability_type ?? null,
+    prerequisites: eu.prerequisitesNone
+      ? null
+      : (eu.prerequisites ?? template?.prerequisites ?? null),
+    prerequisitesNone:
+      eu.prerequisitesNone ?? template?.prerequisites_none ?? false,
+  };
+}
+
 export function buildCredentialJson(loaded: LoadedCredential): string {
   const { cred, template, publicId } = loaded;
 
   const learnerIdHash = keccak256(cred.earner_id);
   const subjectId = `urn:microcred:learner:${learnerIdHash.slice(0, 32)}`;
+  const snap = snapshotAchievement(cred, template);
 
   const achievement = {
     title: cred.title,
     description: template?.description ?? null,
-    learningOutcomes: template?.outcomes ?? [],
+    learningOutcomes: snap.outcomes,
     skills: cred.skills ?? [],
     ects: cred.ects ?? null,
     workload: null,
     level: cred.level === "N/A" ? null : cred.level,
-    assessment: template?.assessment ?? null,
+    assessment: snap.assessment,
     grade: cred.grade ?? null,
-    participation: template?.participation ?? null,
-    qualityAssurance: template?.qa_type ?? null,
-    prerequisites: template?.prerequisites_none
-      ? "None"
-      : (template?.prerequisites ?? null),
-    supervisionAndIdentityVerification: template?.supervision_type ?? null,
-    integrationAndStackability: template?.stackability_type ?? null,
+    participation: snap.participation,
+    qualityAssurance: snap.qaType,
+    prerequisites: snap.prerequisitesNone ? "None" : snap.prerequisites,
+    supervisionAndIdentityVerification: snap.supervisionType,
+    integrationAndStackability: snap.stackabilityType,
   };
 
   const hasChain = !!cred.chain_contract_address;
