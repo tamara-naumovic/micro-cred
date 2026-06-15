@@ -336,6 +336,7 @@ export type Database = {
       }
       credentials: {
         Row: {
+          accepted_at: string | null
           canonical_payload: Json | null
           chain_attempts: number
           chain_block_number: number | null
@@ -368,6 +369,8 @@ export type Database = {
           learner_secret: string | null
           level: Database["public"]["Enums"]["cred_level"]
           pdf_storage_path: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
           renewed_from_id: string | null
           revocation_reason: string | null
           share_is_public: boolean
@@ -395,6 +398,7 @@ export type Database = {
           vc_json: Json | null
         }
         Insert: {
+          accepted_at?: string | null
           canonical_payload?: Json | null
           chain_attempts?: number
           chain_block_number?: number | null
@@ -427,6 +431,8 @@ export type Database = {
           learner_secret?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
           pdf_storage_path?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
           renewed_from_id?: string | null
           revocation_reason?: string | null
           share_is_public?: boolean
@@ -454,6 +460,7 @@ export type Database = {
           vc_json?: Json | null
         }
         Update: {
+          accepted_at?: string | null
           canonical_payload?: Json | null
           chain_attempts?: number
           chain_block_number?: number | null
@@ -486,6 +493,8 @@ export type Database = {
           learner_secret?: string | null
           level?: Database["public"]["Enums"]["cred_level"]
           pdf_storage_path?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
           renewed_from_id?: string | null
           revocation_reason?: string | null
           share_is_public?: boolean
