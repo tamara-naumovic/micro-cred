@@ -573,6 +573,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       issued_at: issuedAt ?? nowISO(),
       expires_at: expiryDate ?? (tpl.expiryMode === "fixed_date" ? (tpl.expiryDate ?? null) : null),
       status: "active",
+      credential_lifecycle: "pending_earner_acceptance",
       source: tpl.source,
       subcategory: tpl.subcategory ?? null,
       level: tpl.level,
