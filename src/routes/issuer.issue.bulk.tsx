@@ -15,10 +15,10 @@ import { AnchorModeSelector, type AnchorMode } from "@/components/AnchorModeSele
 import { IssuanceResultDialog, type IssuanceResultRow } from "@/components/IssuanceResultDialog";
 import { issueCredentialsBatch } from "@/lib/chain/anchor.functions";
 
-const SAMPLE = `email,firstName,lastName,studentId,grade,expiryDate
-mila@student.fon.bg.ac.rs,Mila,Petrović,FON-2023-0142,Pass,
-luka@student.fon.bg.ac.rs,Luka,Jovanović,FON-2022-0815,Pass with distinction,
-sara@student.fon.bg.ac.rs,Sara,Nikolić,FON-2024-0003,Pass,2028-06-30`;
+const SAMPLE = `email,grade,expiryDate
+mila@student.fon.bg.ac.rs,Pass,
+luka@student.fon.bg.ac.rs,Pass with distinction,
+sara@student.fon.bg.ac.rs,Pass,2028-06-30`;
 
 export const Route = createFileRoute("/issuer/issue/bulk")({
   head: () => ({ meta: [{ title: "Bulk Issuance — MicroCred" }] }),
@@ -39,9 +39,6 @@ function parseCsv(input: string): BulkRow[] {
     headers.forEach((h, i) => (row[h] = values[i] ?? ""));
     return {
       email: row.email,
-      firstName: row.firstName,
-      lastName: row.lastName,
-      studentId: row.studentId,
       grade: row.grade || undefined,
       expiryDate: row.expiryDate || undefined,
     } as BulkRow;
@@ -87,7 +84,7 @@ function Bulk() {
       .filter((r) => r.user)
       .map((r) => ({
         earnerId: r.user!.id,
-        earnerName: `${r.row.firstName} ${r.row.lastName}`.trim() || r.user!.name,
+        earnerName: r.user!.name,
         grade: r.row.grade ?? null,
         expiresAt: r.row.expiryDate ? new Date(r.row.expiryDate).toISOString() : null,
       }));
@@ -112,7 +109,7 @@ function Bulk() {
         .forEach((r) => {
           rowsOut.push({
             recipientId: r.row.email,
-            recipientName: `${r.row.firstName} ${r.row.lastName} (${r.row.email})`,
+            recipientName: r.row.email,
             credentialStatus: "not_issued",
             blockchainStatus: "not_requested",
             error: "No earner account found for this email",
@@ -148,7 +145,7 @@ function Bulk() {
             <Label>CSV input</Label>
             <Textarea value={csv} onChange={(e) => setCsv(e.target.value)} rows={10} className="font-mono text-xs" />
             <p className="mt-1 text-xs text-muted-foreground">
-              Headers: email, firstName, lastName, studentId, grade, expiryDate
+              Headers: email, grade, expiryDate
             </p>
           </div>
           <div className="rounded-md border border-border p-3 text-sm space-y-1">

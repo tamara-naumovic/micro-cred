@@ -68,11 +68,7 @@ const emptyState: State = {
 
 export interface BulkRow {
   email: string;
-  firstName: string;
-  lastName: string;
-  studentId: string;
   grade?: string;
-  issueDate?: string;
   expiryDate?: string;
 }
 
