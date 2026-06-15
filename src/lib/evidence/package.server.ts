@@ -64,7 +64,7 @@ export interface LoadedCredential {
 }
 
 const SELECT_COLS =
-  "id, template_id, template_version, title, earner_id, earner_name, issuer_id, issuer_name, issuer_name_snapshot, issued_at, expires_at, status, credential_lifecycle, source, subcategory, level, ects, skills, grade, share_token, credential_hash, learner_commitment, learner_secret, template_ref, vc_id, vc_json, canonical_payload, chain_status, chain_tx_hash, chain_block_number, chain_issuer_address, chain_contract_address, chain_confirmed_at, chain_submitted_at, revocation_reason, superseded_by_id";
+  "id, template_id, template_version, title, earner_id, earner_name, issuer_id, issuer_name, issuer_name_snapshot, issued_at, expires_at, status, credential_lifecycle, source, subcategory, level, ects, skills, grade, share_token, credential_hash, learner_commitment, template_ref, vc_id, vc_json, canonical_payload, chain_status, chain_tx_hash, chain_block_number, chain_issuer_address, chain_contract_address, chain_confirmed_at, chain_submitted_at, revocation_reason, superseded_by_id";
 
 export async function loadCredentialForEvidence(
   credentialId: string,
@@ -78,6 +78,14 @@ export async function loadCredentialForEvidence(
   if (error) throw new Error("Credential data is temporarily unavailable.");
   if (!data) throw new Error("Credential not found.");
   const cred = data as unknown as CredentialRow;
+
+  // Learner secret lives in a separate, earner-only table. Admin client bypasses RLS.
+  const { data: secRow } = await supabaseAdmin
+    .from("credential_secrets")
+    .select("secret")
+    .eq("credential_id", credentialId)
+    .maybeSingle();
+  cred.learner_secret = ((secRow as { secret: string } | null)?.secret) ?? null;
 
   let template: TemplateMeta | null = null;
   if (cred.template_id) {

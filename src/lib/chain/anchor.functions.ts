@@ -54,6 +54,17 @@ async function computeAndPersistHashes(
   supabase: { from: (t: string) => any },
   cred: CredentialRow,
 ): Promise<CredentialRow> {
+  // Load any existing learner secret from the locked-down secrets table.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  if (!cred.learner_secret) {
+    const { data: secRow } = await supabaseAdmin
+      .from("credential_secrets")
+      .select("secret")
+      .eq("credential_id", cred.id)
+      .maybeSingle();
+    cred.learner_secret = ((secRow as { secret: string } | null)?.secret) ?? null;
+  }
+
   // Already populated? Nothing to do.
   if (
     cred.credential_hash &&
@@ -114,10 +125,16 @@ async function computeAndPersistHashes(
       vc_json: vc,
       credential_hash: docHash,
       learner_commitment: commit,
-      learner_secret: secret,
       template_ref: tref,
     })
     .eq("id", cred.id);
+
+  // Persist the secret to the earner-only table (admin client; RLS bypassed).
+  await supabaseAdmin
+    .from("credential_secrets")
+    .upsert({ credential_id: cred.id, secret } as never, {
+      onConflict: "credential_id",
+    } as never);
 
   return {
     ...cred,
@@ -129,6 +146,7 @@ async function computeAndPersistHashes(
   };
 }
 
+
 /** Enqueue a credential for async on-chain anchoring. Idempotent. */
 export const enqueueAnchor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -138,7 +156,7 @@ export const enqueueAnchor = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase
       .from("credentials")
       .select(
-        "id, template_id, title, earner_id, earner_name, issuer_id, issuer_name, issued_at, expires_at, status, source, subcategory, level, ects, skills, grade, credential_hash, learner_commitment, learner_secret, template_ref, vc_json, chain_status",
+        "id, template_id, title, earner_id, earner_name, issuer_id, issuer_name, issued_at, expires_at, status, source, subcategory, level, ects, skills, grade, credential_hash, learner_commitment, template_ref, vc_json, chain_status",
       )
       .eq("id", data.credentialId)
       .maybeSingle();
@@ -183,7 +201,7 @@ export async function processAnchor(credentialId: string): Promise<{
   const { data, error } = await supabaseAdmin
     .from("credentials")
     .select(
-      "id, template_id, title, earner_id, earner_name, issuer_id, issuer_name, issued_at, expires_at, status, source, subcategory, level, ects, skills, grade, credential_hash, learner_commitment, learner_secret, template_ref, vc_json, chain_status",
+      "id, template_id, title, earner_id, earner_name, issuer_id, issuer_name, issued_at, expires_at, status, source, subcategory, level, ects, skills, grade, credential_hash, learner_commitment, template_ref, vc_json, chain_status",
     )
     .eq("id", credentialId)
     .maybeSingle();
@@ -606,10 +624,16 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             vc_json: vc,
             credential_hash: docHash,
             learner_commitment: learnerCommitment,
-            learner_secret: secret,
             chain_status: "not_requested",
           } as never);
         if (insErr) throw new Error(insErr.message);
+
+        // Persist learner secret to the earner-only table.
+        await supabaseAdmin
+          .from("credential_secrets")
+          .upsert({ credential_id: credentialId, secret } as never, {
+            onConflict: "credential_id",
+          } as never);
 
         // Blockchain record stub — anchoring deferred until earner accepts.
         const contractAddress =
@@ -624,6 +648,7 @@ export const issueCredentialsBatch = createServerFn({ method: "POST" })
             document_hash: docHash,
             blockchain_status: "not_requested",
           } as never);
+
 
         // Intentionally do NOT enqueue an anchor job: it will be enqueued
         // when the earner accepts the credential. effectiveMode (now/later)
@@ -810,12 +835,21 @@ export const revealLearnerSecret = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: cred } = await supabase
       .from("credentials")
-      .select("earner_id, learner_secret")
+      .select("earner_id")
       .eq("id", data.credentialId)
       .maybeSingle();
-    if (!cred || cred.earner_id !== userId) throw new Error("Forbidden");
-    return { secret: (cred.learner_secret as string) ?? null };
+    if (!cred || (cred as { earner_id: string }).earner_id !== userId) {
+      throw new Error("Forbidden");
+    }
+    // RLS on credential_secrets also restricts to the earner.
+    const { data: row } = await supabase
+      .from("credential_secrets")
+      .select("secret")
+      .eq("credential_id", data.credentialId)
+      .maybeSingle();
+    return { secret: ((row as { secret: string } | null)?.secret) ?? null };
   });
+
 
 // ============================================================================
 // Phase 5: Anchoring Queue listing + retry
@@ -1336,7 +1370,6 @@ export const resendCredential = createServerFn({ method: "POST" })
         canonical_payload: vc,
         credential_hash: docHash,
         learner_commitment: learnerCommitment,
-        learner_secret: secret,
         credential_lifecycle: "pending_earner_acceptance",
         rejection_reason: null,
         rejected_at: null,
@@ -1346,6 +1379,11 @@ export const resendCredential = createServerFn({ method: "POST" })
     if (updErr) throw new Error(updErr.message);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("credential_secrets")
+      .upsert({ credential_id: data.credentialId, secret } as never, {
+        onConflict: "credential_id",
+      } as never);
     await supabaseAdmin
       .from("credential_blockchain_records")
       .update({ document_hash: docHash, blockchain_status: "not_requested" } as never)
