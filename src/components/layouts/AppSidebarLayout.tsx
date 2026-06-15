@@ -132,6 +132,7 @@ const ISSUER_STAFF_NAV: NavGroups = [
   {
     group: "Account",
     items: [
+      { to: "/issuer/notifications", label: "Notifications", icon: Bell },
       { to: "/issuer/settings", label: "Settings", icon: Settings },
     ],
   },
