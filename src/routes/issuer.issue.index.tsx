@@ -52,6 +52,39 @@ function Direct() {
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<IssuanceResultRow[] | null>(null);
 
+  // Earners who already have a non-revoked credential for the selected template
+  const earnersWithActive = useMemo(() => {
+    if (!templateId) return new Set<string>();
+    return new Set(
+      credentials
+        .filter((c) => c.templateId === templateId && c.status !== "revoked")
+        .map((c) => c.earnerId),
+    );
+  }, [credentials, templateId]);
+
+  // Exclude already-credentialed earners from the picker entirely
+  const earners = useMemo(
+    () => allEarners.filter((u) => !earnersWithActive.has(u.id)),
+    [allEarners, earnersWithActive],
+  );
+
+  // If template changes and some currently-selected earners now have an active
+  // credential for the new template, drop them from the selection.
+  useEffect(() => {
+    setOverrides((prev) => {
+      const filtered: Record<string, RecipientOverride> = {};
+      let changed = false;
+      for (const [id, val] of Object.entries(prev)) {
+        if (earnersWithActive.has(id)) {
+          changed = true;
+        } else {
+          filtered[id] = val;
+        }
+      }
+      return changed ? filtered : prev;
+    });
+  }, [earnersWithActive]);
+
   const selectedIds = Object.keys(overrides);
 
   const setSelectedIds = (ids: string[]) => {
