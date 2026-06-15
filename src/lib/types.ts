@@ -133,7 +133,7 @@ export interface BlockchainPlaceholder {
   txHash?: string;
   ebsiStatus: "not_anchored" | "pending" | "anchored";
   // Bloxberg anchor (optional, present when issued through real flow)
-  chainStatus?: "pending" | "submitted" | "confirmed" | "failed" | "disabled";
+  chainStatus?: "not_requested" | "queued" | "pending" | "submitted" | "confirmed" | "failed" | "disabled";
   blockNumber?: number;
   issuerAddress?: string;
   contractAddress?: string;

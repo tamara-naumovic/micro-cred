@@ -55,7 +55,7 @@ function matches(c: IssuedCredential, tab: TabKey): boolean {
 }
 
 function List() {
-  const { activeUser, credentials } = useStore();
+  const { activeUser, credentials, refresh } = useStore();
   const [src, setSrc] = useState<"all" | "formal" | "non_formal">("all");
   const [rejectTarget, setRejectTarget] = useState<IssuedCredential | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -70,9 +70,15 @@ function List() {
   const onAccept = async (c: IssuedCredential) => {
     setBusy(true);
     try {
-      await accept({ data: { credentialId: c.id } });
-      toast.success("Credential accepted");
-      
+      const res = await accept({ data: { credentialId: c.id } });
+      if ((res as any)?.chainPending) {
+        toast.success("Credential accepted", {
+          description: "Blockchain confirmation is pending — it will appear once anchored.",
+        });
+      } else {
+        toast.success("Credential accepted");
+      }
+      await refresh();
     } catch (e: any) {
       toast.error(e?.message ?? "Could not accept");
     } finally {
@@ -92,7 +98,7 @@ function List() {
       toast.success("Credential rejected");
       setRejectTarget(null);
       setRejectReason("");
-      
+      await refresh();
     } catch (e: any) {
       toast.error(e?.message ?? "Could not reject");
     } finally {

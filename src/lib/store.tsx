@@ -109,6 +109,7 @@ interface StoreCtx extends State {
   markAllRead: (role: Role, userId?: string) => void;
   markRead: (id: string) => void;
   reset: () => void;
+  refresh: () => Promise<void>;
 }
 
 const Ctx = createContext<StoreCtx | null>(null);
@@ -920,13 +921,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       markAllRead,
       markRead,
       reset,
+      refresh: refetchAll,
     }),
     [
       state, activeUser, setActiveUser, loading, createApplication, updateSharing,
       advanceApplicationStatus, rejectApplication, addReviewerComment,
       issueFromApplication, directIssue, bulkIssue, revokeCredential,
       upsertTemplate, archiveTemplate, assignTemplateUsers, approveRegistration, rejectRegistration,
-      markAllRead, markRead, reset,
+      markAllRead, markRead, reset, refetchAll,
     ],
   );
 

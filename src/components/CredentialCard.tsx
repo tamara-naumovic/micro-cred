@@ -1,11 +1,25 @@
 import { Link } from "@tanstack/react-router";
-import { Award, CalendarClock, GraduationCap, Share2 } from "lucide-react";
+import { Award, CalendarClock, Clock, GraduationCap, Share2 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ShareDialog } from "@/components/ShareDialog";
 import type { IssuedCredential } from "@/lib/types";
+
+export function ChainPendingChip({ status }: { status?: string }) {
+  if (!status) return null;
+  if (status === "confirmed" || status === "disabled" || status === "not_requested") return null;
+  const label = status === "failed" ? "Blockchain retrying" : "Blockchain pending";
+  return (
+    <Badge
+      variant="outline"
+      className="border bg-warning/15 text-warning-foreground border-warning/30 gap-1"
+    >
+      <Clock className="h-3 w-3" /> {label}
+    </Badge>
+  );
+}
 
 export function CredentialCard({
   credential,
@@ -18,6 +32,7 @@ export function CredentialCard({
   shareable?: boolean;
 }) {
   const c = credential;
+  const showPending = c.status === "active" && c.blockchain?.chainStatus;
   return (
     <Card className="flex h-full flex-col">
       <CardHeader className="space-y-2">
@@ -25,7 +40,10 @@ export function CredentialCard({
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Award className="h-4 w-4" />
           </div>
-          <StatusBadge status={c.status} />
+          <div className="flex flex-wrap items-center gap-1 justify-end">
+            <StatusBadge status={c.status} />
+            {showPending && <ChainPendingChip status={c.blockchain?.chainStatus} />}
+          </div>
         </div>
         <div>
           <div className="font-display text-lg font-semibold leading-tight">{c.title}</div>
