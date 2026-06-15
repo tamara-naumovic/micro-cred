@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { UploadCloud, Loader2 } from "lucide-react";
+import { UploadCloud, Loader2, FileUp, X } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -63,10 +63,35 @@ function Bulk() {
   );
   const [templateId, setTemplateId] = useState(myTemplates[0]?.id ?? "");
   const [csv, setCsv] = useState(SAMPLE);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const rows = useMemo(() => parseCsv(csv), [csv]);
   const [anchorMode, setAnchorMode] = useState<AnchorMode>("later");
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<IssuanceResultRow[] | null>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const isCsv = file.name.toLowerCase().endsWith(".csv") || file.type === "text/csv" || file.type === "application/vnd.ms-excel";
+    if (!isCsv) return toast.error("Please upload a .csv file");
+    if (file.size > 1_000_000) return toast.error("File too large (max 1 MB)");
+    try {
+      let text = await file.text();
+      if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+      setCsv(text);
+      setFileName(file.name);
+      toast.success(`Loaded ${file.name}`);
+    } catch {
+      toast.error("Failed to read file");
+    }
+  };
+
+  const clearFile = () => {
+    setCsv(SAMPLE);
+    setFileName(null);
+  };
 
   // Earners with an existing non-revoked credential for the selected template
   const earnersWithActive = useMemo(() => {
@@ -166,7 +191,7 @@ function Bulk() {
   return (
     <PageShell
       title="Bulk Issuance"
-      description="Paste a CSV (or upload via XLSX in the production version) to issue many credentials at once."
+      description="Paste a CSV or upload a .csv file to issue many credentials at once."
     >
       <Card>
         <CardContent className="space-y-5 p-6">
@@ -182,11 +207,41 @@ function Bulk() {
             </Select>
           </div>
           <div>
-            <Label>CSV input</Label>
-            <Textarea value={csv} onChange={(e) => setCsv(e.target.value)} rows={10} className="font-mono text-xs" />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Headers: email, grade, expiryDate
-            </p>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <Label className="mb-0">CSV input</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  hidden
+                  onChange={handleFileUpload}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <FileUp className="mr-2 h-4 w-4" />
+                  Upload CSV
+                </Button>
+              </div>
+            </div>
+            <Textarea value={csv} onChange={(e) => { setCsv(e.target.value); setFileName(null); }} rows={10} className="font-mono text-xs" />
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">
+                Headers: email, grade, expiryDate. Paste CSV or upload a .csv file (UTF-8).
+              </p>
+              {fileName && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>Loaded: <span className="font-medium text-foreground">{fileName}</span></span>
+                  <Button type="button" variant="ghost" size="sm" className="h-6 px-2" onClick={clearFile}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="rounded-md border border-border p-3 text-sm space-y-1">
             <div><span className="font-medium">{rows.length}</span> recipient(s) parsed</div>
