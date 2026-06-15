@@ -26,8 +26,6 @@ import {
   CartesianGrid,
   Cell,
   Label,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
