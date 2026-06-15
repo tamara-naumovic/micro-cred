@@ -292,16 +292,58 @@ function Form() {
               </Select>
               {qaType && qaType !== "not_specified" && (
                 <div>
-                  <Label className="text-sm">QA confirmation document *</Label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Input
-                      type="file"
-                      accept="application/pdf,image/*"
-                      onChange={(e) => setQaFile(e.target.files?.[0] ?? null)}
-                    />
-                    {qaFile && <span className="text-xs text-muted-foreground"><Upload className="inline h-3 w-3 mr-1" />{qaFile.name}</span>}
+                  <Label className="text-sm">QA confirmation documents *</Label>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setQaDragOver(true); }}
+                    onDragLeave={() => setQaDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setQaDragOver(false);
+                      const dropped = Array.from(e.dataTransfer.files);
+                      if (dropped.length) setQaFiles((prev) => [...prev, ...dropped]);
+                    }}
+                    className={cn(
+                      "mt-1 flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-6 text-center transition-colors",
+                      qaDragOver ? "border-primary bg-primary/5" : "border-muted-foreground/30",
+                    )}
+                  >
+                    <Upload className="h-6 w-6 text-muted-foreground" />
+                    <div className="text-sm">
+                      Drag &amp; drop files here, or{" "}
+                      <label className="cursor-pointer text-primary underline">
+                        browse
+                        <input
+                          type="file"
+                          multiple
+                          accept="application/pdf,image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const picked = Array.from(e.target.files ?? []);
+                            if (picked.length) setQaFiles((prev) => [...prev, ...picked]);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">PDF or images. Multiple files allowed.</p>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">PDF or image, max 10 MB.</p>
+                  {qaFiles.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {qaFiles.map((f, idx) => (
+                        <li key={`${f.name}-${idx}`} className="flex items-center justify-between rounded border px-2 py-1 text-xs">
+                          <span className="truncate"><Upload className="inline h-3 w-3 mr-1" />{f.name}</span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setQaFiles((prev) => prev.filter((_, i) => i !== idx))}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
             </div>
