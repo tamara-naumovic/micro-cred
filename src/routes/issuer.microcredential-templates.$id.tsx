@@ -13,6 +13,8 @@ import { StaffPicker } from "@/components/StaffPicker";
 import { useStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 
+type StorageRemoveResult = { error: { message: string } | null };
+
 const QA_LABEL: Record<string, string> = {
   internal: "Internal",
   external: "External",
