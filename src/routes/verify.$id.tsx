@@ -1,4 +1,5 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { DashboardHomeLink } from "@/components/DashboardHomeLink";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
