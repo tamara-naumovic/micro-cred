@@ -106,18 +106,20 @@ function Detail() {
             <Field label="Skills">{tpl.skills.join(", ")}</Field>
             <Field label="Assessment">{tpl.assessment}</Field>
             <Field label="Quality assurance">
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div>{QA_LABEL[tpl.qaType] ?? tpl.qualityAssurance}</div>
-                {(() => {
-                  const paths = tpl.qaDocumentPaths && tpl.qaDocumentPaths.length > 0
-                    ? tpl.qaDocumentPaths
-                    : tpl.qaDocumentPath ? [tpl.qaDocumentPath] : [];
-                  return paths.map((p) => (
-                    <Button key={p} size="sm" variant="outline" onClick={() => openQaDocument(p)}>
-                      <FileDown className="mr-2 h-4 w-4" />{p.split("/").pop()}
-                    </Button>
-                  ));
-                })()}
+                <QaDocumentsEditor
+                  templateId={tpl.id}
+                  issuerId={tpl.issuerId}
+                  paths={
+                    tpl.qaDocumentPaths && tpl.qaDocumentPaths.length > 0
+                      ? tpl.qaDocumentPaths
+                      : tpl.qaDocumentPath
+                        ? [tpl.qaDocumentPath]
+                        : []
+                  }
+                  canEdit={!isStaff}
+                />
               </div>
             </Field>
             <Field label="Prerequisites">
