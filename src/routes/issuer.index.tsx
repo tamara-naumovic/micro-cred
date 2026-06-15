@@ -413,11 +413,11 @@ function Overview() {
               Credentials issued over time
             </CardTitle>
             <CardDescription>
-              Internally issued vs confirmed on Bloxberg
+              {`Number of credentials issued per ${period === "30d" ? "day" : period === "6m" ? "week" : "month"}, and how many of those are confirmed on Bloxberg.`}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {series.length === 0 ? (
+            {series.every((p) => p.issued === 0 && p.confirmed === 0) ? (
               <EmptyBlock label="No credentials have been issued in this period." />
             ) : (
               <div className="h-72 w-full">
@@ -443,6 +443,12 @@ function Overview() {
                         border: "1px solid hsl(var(--border))",
                         borderRadius: 8,
                         fontSize: 12,
+                      }}
+                      labelFormatter={(_label, payload) => {
+                        const p = payload?.[0]?.payload as
+                          | { rangeLabel?: string; label?: string }
+                          | undefined;
+                        return p?.rangeLabel ?? p?.label ?? "";
                       }}
                     />
                     <Line
