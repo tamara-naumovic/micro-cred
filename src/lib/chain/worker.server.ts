@@ -168,7 +168,10 @@ export async function processCredentialAnchor(credentialId: string): Promise<{
     return { ok: false, skipped: true, error: "Chain not configured" };
   }
 
-  const c = cred as Record<string, any>;
+  // Auto-heal: legacy credentials may be missing the hex fields we need below.
+  // Backfill before computing anything else; throws a clear error if it can't.
+  const c = await ensureCredentialChainFields(supabaseAdmin, cred as Record<string, any>);
+
   const issuedAtSec = Math.floor(new Date(c.issued_at).getTime() / 1000);
   const expiresAtSec = c.expires_at ? Math.floor(new Date(c.expires_at).getTime() / 1000) : 0;
   const statusInt = c.credential_lifecycle === "revoked"
