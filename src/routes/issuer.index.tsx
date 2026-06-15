@@ -1222,30 +1222,37 @@ function TemplateStatusPanel({
     published: templates.filter((t) => t.status === "active").length,
     archived: templates.filter((t) => t.status === "archived").length,
   };
-  // Per-template blockchain aggregation: if any credential of that template is
-  // queued/failed/confirmed, count once.
+  // Per-template blockchain aggregation: pick a single representative status
+  // per template based on its credentials' chainStatus values.
+  // Priority: failed > pending > submitted > confirmed > disabled > not_anchored
   const tplChain = new Map<string, string>();
+  const priority: Record<string, number> = {
+    failed: 5,
+    pending: 4,
+    submitted: 3,
+    confirmed: 2,
+    disabled: 1,
+    not_anchored: 0,
+  };
+  // Seed every template as "not_anchored" so templates without credentials still count
+  for (const t of templates) tplChain.set(t.id, "not_anchored");
   for (const c of credentials) {
-    const s = c.blockchain.chainStatus;
-    if (!s || s === "disabled") continue;
-    const cur = tplChain.get(c.templateId);
-    // priority: failed > queued > confirmed
-    if (s === "failed") tplChain.set(c.templateId, "failed");
-    else if (s === "pending" || s === "submitted") {
-      if (cur !== "failed") tplChain.set(c.templateId, "queued");
-    } else if (s === "confirmed") {
-      if (!cur) tplChain.set(c.templateId, "confirmed");
+    const s = c.blockchain.chainStatus ?? "not_anchored";
+    const cur = tplChain.get(c.templateId) ?? "not_anchored";
+    if ((priority[s] ?? 0) > (priority[cur] ?? 0)) {
+      tplChain.set(c.templateId, s);
     }
   }
   const chain = {
-    queued: 0,
+    not_anchored: 0,
+    pending: 0,
+    submitted: 0,
     confirmed: 0,
     failed: 0,
+    disabled: 0,
   };
   for (const v of tplChain.values()) {
-    if (v === "queued") chain.queued++;
-    else if (v === "confirmed") chain.confirmed++;
-    else if (v === "failed") chain.failed++;
+    if (v in chain) (chain as Record<string, number>)[v]++;
   }
 
   return (
@@ -1253,7 +1260,7 @@ function TemplateStatusPanel({
       <CardHeader>
         <CardTitle className="text-base">MC template status</CardTitle>
         <CardDescription>
-          Lifecycle and blockchain status (kept separate)
+          Lifecycle and blockchain status
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -1272,15 +1279,19 @@ function TemplateStatusPanel({
             Blockchain
           </div>
           <div className="space-y-1.5 text-sm">
-            <StatLine label="Queued for anchoring" value={chain.queued} />
+            <StatLine label="Not anchored" value={chain.not_anchored} />
+            <StatLine label="Pending" value={chain.pending} />
+            <StatLine label="Submitted" value={chain.submitted} />
             <StatLine label="Confirmed on Bloxberg" value={chain.confirmed} />
             <StatLine label="Failed anchoring" value={chain.failed} />
+            <StatLine label="Anchoring disabled" value={chain.disabled} />
           </div>
         </div>
       </CardContent>
     </Card>
   );
 }
+
 
 function StatLine({ label, value }: { label: string; value: number }) {
   return (
