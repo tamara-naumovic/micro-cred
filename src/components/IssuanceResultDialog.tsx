@@ -37,8 +37,10 @@ export function IssuanceResultDialog({
   results: IssuanceResultRow[];
   onDone?: () => void;
 }) {
-  const issued = results.filter((r) => r.credentialStatus === "issued").length;
-  const failed = results.length - issued;
+  const sent = results.filter(
+    (r) => r.credentialStatus === "issued" || r.credentialStatus === "pending_earner_acceptance",
+  ).length;
+  const failed = results.length - sent;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,13 +48,16 @@ export function IssuanceResultDialog({
         <DialogHeader>
           <DialogTitle>Issuance results</DialogTitle>
         </DialogHeader>
+        <p className="mb-2 text-sm text-muted-foreground">
+          Credentials are sent to each earner for acceptance. They are not anchored on the blockchain until the earner accepts.
+        </p>
         <div className="mb-3 flex gap-2 text-sm">
           <Badge variant="outline" className="bg-success/10 text-success-foreground border-success/30">
-            {issued} issued
+            {sent} sent for acceptance
           </Badge>
           {failed > 0 && (
             <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
-              {failed} failed
+              {failed} not sent
             </Badge>
           )}
         </div>
@@ -70,6 +75,7 @@ export function IssuanceResultDialog({
               {results.map((r) => {
                 const bcStatus = (r.blockchainStatus || "not_requested") as BlockchainStatus;
                 const txUrl = explorerTxUrl(r.txHash);
+                const sentOk = r.credentialStatus === "issued" || r.credentialStatus === "pending_earner_acceptance";
                 return (
                   <tr key={`${r.recipientId}-${r.credentialId ?? "x"}`} className="border-t">
                     <td className="px-3 py-2">
@@ -77,9 +83,9 @@ export function IssuanceResultDialog({
                       {r.error && <div className="text-xs text-destructive">{r.error}</div>}
                     </td>
                     <td className="px-3 py-2">
-                      {r.credentialStatus === "issued" ? (
-                        <span className="inline-flex items-center gap-1 text-success-foreground">
-                          <CheckCircle2 className="h-3.5 w-3.5" />Issued
+                      {sentOk ? (
+                        <span className="inline-flex items-center gap-1 text-warning-foreground">
+                          <Clock className="h-3.5 w-3.5" />Awaiting acceptance
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-destructive">
