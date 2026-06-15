@@ -290,11 +290,19 @@ function QaDocumentsEditor({
     }
   };
 
+  const refresh = useStore((s) => s.refetchAll);
+
   const onRemove = async (path: string) => {
     setBusy(true);
     try {
-      await supabase.storage.from("qa-documents").remove([path]);
+      const res = (await supabase.storage
+        .from("qa-documents")
+        .remove([path])) as unknown as StorageRemoveResult;
+      if (res.error) {
+        console.warn("[qa-documents] storage remove failed", res.error.message);
+      }
       await persist(paths.filter((p) => p !== path));
+      await refresh();
       toast.success("Document removed");
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Failed to remove");
