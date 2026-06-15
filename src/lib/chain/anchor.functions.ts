@@ -1169,10 +1169,43 @@ export const acceptCredential = createServerFn({ method: "POST" })
       link: "/issuer/credentials",
     } as never);
 
-    // Now safe to anchor on Bloxberg.
-    await enqueueAcceptedAnchor(data.credentialId);
+    // Now best-effort anchor on Bloxberg. If this fails, the credential is
+    // still accepted/active for the earner — the cron worker will retry.
+    let chainPending = false;
+    try {
+      await enqueueAcceptedAnchor(data.credentialId);
+      // After enqueue, if the row didn't reach 'confirmed' yet, mark pending.
+      const { data: row } = await supabaseAdmin
+        .from("credentials")
+        .select("chain_status")
+        .eq("id", data.credentialId)
+        .maybeSingle();
+      const cs = (row as any)?.chain_status as string | null | undefined;
+      chainPending = cs !== "confirmed" && cs !== "disabled";
+    } catch (e) {
+      chainPending = true;
+      const msg = (e as Error)?.message ?? "Chain anchor failed";
+      console.error("[acceptCredential] chain anchor failed:", msg);
+      // Make sure a job exists so cron retries, and surface the error.
+      await supabaseAdmin
+        .from("credential_anchor_jobs")
+        .upsert(
+          {
+            credential_id: data.credentialId,
+            operation: "anchor_credential",
+            status: "queued",
+            last_error: msg,
+            last_attempt_at: new Date().toISOString(),
+          } as never,
+          { onConflict: "credential_id,operation" } as never,
+        );
+      await supabaseAdmin
+        .from("credentials")
+        .update({ chain_status: "queued", chain_error: msg } as never)
+        .eq("id", data.credentialId);
+    }
 
-    return { ok: true };
+    return { ok: true, chainPending };
   });
 
 /** Earner rejects a credential with a reason. */
