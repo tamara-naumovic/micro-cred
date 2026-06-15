@@ -562,70 +562,52 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const buildCredentialInsert = useCallback(
-    (
-      tpl: MicroCredentialTemplate,
-      earner: { id: string; name: string },
-      grade?: string,
-      expiryDate?: string,
-      issuedAt?: string,
-    ): Record<string, unknown> => ({
-      template_id: tpl.id,
-      title: tpl.title,
-      earner_id: earner.id,
-      earner_name: earner.name,
-      issuer_id: tpl.issuerId,
-      issuer_name: tpl.issuerName,
-      issued_at: issuedAt ?? nowISO(),
-      expires_at: expiryDate ?? (tpl.expiryMode === "fixed_date" ? (tpl.expiryDate ?? null) : null),
-      status: "active",
-      credential_lifecycle: "pending_earner_acceptance",
-      source: tpl.source,
-      subcategory: tpl.subcategory ?? null,
-      level: tpl.level,
-      ects: tpl.ects ?? null,
-      skills: tpl.skills,
-      grade: grade ?? null,
-    }),
-    [],
-  );
-
   const issueFromApplication: StoreCtx["issueFromApplication"] = useCallback((appId, opts) => {
     const app = state.applications.find((a) => a.id === appId);
     if (!app) return null;
     const tpl = state.templates.find((t) => t.id === app.templateId);
     if (!tpl) return null;
     (async () => {
-      const { data: cred, error } = await supabase
-        .from("credentials")
-        .insert(
-          buildCredentialInsert(
-            tpl,
-            { id: app.earnerId, name: app.earnerName },
-            opts?.grade,
-            opts?.expiryDate,
-          ) as unknown as never,
-        )
-        .select()
-        .single();
-      if (error) {
-        console.error("[store] issueFromApplication", error);
-        return;
+      try {
+        const res = await issueCredentialsBatch({
+          data: {
+            templateId: tpl.id,
+            issuedAt: nowISO(),
+            recipients: [
+              {
+                earnerId: app.earnerId,
+                earnerName: app.earnerName,
+                grade: opts?.grade ?? null,
+                expiresAt: opts?.expiryDate ?? null,
+              },
+            ],
+            anchorMode: "later",
+          },
+        });
+        const first = res.results[0];
+        if (!first?.credentialId) {
+          console.error("[store] issueFromApplication", first?.error);
+          toast.error(first?.error || "Issuance failed");
+          return;
+        }
+        await supabase
+          .from("applications")
+          .update({ status: "issued", resulting_credential_id: first.credentialId })
+          .eq("id", appId);
+        await supabase.from("application_timeline").insert({
+          application_id: appId,
+          actor_name: activeUserRef.current?.name ?? "Issuer",
+          action: "Credential issued",
+        });
+      } catch (e) {
+        console.error("[store] issueFromApplication", e);
+        toast.error((e as Error).message || "Issuance failed");
       }
-      await supabase
-        .from("applications")
-        .update({ status: "issued", resulting_credential_id: cred.id })
-        .eq("id", appId);
-      await supabase.from("application_timeline").insert({
-        application_id: appId,
-        actor_name: activeUserRef.current?.name ?? "Issuer",
-        action: "Credential issued",
-      });
-      // Anchoring is deferred until the earner accepts the credential.
       refetchAll();
     })();
     return null;
-  }, [state.applications, state.templates, buildCredentialInsert, refetchAll]);
+  }, [state.applications, state.templates, refetchAll]);
+
 
   const advanceApplicationStatus: StoreCtx["advanceApplicationStatus"] = useCallback((appId, opts) => {
     const app = state.applications.find((a) => a.id === appId);
