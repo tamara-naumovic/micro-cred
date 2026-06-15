@@ -224,6 +224,8 @@ function mapCredential(r: Row): IssuedCredential {
     },
     revocationReason: (r.revocation_reason as string | null) ?? undefined,
     renewedFromId: (r.renewed_from_id as string | null) ?? undefined,
+    lifecycle: ((r.credential_lifecycle as string | null) ?? "issued") as IssuedCredential["lifecycle"],
+    rejectionReason: (r.rejection_reason as string | null) ?? undefined,
   };
 }
 
