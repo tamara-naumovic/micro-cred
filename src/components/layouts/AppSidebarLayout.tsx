@@ -1,4 +1,5 @@
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { DashboardHomeLink } from "@/components/DashboardHomeLink";
 import {
   Award,
   BadgeCheck,
