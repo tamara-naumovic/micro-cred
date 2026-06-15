@@ -1,7 +1,7 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
-import { Trash2, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Trash2, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -18,8 +18,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
+import { BulkUsersUpload } from "@/components/admin/BulkUsersUpload";
 import { useStore } from "@/lib/store";
-import { orgCreateEarner, removeEarnerInstitution } from "@/lib/admin-users.functions";
+import { orgBulkCreateEarners, orgCreateEarner, removeEarnerInstitution } from "@/lib/admin-users.functions";
+
+const PAGE_SIZE = 10;
+
 
 export const Route = createFileRoute("/issuer/earners")({
   head: () => ({ meta: [{ title: "Earners — MicroCred" }] }),
