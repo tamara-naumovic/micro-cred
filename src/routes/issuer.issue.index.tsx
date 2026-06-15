@@ -54,11 +54,12 @@ function Direct() {
 
   const selectedIds = Object.keys(overrides);
 
-  const toggle = (id: string) => {
+  const setSelectedIds = (ids: string[]) => {
     setOverrides((prev) => {
-      const next = { ...prev };
-      if (next[id]) delete next[id];
-      else next[id] = { grade: "", expiryDate: "" };
+      const next: Record<string, RecipientOverride> = {};
+      ids.forEach((id) => {
+        next[id] = prev[id] ?? { grade: "", expiryDate: "" };
+      });
       return next;
     });
   };
