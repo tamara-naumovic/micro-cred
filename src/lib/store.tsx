@@ -684,11 +684,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         insert: (r: Record<string, unknown>[]) => { select: () => Promise<{ data: { id: string }[] | null; error: unknown }> };
       }).insert(rows).select();
       if (error) console.error("[store] directIssue", error);
-      for (const c of inserted ?? []) {
-        enqueueAnchor({ data: { credentialId: c.id } }).catch((e) =>
-          console.warn("[chain] enqueueAnchor failed", e),
-        );
-      }
+      // Anchoring deferred until earner acceptance.
+      void inserted;
       refetchAll();
     })();
     return [];
