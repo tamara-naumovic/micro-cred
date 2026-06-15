@@ -1,0 +1,1 @@
+ALTER TABLE public.templates ADD COLUMN IF NOT EXISTS qa_document_paths text[] NOT NULL DEFAULT '{}';
