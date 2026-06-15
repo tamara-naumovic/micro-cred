@@ -30,6 +30,7 @@ import {
   AlertTriangle,
   Layers,
   Award,
+  Wrench,
 } from "lucide-react";
 
 export const Route = createFileRoute("/issuer/anchoring-queue")({
