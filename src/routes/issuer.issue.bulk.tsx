@@ -179,6 +179,11 @@ function Bulk() {
                 {unmatched} email(s) do not match an existing earner account and will be skipped.
               </div>
             )}
+            {duplicates > 0 && (
+              <div className="text-xs text-warning-foreground">
+                {duplicates} earner(s) already have an active (non-revoked) credential for this micro-credential and will be skipped.
+              </div>
+            )}
           </div>
 
           <AnchorModeSelector value={anchorMode} onChange={setAnchorMode} scope="credential" />
