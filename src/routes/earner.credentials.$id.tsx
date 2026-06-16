@@ -191,6 +191,7 @@ interface DetailLayoutProps {
   expiresAt?: string;
   grade?: string;
   skills: string[];
+  outcomes?: string[];
   blockchain: IssuedCredential["blockchain"];
   sharing: SharingSettings;
   shareUrl: string;
