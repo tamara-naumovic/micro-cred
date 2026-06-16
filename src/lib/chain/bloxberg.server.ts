@@ -201,23 +201,60 @@ export async function submitCredentialAnchor(record: CredentialAnchorRecord): Pr
     CredentialRegistryAbi as ConstructorParameters<typeof ethers.Contract>[1],
     wallet,
   );
-  // Contract: issueCredential(bytes32 credentialId, bytes32 documentHash, bytes32 learnerCommitment,
-  //                           bytes32 templateRef, uint64 expiresAt, string issuerNameSnapshot)
-  const tx = await contract.issueCredential(
-    to0x(toBytes32Hex(record.credentialIdHex)),
-    to0x(record.documentHashHex),
-    to0x(record.learnerCommitmentHex),
-    to0x(record.templateRefHex),
-    BigInt(record.expiresAt),
-    record.issuerNameSnapshot,
-  );
-  const receipt = await tx.wait(1);
-  return {
-    txHash: tx.hash,
-    blockNumber: Number(receipt?.blockNumber ?? 0),
-    issuerAddress: wallet.address,
-    contractAddress: address,
-  };
+  const credentialIdB32 = to0x(toBytes32Hex(record.credentialIdHex));
+  const docHashB32 = to0x(record.documentHashHex);
+
+  // Pre-check: if this credentialId is already on-chain, return early instead
+  // of submitting a tx that will revert with CredentialAlreadyExists.
+  try {
+    const existing = await contract.getCredential(credentialIdB32);
+    const existingDocHash = (existing?.[0] ?? existing?.documentHash) as string | undefined;
+    const existingIssuer = (existing?.[3] ?? existing?.issuer) as string | undefined;
+    if (existingDocHash && existingDocHash !== "0x" + "00".repeat(32)) {
+      const sameDoc = existingDocHash.toLowerCase() === docHashB32.toLowerCase();
+      const sameIssuer = (existingIssuer ?? "").toLowerCase() === wallet.address.toLowerCase();
+      if (sameDoc && sameIssuer) {
+        return {
+          txHash: null,
+          blockNumber: 0,
+          issuerAddress: wallet.address,
+          contractAddress: address,
+          alreadyAnchored: true,
+        };
+      }
+      throw new Error(
+        `Credential already exists on chain with a different ${sameDoc ? "issuer" : "document hash"}. ` +
+          `Issue a superseded version instead.`,
+      );
+    }
+  } catch (e) {
+    // getCredential reverts with CredentialNotFound when the id is not present —
+    // that's the happy path; fall through to issuance. Re-throw the explicit
+    // mismatch error we constructed above.
+    const msg = (e as Error)?.message ?? "";
+    if (msg.startsWith("Credential already exists on chain")) throw e;
+    // Otherwise: not found / unknown — proceed to issue.
+  }
+
+  try {
+    const tx = await contract.issueCredential(
+      credentialIdB32,
+      docHashB32,
+      to0x(record.learnerCommitmentHex),
+      to0x(record.templateRefHex),
+      BigInt(record.expiresAt),
+      record.issuerNameSnapshot,
+    );
+    const receipt = await tx.wait(1);
+    return {
+      txHash: tx.hash,
+      blockNumber: Number(receipt?.blockNumber ?? 0),
+      issuerAddress: wallet.address,
+      contractAddress: address,
+    };
+  } catch (e) {
+    throw new Error(decodeRevert(e));
+  }
 }
 
 // Backwards-compat alias used by older code paths.
