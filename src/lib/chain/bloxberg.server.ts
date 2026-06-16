@@ -280,22 +280,54 @@ export async function submitTemplateAnchor(record: TemplateAnchorRecord): Promis
     TemplateRegistryAbi as ConstructorParameters<typeof ethers.Contract>[1],
     wallet,
   );
-  // Contract: registerTemplateVersion(bytes32 templateRef, bytes32 templateIdHash, bytes32 documentHash,
-  //                                   uint32 version, string issuerNameSnapshot)
-  const tx = await contract.registerTemplateVersion(
-    to0x(record.templateRefHex),
-    to0x(toBytes32Hex(record.templateIdHex)),
-    to0x(record.documentHashHex),
-    versionToUint32(record.version),
-    record.issuerNameSnapshot,
-  );
-  const receipt = await tx.wait(1);
-  return {
-    txHash: tx.hash,
-    blockNumber: Number(receipt?.blockNumber ?? 0),
-    issuerAddress: wallet.address,
-    contractAddress: address,
-  };
+  const templateRefB32 = to0x(record.templateRefHex);
+  const docHashB32 = to0x(record.documentHashHex);
+
+  // Pre-check: idempotently treat an existing version as already anchored.
+  try {
+    const existing = await contract.getTemplate(templateRefB32);
+    const existingDocHash = (existing?.[1] ?? existing?.documentHash) as string | undefined;
+    const existingIssuer = (existing?.[2] ?? existing?.issuer) as string | undefined;
+    if (existingDocHash && existingDocHash !== "0x" + "00".repeat(32)) {
+      const sameDoc = existingDocHash.toLowerCase() === docHashB32.toLowerCase();
+      const sameIssuer = (existingIssuer ?? "").toLowerCase() === wallet.address.toLowerCase();
+      if (sameDoc && sameIssuer) {
+        return {
+          txHash: null,
+          blockNumber: 0,
+          issuerAddress: wallet.address,
+          contractAddress: address,
+          alreadyAnchored: true,
+        };
+      }
+      throw new Error(
+        `Template version already exists on chain with a different ${sameDoc ? "issuer" : "document hash"}. ` +
+          `Bump the version and re-publish.`,
+      );
+    }
+  } catch (e) {
+    const msg = (e as Error)?.message ?? "";
+    if (msg.startsWith("Template version already exists")) throw e;
+  }
+
+  try {
+    const tx = await contract.registerTemplateVersion(
+      templateRefB32,
+      to0x(toBytes32Hex(record.templateIdHex)),
+      docHashB32,
+      versionToUint32(record.version),
+      record.issuerNameSnapshot,
+    );
+    const receipt = await tx.wait(1);
+    return {
+      txHash: tx.hash,
+      blockNumber: Number(receipt?.blockNumber ?? 0),
+      issuerAddress: wallet.address,
+      contractAddress: address,
+    };
+  } catch (e) {
+    throw new Error(decodeRevert(e));
+  }
 }
 
 export async function submitRevokeCredential(
