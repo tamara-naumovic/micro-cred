@@ -370,6 +370,20 @@ export async function processTemplateAnchor(
       } as never)
       .eq("template_id", templateId)
       .eq("template_version", version);
+    await supabaseAdmin
+      .from("template_anchor_jobs" as never)
+      .update({
+        status: "done",
+        last_attempt_at: confIso,
+        last_error: res.alreadyAnchored
+          ? "Recovered: template version was already on chain"
+          : null,
+        transaction_hash: res.txHash ?? null,
+        next_attempt_at: null,
+      } as never)
+      .eq("template_id", templateId)
+      .eq("template_version", version);
+
 
     // Auto-enqueue all related issued credentials that are not yet confirmed on-chain.
     try {
