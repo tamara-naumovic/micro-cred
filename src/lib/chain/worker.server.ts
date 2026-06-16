@@ -443,6 +443,15 @@ export async function processTemplateAnchor(
       .update({ blockchain_status: "failed", last_error: msg } as never)
       .eq("template_id", templateId)
       .eq("template_version", version);
+    await supabaseAdmin
+      .from("template_anchor_jobs" as never)
+      .update({
+        status: "failed",
+        last_attempt_at: new Date().toISOString(),
+        last_error: msg,
+      } as never)
+      .eq("template_id", templateId)
+      .eq("template_version", version);
     return { ok: false, error: msg };
   }
 }
