@@ -1546,6 +1546,15 @@ export const repairCredentialChainFields = createServerFn({ method: "POST" })
     if (tplCheck.anchored) {
       const { processCredentialAnchor } = await import("./worker.server");
       const res = await processCredentialAnchor(data.credentialId);
+      if (res.ok) {
+        // Belt-and-suspenders: ensure the queue row reflects the confirmed anchor
+        // even if a future refactor changes worker behaviour.
+        await (supabaseAdmin as any)
+          .from("credential_anchor_jobs")
+          .update({ status: "done", last_error: null, next_attempt_at: null } as never)
+          .eq("credential_id", data.credentialId)
+          .eq("operation", "anchor_credential");
+      }
       return {
         ok: res.ok,
         repaired: {
@@ -1556,6 +1565,7 @@ export const repairCredentialChainFields = createServerFn({ method: "POST" })
         anchorResult: res,
       };
     }
+
 
     return {
       ok: true,
