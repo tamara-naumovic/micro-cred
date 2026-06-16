@@ -1206,6 +1206,7 @@ export type Database = {
           prerequisites: string
           prerequisites_none: boolean
           qa_document_path: string
+          qa_document_paths: string[]
           qa_type: string
           skills: string[]
           source: Database["public"]["Enums"]["learning_source"]
