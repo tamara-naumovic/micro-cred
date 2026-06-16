@@ -265,6 +265,16 @@ function DetailLayout(p: DetailLayoutProps) {
                 {p.expiresAt && <Field label="Expires" value={new Date(p.expiresAt).toLocaleDateString()} />}
                 {p.grade && <Field label="Grade" value={p.grade} />}
               </dl>
+              {p.outcomes && p.outcomes.length > 0 && (
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Learning outcomes</div>
+                  <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+                    {p.outcomes.map((o) => (
+                      <li key={o}>{o}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {p.skills.length > 0 && (
                 <div>
                   <div className="text-xs uppercase tracking-wider text-muted-foreground">Skills</div>
