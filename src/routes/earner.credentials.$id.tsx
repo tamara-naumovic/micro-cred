@@ -108,6 +108,7 @@ function RealDetail({ credentialId }: { credentialId: string }) {
       expiresAt={cred.expires_at ?? undefined}
       grade={cred.grade ?? undefined}
       skills={cred.skills}
+      outcomes={cred.outcomes ?? []}
       blockchain={dbToBlockchain(cred)}
       sharing={sharing}
       shareUrl={shareUrl}
