@@ -48,6 +48,8 @@ export interface DbCredential {
   chain_block_number: number | null;
   chain_issuer_address: string | null;
   chain_contract_address: string | null;
+  template_id?: string | null;
+  outcomes?: string[];
 }
 
 export async function fetchMyCredential(id: string): Promise<DbCredential | null> {
@@ -70,6 +72,20 @@ export async function fetchMyCredential(id: string): Promise<DbCredential | null
 
   const cred = data as unknown as DbCredential;
   cred.learner_secret = ((secRow as { secret: string } | null)?.secret) ?? null;
+
+  // Pull Learning outcomes from the source template so the earner sees the
+  // same content visible on the public verification page.
+  if (cred.template_id) {
+    const { data: tpl } = await supabase
+      .from("templates")
+      .select("outcomes")
+      .eq("id", cred.template_id)
+      .maybeSingle();
+    cred.outcomes = ((tpl as { outcomes: string[] } | null)?.outcomes) ?? [];
+  } else {
+    cred.outcomes = [];
+  }
+
   return cred;
 }
 

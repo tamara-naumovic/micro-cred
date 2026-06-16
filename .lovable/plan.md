@@ -1,59 +1,56 @@
-## Cilj
+## Problem
 
-Na javnoj verifikacionoj stranici kredencijala (`/verify/:share_token`), **Learning outcomes** (skills/competencies) i **QA dokumenti** treba uvek da budu prikazani — earner ne sme moći da ih sakrije, jer su to ključne informacije koje potvrđuju znanja i kompetencije.
+Template ima dva odvojena polja: **Learning outcomes** (`templates.outcomes`) i **Skills** (`templates.skills`). Na kredencijalu se čuva samo `credentials.skills`, a stranica za verifikaciju (`/verify/:id`) prikazuje te skill-ove pod oznakom **"Learning outcomes"** — što je pogrešno. Pravi learning outcomes iz šablona se uopšte ne pojavljuju ni na verifikaciji ni na earner-ovoj stranici kredencijala. Šablonska stranica (`issuer.microcredential-templates.$id`) je već ispravna (prikazuje oba odvojeno).
 
-## Trenutno stanje
+## Rešenje
 
-- `credentials.share_show_skills` (boolean) kontroliše prikaz skills-a; earner ga može isključiti u Visibility kartici (`/earner/credentials/:id`).
-- RPC `get_public_credential` vraća skills samo kada je `share_show_skills = true`, a od QA podataka vraća samo `qa_type` i jedan `qa_document_path` (single).
-- Template ima i `qa_document_paths text[]` (više fajlova), ali to nije izloženo javno.
-- Bucket `qa-documents` je privatan — za javni preuzimanje treba signed URL.
+Dovući `outcomes` iz povezanog šablona u javnu RPC-u i prikazati ih kao zasebnu sekciju, a Skills vratiti pod ispravnu oznaku.
 
-## Promene
+### 1. DB migracija — `get_public_credential`
 
-### 1) Baza — `get_public_credential` (migracija)
+Dodati `outcomes text[]` u povratni tip funkcije (LEFT JOIN na `templates` preko `c.template_id`):
 
-- Skills se uvek vraćaju (ukloniti `CASE WHEN share_show_skills`).
-- Dodati u povratni skup `qa_document_paths text[]` (iz `templates.qa_document_paths`).
-- Ostali `share_show_*` togglovi ostaju netaknuti.
-- Takođe ažurirati `get_public_profile` da uvek vraća skills (uklanja se `case when c.share_show_skills`).
-
-### 2) Public signed URL za QA dokumente (server funkcija)
-
-Nova javna `createServerFn` (`src/lib/public-credential.functions.ts`) — `getPublicQaDocumentUrl({ shareToken, path })`:
-- Validira da `share_token` postoji, da je kredencijal `share_is_public = true`, i da je `path` deo `templates.qa_document_paths` (ili jednako legacy `qa_document_path`) za pripadajući template.
-- Vraća signed URL (npr. 5 min) iz buckta `qa-documents` koristeći `supabaseAdmin` (učitan unutar handlera).
-- Bez auth middleware-a (javno dostupno preko share linka), ali sa strogom validacijom prema share tokenu.
-
-### 3) Verify stranica — `src/routes/verify.$id.tsx`
-
-- Skills sekciju prikazivati uvek kada `cred.skills.length > 0` (ukloniti uslov `cred.sharing.showSkills`); naslov sekcije preimenovati u **"Learning outcomes"** radi jasnoće.
-- Dodati novu sekciju **"Quality assurance documents"** ispod Credential details:
-  - lista svih `qa_document_paths` sa prikazom naziva fajla i dugmetom "Download" koje poziva `getPublicQaDocumentUrl` i otvara dobijeni signed URL.
-  - Ako nema dokumenata, sekcija se ne prikazuje.
-
-### 4) Earner Visibility kartica — `src/routes/earner.credentials.$id.tsx`
-
-- Ukloniti red `["showSkills", "Show skills"]` iz togglova (skills se više ne mogu sakriti).
-- Kolona `share_show_skills` ostaje u bazi radi kompatibilnosti, ali se ignoriše.
-- Dodati malu napomenu ispod togglova: *"Learning outcomes and quality assurance documents are always visible on the shared verification page."*
-
-## Tehnički detalji
-
-```text
-RPC: public.get_public_credential(_share_token)
-  + qa_document_paths text[]      ← novo polje
-  ~ skills                         ← uvek c.skills (bez toggle-a)
-
-Server fn (public): getPublicQaDocumentUrl
-  in:  { shareToken: string, path: string }
-  out: { url: string, expiresInSec: number }
-  guard: credential.share_is_public = true
-         AND (path = template.qa_document_path
-              OR path = ANY(template.qa_document_paths))
+```sql
+DROP FUNCTION IF EXISTS public.get_public_credential(text);
+CREATE OR REPLACE FUNCTION public.get_public_credential(_share_token text)
+RETURNS TABLE(
+  ... postojeća polja ...,
+  skills text[],
+  outcomes text[],            -- NOVO
+  ... ostalo ...
+)
+...
+  SELECT
+    ...,
+    c.skills,
+    COALESCE(t.outcomes, '{}'::text[]) AS outcomes,
+    ...
+  FROM credentials c
+  LEFT JOIN templates t ON t.id = c.template_id
+  WHERE c.share_token = _share_token AND c.share_is_public = true;
 ```
 
-## Van opsega
+Takođe dodati `outcomes` u `get_public_credential_evidence` JSON payload (ako se koristi) i ažurirati `get_public_profile` da vraća `outcomes` po kredencijalu na isti način.
 
-- Ne menjamo izgled/sadržaj internog earner prikaza kredencijala.
-- Ne uklanjamo kolonu `share_show_skills` iz baze (izbegavamo nepotrebnu migraciju podataka i breaking change za eksterne integracije).
+### 2. `src/routes/verify.$id.tsx` (Cloud grana, ~linije 139–165)
+
+- Preimenovati postojeću sekciju "Learning outcomes" (koja zapravo prikazuje `cred.skills`) → **"Skills"**.
+- Iznad nje dodati novu sekciju **"Learning outcomes"** koja renderuje `cred.outcomes` kao bullet listu (isti format kao na template detail-u: `<ul class="list-disc">`).
+- Obe sekcije se prikazuju bezuslovno ako imaju sadržaja (outcomes su obavezni za public share po prethodnoj odluci).
+
+Mock grana (linije 252–261): isti tretman — Skills ostaje, ali pošto mock store nema outcomes, prikazati outcomes samo ako postoji `cred.outcomes` (neobavezno za demo).
+
+### 3. `src/routes/earner.credentials.$id.tsx`
+
+- U Cloud preview kartici (oko linije 110/164, gde se prosleđuje `skills={cred.skills}`) dovući i prikazati `outcomes` iz povezanog šablona. Učitati `templates.outcomes` zajedno sa postojećim template fetch-om (već postoji `template_id`).
+- Render: dve odvojene sekcije — **Learning outcomes** (bullet lista) iznad **Skills** (badge-ovi). Isti raspored kao na verifikaciji da bi earner video tačno ono što gledalac vidi.
+
+### 4. Types
+
+- `src/integrations/supabase/types.ts`: dodati `outcomes: string[]` u Returns tip za `get_public_credential` (i `get_public_profile` ako se ažurira).
+
+## Van obima
+
+- Promene na `issuer.microcredential-templates.$id.tsx` i `.new.tsx` (već ispravno razdvajaju outcomes/skills).
+- Denormalizacija `outcomes` u sam `credentials` red — dovoljno je čitanje preko JOIN-a; sprečava razilaženje sa šablonom.
+- Promene na VC/blockchain payload-ima.

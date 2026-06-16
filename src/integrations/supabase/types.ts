@@ -1203,6 +1203,7 @@ export type Database = {
           issuer_name: string
           learner_commitment: string
           level: Database["public"]["Enums"]["cred_level"]
+          outcomes: string[]
           prerequisites: string
           prerequisites_none: boolean
           qa_document_path: string
