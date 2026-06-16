@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { DashboardHomeLink } from "@/components/DashboardHomeLink";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   BadgeCheck,
   CalendarClock,
+  Download,
+  FileText,
   FileWarning,
   GraduationCap,
   ShieldCheck,
@@ -17,6 +22,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
 import { useStore } from "@/lib/store";
 import { fetchPublicCredential, fetchCredentialVisibility } from "@/lib/credentials";
+import { getPublicQaDocumentUrl } from "@/lib/public-credential.functions";
 
 export const Route = createFileRoute("/verify/$id")({
   head: ({ params }) => ({
