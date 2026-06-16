@@ -34,10 +34,47 @@ export interface TemplateAnchorRecord {
 }
 
 export interface AnchorResult {
-  txHash: string;
+  txHash: string | null;
   blockNumber: number;
   issuerAddress: string;
   contractAddress: string;
+  alreadyAnchored?: boolean;
+}
+
+// Map of known custom-error selectors → human label. ethers v6 doesn't decode
+// non-standard errors and reports them as "missing revert data". We pre-decode
+// `e.info?.error?.data` (which usually arrives as "Reverted 0x<selector>...")
+// and translate the selector to a useful message.
+const KNOWN_REVERTS: Record<string, string> = {
+  "0x87dbb506": "CredentialAlreadyExists",
+  "0x1cb411bc": "CredentialNotFound",
+  "0x6f4d9d9b": "TemplateAlreadyExists",
+  "0x6f7c43f1": "TemplateNotFound",
+  "0x9c8d2cd2": "InvalidTemplateRef",
+};
+
+function decodeRevert(err: unknown): string {
+  const e = err as {
+    shortMessage?: string;
+    message?: string;
+    data?: string;
+    info?: { error?: { data?: string; message?: string } };
+  };
+  const rawData =
+    (typeof e?.data === "string" ? e.data : undefined) ??
+    e?.info?.error?.data ??
+    "";
+  const hex = rawData.replace(/^Reverted\s*/, "");
+  if (hex.startsWith("0x") && hex.length >= 10) {
+    const selector = hex.slice(0, 10).toLowerCase();
+    const label = KNOWN_REVERTS[selector];
+    if (label) {
+      const arg = hex.length >= 74 ? "0x" + hex.slice(10, 74) : "";
+      return `Contract reverted: ${label}${arg ? `(${arg})` : ""}`;
+    }
+    return `Contract reverted (selector ${selector})`;
+  }
+  return e?.shortMessage ?? e?.message ?? "Contract reverted";
 }
 
 interface ChainBase {
@@ -164,23 +201,60 @@ export async function submitCredentialAnchor(record: CredentialAnchorRecord): Pr
     CredentialRegistryAbi as ConstructorParameters<typeof ethers.Contract>[1],
     wallet,
   );
-  // Contract: issueCredential(bytes32 credentialId, bytes32 documentHash, bytes32 learnerCommitment,
-  //                           bytes32 templateRef, uint64 expiresAt, string issuerNameSnapshot)
-  const tx = await contract.issueCredential(
-    to0x(toBytes32Hex(record.credentialIdHex)),
-    to0x(record.documentHashHex),
-    to0x(record.learnerCommitmentHex),
-    to0x(record.templateRefHex),
-    BigInt(record.expiresAt),
-    record.issuerNameSnapshot,
-  );
-  const receipt = await tx.wait(1);
-  return {
-    txHash: tx.hash,
-    blockNumber: Number(receipt?.blockNumber ?? 0),
-    issuerAddress: wallet.address,
-    contractAddress: address,
-  };
+  const credentialIdB32 = to0x(toBytes32Hex(record.credentialIdHex));
+  const docHashB32 = to0x(record.documentHashHex);
+
+  // Pre-check: if this credentialId is already on-chain, return early instead
+  // of submitting a tx that will revert with CredentialAlreadyExists.
+  try {
+    const existing = await contract.getCredential(credentialIdB32);
+    const existingDocHash = (existing?.[0] ?? existing?.documentHash) as string | undefined;
+    const existingIssuer = (existing?.[3] ?? existing?.issuer) as string | undefined;
+    if (existingDocHash && existingDocHash !== "0x" + "00".repeat(32)) {
+      const sameDoc = existingDocHash.toLowerCase() === docHashB32.toLowerCase();
+      const sameIssuer = (existingIssuer ?? "").toLowerCase() === wallet.address.toLowerCase();
+      if (sameDoc && sameIssuer) {
+        return {
+          txHash: null,
+          blockNumber: 0,
+          issuerAddress: wallet.address,
+          contractAddress: address,
+          alreadyAnchored: true,
+        };
+      }
+      throw new Error(
+        `Credential already exists on chain with a different ${sameDoc ? "issuer" : "document hash"}. ` +
+          `Issue a superseded version instead.`,
+      );
+    }
+  } catch (e) {
+    // getCredential reverts with CredentialNotFound when the id is not present —
+    // that's the happy path; fall through to issuance. Re-throw the explicit
+    // mismatch error we constructed above.
+    const msg = (e as Error)?.message ?? "";
+    if (msg.startsWith("Credential already exists on chain")) throw e;
+    // Otherwise: not found / unknown — proceed to issue.
+  }
+
+  try {
+    const tx = await contract.issueCredential(
+      credentialIdB32,
+      docHashB32,
+      to0x(record.learnerCommitmentHex),
+      to0x(record.templateRefHex),
+      BigInt(record.expiresAt),
+      record.issuerNameSnapshot,
+    );
+    const receipt = await tx.wait(1);
+    return {
+      txHash: tx.hash,
+      blockNumber: Number(receipt?.blockNumber ?? 0),
+      issuerAddress: wallet.address,
+      contractAddress: address,
+    };
+  } catch (e) {
+    throw new Error(decodeRevert(e));
+  }
 }
 
 // Backwards-compat alias used by older code paths.
@@ -206,22 +280,54 @@ export async function submitTemplateAnchor(record: TemplateAnchorRecord): Promis
     TemplateRegistryAbi as ConstructorParameters<typeof ethers.Contract>[1],
     wallet,
   );
-  // Contract: registerTemplateVersion(bytes32 templateRef, bytes32 templateIdHash, bytes32 documentHash,
-  //                                   uint32 version, string issuerNameSnapshot)
-  const tx = await contract.registerTemplateVersion(
-    to0x(record.templateRefHex),
-    to0x(toBytes32Hex(record.templateIdHex)),
-    to0x(record.documentHashHex),
-    versionToUint32(record.version),
-    record.issuerNameSnapshot,
-  );
-  const receipt = await tx.wait(1);
-  return {
-    txHash: tx.hash,
-    blockNumber: Number(receipt?.blockNumber ?? 0),
-    issuerAddress: wallet.address,
-    contractAddress: address,
-  };
+  const templateRefB32 = to0x(record.templateRefHex);
+  const docHashB32 = to0x(record.documentHashHex);
+
+  // Pre-check: idempotently treat an existing version as already anchored.
+  try {
+    const existing = await contract.getTemplate(templateRefB32);
+    const existingDocHash = (existing?.[1] ?? existing?.documentHash) as string | undefined;
+    const existingIssuer = (existing?.[2] ?? existing?.issuer) as string | undefined;
+    if (existingDocHash && existingDocHash !== "0x" + "00".repeat(32)) {
+      const sameDoc = existingDocHash.toLowerCase() === docHashB32.toLowerCase();
+      const sameIssuer = (existingIssuer ?? "").toLowerCase() === wallet.address.toLowerCase();
+      if (sameDoc && sameIssuer) {
+        return {
+          txHash: null,
+          blockNumber: 0,
+          issuerAddress: wallet.address,
+          contractAddress: address,
+          alreadyAnchored: true,
+        };
+      }
+      throw new Error(
+        `Template version already exists on chain with a different ${sameDoc ? "issuer" : "document hash"}. ` +
+          `Bump the version and re-publish.`,
+      );
+    }
+  } catch (e) {
+    const msg = (e as Error)?.message ?? "";
+    if (msg.startsWith("Template version already exists")) throw e;
+  }
+
+  try {
+    const tx = await contract.registerTemplateVersion(
+      templateRefB32,
+      to0x(toBytes32Hex(record.templateIdHex)),
+      docHashB32,
+      versionToUint32(record.version),
+      record.issuerNameSnapshot,
+    );
+    const receipt = await tx.wait(1);
+    return {
+      txHash: tx.hash,
+      blockNumber: Number(receipt?.blockNumber ?? 0),
+      issuerAddress: wallet.address,
+      contractAddress: address,
+    };
+  } catch (e) {
+    throw new Error(decodeRevert(e));
+  }
 }
 
 export async function submitRevokeCredential(
@@ -242,8 +348,13 @@ export async function submitRevokeCredential(
     ? to0x(toBytes32Hex(reasonHashHex))
     : to0x("0".repeat(64));
   // Contract: revokeCredential(bytes32 credentialId, bytes32 reasonHash)
-  const tx = await contract.revokeCredential(to0x(toBytes32Hex(credentialIdHex)), reason);
-  const receipt = await tx.wait(1);
+  let tx, receipt;
+  try {
+    tx = await contract.revokeCredential(to0x(toBytes32Hex(credentialIdHex)), reason);
+    receipt = await tx.wait(1);
+  } catch (e) {
+    throw new Error(decodeRevert(e));
+  }
   return {
     txHash: tx.hash,
     blockNumber: Number(receipt?.blockNumber ?? 0),

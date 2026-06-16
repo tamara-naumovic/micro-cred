@@ -232,27 +232,31 @@ export async function processCredentialAnchor(credentialId: string): Promise<{
       .from("credentials")
       .update({
         chain_status: "confirmed",
-        chain_tx_hash: res.txHash,
-        chain_block_number: res.blockNumber,
+        chain_tx_hash: res.txHash ?? null,
+        chain_block_number: res.blockNumber || null,
         chain_issuer_address: res.issuerAddress,
         chain_contract_address: res.contractAddress,
         chain_confirmed_at: confIso,
-        chain_error: null,
+        chain_error: res.alreadyAnchored
+          ? "Recovered: credential was already on chain"
+          : null,
       } as never)
       .eq("id", credentialId);
     await supabaseAdmin
       .from("credential_blockchain_records" as never)
       .update({
         blockchain_status: "confirmed",
-        transaction_hash: res.txHash,
-        block_number: res.blockNumber,
+        transaction_hash: res.txHash ?? null,
+        block_number: res.blockNumber || null,
         anchored_at: confIso,
         contract_address: res.contractAddress,
-        last_error: null,
+        last_error: res.alreadyAnchored
+          ? "Recovered: credential was already on chain"
+          : null,
         attempt_count: (c.chain_attempts ?? 0) + 1,
       } as never)
       .eq("credential_id", credentialId);
-    return { ok: true, txHash: res.txHash };
+    return { ok: true, txHash: res.txHash ?? undefined };
   } catch (e) {
     const msg = e instanceof ChainNotConfiguredError ? "Chain not configured" : (e as Error).message;
     await supabaseAdmin
@@ -330,11 +334,13 @@ export async function processTemplateAnchor(
       .from("template_blockchain_records" as never)
       .update({
         blockchain_status: "confirmed",
-        transaction_hash: res.txHash,
-        block_number: res.blockNumber,
+        transaction_hash: res.txHash ?? null,
+        block_number: res.blockNumber || null,
         anchored_at: confIso,
         contract_address: res.contractAddress,
-        last_error: null,
+        last_error: res.alreadyAnchored
+          ? "Recovered: template version was already on chain"
+          : null,
       } as never)
       .eq("template_id", templateId)
       .eq("template_version", version);
@@ -385,7 +391,7 @@ export async function processTemplateAnchor(
       console.error("[auto-enqueue credentials] failed", (e as Error).message);
     }
 
-    return { ok: true, txHash: res.txHash };
+    return { ok: true, txHash: res.txHash ?? undefined };
   } catch (e) {
     const msg = e instanceof ChainNotConfiguredError ? "Chain not configured" : (e as Error).message;
     await supabaseAdmin
