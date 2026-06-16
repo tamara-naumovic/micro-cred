@@ -256,9 +256,24 @@ export async function processCredentialAnchor(credentialId: string): Promise<{
         attempt_count: (c.chain_attempts ?? 0) + 1,
       } as never)
       .eq("credential_id", credentialId);
+    await supabaseAdmin
+      .from("credential_anchor_jobs" as never)
+      .update({
+        status: "done",
+        attempts: (c.chain_attempts ?? 0) + 1,
+        last_attempt_at: confIso,
+        last_error: res.alreadyAnchored
+          ? "Recovered: credential was already on chain"
+          : null,
+        transaction_hash: res.txHash ?? null,
+        next_attempt_at: null,
+      } as never)
+      .eq("credential_id", credentialId)
+      .eq("operation", "anchor_credential");
     return { ok: true, txHash: res.txHash ?? undefined };
   } catch (e) {
     const msg = e instanceof ChainNotConfiguredError ? "Chain not configured" : (e as Error).message;
+    const failIso = new Date().toISOString();
     await supabaseAdmin
       .from("credentials")
       .update({ chain_status: "failed", chain_error: msg } as never)
@@ -267,9 +282,20 @@ export async function processCredentialAnchor(credentialId: string): Promise<{
       .from("credential_blockchain_records" as never)
       .update({ blockchain_status: "failed", last_error: msg } as never)
       .eq("credential_id", credentialId);
+    await supabaseAdmin
+      .from("credential_anchor_jobs" as never)
+      .update({
+        status: "failed",
+        attempts: (c.chain_attempts ?? 0) + 1,
+        last_attempt_at: failIso,
+        last_error: msg,
+      } as never)
+      .eq("credential_id", credentialId)
+      .eq("operation", "anchor_credential");
     return { ok: false, error: msg };
   }
 }
+
 
 export async function processTemplateAnchor(
   templateId: string,
