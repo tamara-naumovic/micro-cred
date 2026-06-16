@@ -34,10 +34,47 @@ export interface TemplateAnchorRecord {
 }
 
 export interface AnchorResult {
-  txHash: string;
+  txHash: string | null;
   blockNumber: number;
   issuerAddress: string;
   contractAddress: string;
+  alreadyAnchored?: boolean;
+}
+
+// Map of known custom-error selectors → human label. ethers v6 doesn't decode
+// non-standard errors and reports them as "missing revert data". We pre-decode
+// `e.info?.error?.data` (which usually arrives as "Reverted 0x<selector>...")
+// and translate the selector to a useful message.
+const KNOWN_REVERTS: Record<string, string> = {
+  "0x87dbb506": "CredentialAlreadyExists",
+  "0x1cb411bc": "CredentialNotFound",
+  "0x6f4d9d9b": "TemplateAlreadyExists",
+  "0x6f7c43f1": "TemplateNotFound",
+  "0x9c8d2cd2": "InvalidTemplateRef",
+};
+
+function decodeRevert(err: unknown): string {
+  const e = err as {
+    shortMessage?: string;
+    message?: string;
+    data?: string;
+    info?: { error?: { data?: string; message?: string } };
+  };
+  const rawData =
+    (typeof e?.data === "string" ? e.data : undefined) ??
+    e?.info?.error?.data ??
+    "";
+  const hex = rawData.replace(/^Reverted\s*/, "");
+  if (hex.startsWith("0x") && hex.length >= 10) {
+    const selector = hex.slice(0, 10).toLowerCase();
+    const label = KNOWN_REVERTS[selector];
+    if (label) {
+      const arg = hex.length >= 74 ? "0x" + hex.slice(10, 74) : "";
+      return `Contract reverted: ${label}${arg ? `(${arg})` : ""}`;
+    }
+    return `Contract reverted (selector ${selector})`;
+  }
+  return e?.shortMessage ?? e?.message ?? "Contract reverted";
 }
 
 interface ChainBase {
