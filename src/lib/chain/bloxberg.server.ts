@@ -348,8 +348,13 @@ export async function submitRevokeCredential(
     ? to0x(toBytes32Hex(reasonHashHex))
     : to0x("0".repeat(64));
   // Contract: revokeCredential(bytes32 credentialId, bytes32 reasonHash)
-  const tx = await contract.revokeCredential(to0x(toBytes32Hex(credentialIdHex)), reason);
-  const receipt = await tx.wait(1);
+  let tx, receipt;
+  try {
+    tx = await contract.revokeCredential(to0x(toBytes32Hex(credentialIdHex)), reason);
+    receipt = await tx.wait(1);
+  } catch (e) {
+    throw new Error(decodeRevert(e));
+  }
   return {
     txHash: tx.hash,
     blockNumber: Number(receipt?.blockNumber ?? 0),
