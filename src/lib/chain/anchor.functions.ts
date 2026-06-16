@@ -260,7 +260,7 @@ export async function processAnchor(credentialId: string): Promise<{
         chain_error: null,
       } as never)
       .eq("id", credentialId);
-    return { ok: true, txHash: res.txHash };
+    return { ok: true, txHash: res.txHash ?? undefined };
   } catch (e) {
     const msg = e instanceof ChainNotConfiguredError ? "Chain not configured" : (e as Error).message;
     await supabaseAdmin
