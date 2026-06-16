@@ -356,7 +356,6 @@ function DetailLayout(p: DetailLayoutProps) {
                 ["showSource", "Show learning source"],
                 ["showGrade", "Show grade"],
                 ["showExpiry", "Show expiry date"],
-                ["showSkills", "Show skills"],
                 ["showLevel", "Show level"],
                 ["showPrerequisites", "Show prerequisites"],
                 ["showSupervision", "Show supervision & ID verification"],
@@ -370,6 +369,9 @@ function DetailLayout(p: DetailLayoutProps) {
                   />
                 </label>
               ))}
+              <p className="pt-2 text-xs text-muted-foreground border-t border-border">
+                Learning outcomes and quality assurance documents are always visible on the shared verification page.
+              </p>
             </CardContent>
           </Card>
         </div>
