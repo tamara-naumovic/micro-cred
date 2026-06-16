@@ -291,7 +291,8 @@ function AnchoringQueuePage() {
                                 </a>
                               </Button>
                             ) : null}
-                            {(r.status === "queued" || r.status === "failed") &&
+                            {bcStatus !== "confirmed" &&
+                              (r.status === "queued" || r.status === "failed") &&
                               r.attempts < maxAttempts && (
                                 <Button
                                   size="sm"
@@ -303,29 +304,32 @@ function AnchoringQueuePage() {
                                   Retry
                                 </Button>
                               )}
-                            {r.entity_type === "credential" && r.status === "failed" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => repairMut.mutate(r.entity_id)}
-                                disabled={repairMut.isPending}
-                                title="Recompute missing chain fields and re-queue"
-                              >
-                                <Wrench className="mr-1 h-3.5 w-3.5" />
-                                Repair
-                              </Button>
-                            )}
-                            {(r.status === "queued" || r.status === "failed") && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => cancelMut.mutate({ jobId: r.id, entityKind: r.entity_type })}
-                                disabled={cancelMut.isPending}
-                                title="Cancel"
-                              >
-                                <XOctagon className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
+                            {bcStatus !== "confirmed" &&
+                              r.entity_type === "credential" &&
+                              r.status === "failed" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => repairMut.mutate(r.entity_id)}
+                                  disabled={repairMut.isPending}
+                                  title="Recompute missing chain fields and re-queue"
+                                >
+                                  <Wrench className="mr-1 h-3.5 w-3.5" />
+                                  Repair
+                                </Button>
+                              )}
+                            {bcStatus !== "confirmed" &&
+                              (r.status === "queued" || r.status === "failed") && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => cancelMut.mutate({ jobId: r.id, entityKind: r.entity_type })}
+                                  disabled={cancelMut.isPending}
+                                  title="Cancel"
+                                >
+                                  <XOctagon className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                           </div>
                         </TableCell>
                       </TableRow>
