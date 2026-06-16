@@ -1107,7 +1107,6 @@ function LearnerOverview({
 
 function TemplateStatusPanel({
   templates,
-  credentials,
 }: {
   templates: MicroCredentialTemplate[];
   credentials: IssuedCredential[];
@@ -1117,27 +1116,10 @@ function TemplateStatusPanel({
     published: templates.filter((t) => t.status === "active").length,
     archived: templates.filter((t) => t.status === "archived").length,
   };
-  // Per-template blockchain aggregation: pick a single representative status
-  // per template based on its credentials' chainStatus values.
-  // Priority: failed > pending > submitted > confirmed > disabled > not_anchored
-  const tplChain = new Map<string, string>();
-  const priority: Record<string, number> = {
-    failed: 5,
-    pending: 4,
-    submitted: 3,
-    confirmed: 2,
-    disabled: 1,
-    not_anchored: 0,
-  };
-  // Seed every template as "not_anchored" so templates without credentials still count
-  for (const t of templates) tplChain.set(t.id, "not_anchored");
-  for (const c of credentials) {
-    const s = c.blockchain.chainStatus ?? "not_anchored";
-    const cur = tplChain.get(c.templateId) ?? "not_anchored";
-    if ((priority[s] ?? 0) > (priority[cur] ?? 0)) {
-      tplChain.set(c.templateId, s);
-    }
-  }
+  // Read each template's own on-chain status directly (templates.blockchain_status).
+  // Do NOT infer from credentials — a template can be anchored even when it has
+  // zero issued credentials, and a not-yet-anchored credential should not mark
+  // the template itself as "not anchored".
   const chain = {
     not_anchored: 0,
     pending: 0,
@@ -1146,9 +1128,16 @@ function TemplateStatusPanel({
     failed: 0,
     disabled: 0,
   };
-  for (const v of tplChain.values()) {
-    if (v in chain) (chain as Record<string, number>)[v]++;
+  for (const t of templates) {
+    const s = t.blockchainStatus ?? "not_requested";
+    if (s === "confirmed") chain.confirmed++;
+    else if (s === "failed") chain.failed++;
+    else if (s === "disabled") chain.disabled++;
+    else if (s === "queued" || s === "submitting" || s === "pending") chain.pending++;
+    else if (s === "submitted") chain.submitted++;
+    else chain.not_anchored++;
   }
+
 
   return (
     <Card>
