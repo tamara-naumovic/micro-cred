@@ -385,7 +385,7 @@ export async function processTemplateAnchor(
       console.error("[auto-enqueue credentials] failed", (e as Error).message);
     }
 
-    return { ok: true, txHash: res.txHash };
+    return { ok: true, txHash: res.txHash ?? undefined };
   } catch (e) {
     const msg = e instanceof ChainNotConfiguredError ? "Chain not configured" : (e as Error).message;
     await supabaseAdmin
