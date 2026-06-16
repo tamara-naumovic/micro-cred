@@ -252,12 +252,14 @@ export async function processAnchor(credentialId: string): Promise<{
       .from("credentials")
       .update({
         chain_status: "confirmed",
-        chain_tx_hash: res.txHash,
-        chain_block_number: res.blockNumber,
+        chain_tx_hash: res.txHash ?? null,
+        chain_block_number: res.blockNumber || null,
         chain_issuer_address: res.issuerAddress,
         chain_contract_address: res.contractAddress,
         chain_confirmed_at: new Date().toISOString(),
-        chain_error: null,
+        chain_error: res.alreadyAnchored
+          ? "Recovered: credential was already on chain"
+          : null,
       } as never)
       .eq("id", credentialId);
     return { ok: true, txHash: res.txHash ?? undefined };
