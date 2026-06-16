@@ -334,11 +334,13 @@ export async function processTemplateAnchor(
       .from("template_blockchain_records" as never)
       .update({
         blockchain_status: "confirmed",
-        transaction_hash: res.txHash,
-        block_number: res.blockNumber,
+        transaction_hash: res.txHash ?? null,
+        block_number: res.blockNumber || null,
         anchored_at: confIso,
         contract_address: res.contractAddress,
-        last_error: null,
+        last_error: res.alreadyAnchored
+          ? "Recovered: template version was already on chain"
+          : null,
       } as never)
       .eq("template_id", templateId)
       .eq("template_version", version);
