@@ -260,9 +260,20 @@ function MockVerify({ cred }: { cred: NonNullable<ReturnType<typeof useStore>["c
             {cred.ects && <Field label="Workload" value={`${cred.ects} ECTS`} />}
           </dl>
 
-          {cred.skills.length > 0 && (
+          {(cred as any).outcomes && (cred as any).outcomes.length > 0 && (
             <div>
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Learning outcomes</div>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                {((cred as any).outcomes as string[]).map((o: string) => (
+                  <li key={o}>{o}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {cred.skills.length > 0 && (
+            <div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Skills</div>
               <div className="mt-2 flex flex-wrap gap-1">
                 {cred.skills.map((s) => (
                   <Badge key={s} variant="secondary">{s}</Badge>
