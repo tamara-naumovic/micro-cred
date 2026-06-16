@@ -1,29 +1,59 @@
 ## Cilj
 
-Generisati jedan Markdown dokument koji opisuje kompletan data model platforme, sa ugrađenim Mermaid ER dijagramom. Fajl će biti dostupan za preuzimanje iz `/mnt/documents/`.
+Na javnoj verifikacionoj stranici kredencijala (`/verify/:share_token`), **Learning outcomes** (skills/competencies) i **QA dokumenti** treba uvek da budu prikazani — earner ne sme moći da ih sakrije, jer su to ključne informacije koje potvrđuju znanja i kompetencije.
 
-## Šta dokument sadrži
+## Trenutno stanje
 
-1. **Pregled** — kratak opis domena (organizacije, korisnici/uloge, šabloni mikrokredencijala, prijave, izdati kredencijali, blockchain anchoring, notifikacije, audit).
-2. **Enumi** — sve PostgreSQL enum tipove (`app_role`, `credential_status`, `learning_source`, `cred_level`, lifecycle/anchor statusi, itd.) sa dozvoljenim vrednostima.
-3. **Tabele** — za svaku tabelu u `public` šemi:
-   - Ime, kratak opis namene
-   - Tabela kolona: ime, tip, nullable, default, opis
-   - Primarni i strani ključevi
-   - Indeksi (gde su značajni)
-   - RLS politike (ko može da čita/menja, na šta su skupljene)
-4. **Database funkcije i trigeri** — `has_role`, `has_role_in_org`, `is_platform_admin`, `is_template_assignee`, `handle_new_user`, `get_public_*`, notify trigeri, sync trigeri.
-5. **Storage bucket-i** — `qa-documents`, `accreditation-docs` (privatnost + ko ima pristup).
-6. **Mermaid ER dijagram** — vizuelni prikaz svih tabela i veza (FK), grupisan po domenima (Identitet, Organizacija, Kredencijali, Blockchain, Notifikacije/Audit).
-7. **Tok podataka** — kratak narativ: registracija → prijava → izdavanje → prihvatanje → anchoring → verifikacija/deljenje.
+- `credentials.share_show_skills` (boolean) kontroliše prikaz skills-a; earner ga može isključiti u Visibility kartici (`/earner/credentials/:id`).
+- RPC `get_public_credential` vraća skills samo kada je `share_show_skills = true`, a od QA podataka vraća samo `qa_type` i jedan `qa_document_path` (single).
+- Template ima i `qa_document_paths text[]` (više fajlova), ali to nije izloženo javno.
+- Bucket `qa-documents` je privatan — za javni preuzimanje treba signed URL.
 
-## Kako će se generisati
+## Promene
 
-- Pročitati šemu iz baze (`information_schema`, `pg_policies`, `pg_constraint`, enum vrednosti) preko read-only upita.
-- Pročitati FK veze za Mermaid dijagram.
-- Sastaviti `.md` fajl u `/mnt/documents/data-model.md`.
-- Isporučiti link za preuzimanje (`<presentation-artifact>`).
+### 1) Baza — `get_public_credential` (migracija)
 
-## Ishod
+- Skills se uvek vraćaju (ukloniti `CASE WHEN share_show_skills`).
+- Dodati u povratni skup `qa_document_paths text[]` (iz `templates.qa_document_paths`).
+- Ostali `share_show_*` togglovi ostaju netaknuti.
+- Takođe ažurirati `get_public_profile` da uvek vraća skills (uklanja se `case when c.share_show_skills`).
 
-Jedan `data-model.md` fajl koji možeš otvoriti u bilo kom Markdown čitaču (GitHub, VS Code, Obsidian…), sa ER dijagramom koji se renderuje automatski.
+### 2) Public signed URL za QA dokumente (server funkcija)
+
+Nova javna `createServerFn` (`src/lib/public-credential.functions.ts`) — `getPublicQaDocumentUrl({ shareToken, path })`:
+- Validira da `share_token` postoji, da je kredencijal `share_is_public = true`, i da je `path` deo `templates.qa_document_paths` (ili jednako legacy `qa_document_path`) za pripadajući template.
+- Vraća signed URL (npr. 5 min) iz buckta `qa-documents` koristeći `supabaseAdmin` (učitan unutar handlera).
+- Bez auth middleware-a (javno dostupno preko share linka), ali sa strogom validacijom prema share tokenu.
+
+### 3) Verify stranica — `src/routes/verify.$id.tsx`
+
+- Skills sekciju prikazivati uvek kada `cred.skills.length > 0` (ukloniti uslov `cred.sharing.showSkills`); naslov sekcije preimenovati u **"Learning outcomes"** radi jasnoće.
+- Dodati novu sekciju **"Quality assurance documents"** ispod Credential details:
+  - lista svih `qa_document_paths` sa prikazom naziva fajla i dugmetom "Download" koje poziva `getPublicQaDocumentUrl` i otvara dobijeni signed URL.
+  - Ako nema dokumenata, sekcija se ne prikazuje.
+
+### 4) Earner Visibility kartica — `src/routes/earner.credentials.$id.tsx`
+
+- Ukloniti red `["showSkills", "Show skills"]` iz togglova (skills se više ne mogu sakriti).
+- Kolona `share_show_skills` ostaje u bazi radi kompatibilnosti, ali se ignoriše.
+- Dodati malu napomenu ispod togglova: *"Learning outcomes and quality assurance documents are always visible on the shared verification page."*
+
+## Tehnički detalji
+
+```text
+RPC: public.get_public_credential(_share_token)
+  + qa_document_paths text[]      ← novo polje
+  ~ skills                         ← uvek c.skills (bez toggle-a)
+
+Server fn (public): getPublicQaDocumentUrl
+  in:  { shareToken: string, path: string }
+  out: { url: string, expiresInSec: number }
+  guard: credential.share_is_public = true
+         AND (path = template.qa_document_path
+              OR path = ANY(template.qa_document_paths))
+```
+
+## Van opsega
+
+- Ne menjamo izgled/sadržaj internog earner prikaza kredencijala.
+- Ne uklanjamo kolonu `share_show_skills` iz baze (izbegavamo nepotrebnu migraciju podataka i breaking change za eksterne integracije).

@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { DashboardHomeLink } from "@/components/DashboardHomeLink";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
-  ArrowLeft,
   BadgeCheck,
   CalendarClock,
+  Download,
+  FileText,
   FileWarning,
   GraduationCap,
   ShieldCheck,
@@ -17,6 +21,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
 import { useStore } from "@/lib/store";
 import { fetchPublicCredential, fetchCredentialVisibility } from "@/lib/credentials";
+import { getPublicQaDocumentUrl } from "@/lib/public-credential.functions";
 
 export const Route = createFileRoute("/verify/$id")({
   head: ({ params }) => ({
@@ -150,7 +155,7 @@ function RealVerify({
 
           {cred.skills && cred.skills.length > 0 && (
             <div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">Skills & competencies</div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Learning outcomes</div>
               <div className="mt-2 flex flex-wrap gap-1">
                 {cred.skills.map((s) => (
                   <Badge key={s} variant="secondary">{s}</Badge>
@@ -160,6 +165,8 @@ function RealVerify({
           )}
 
           <TemplateInfo cred={cred} />
+
+          <QaDocumentsSection cred={cred} shareToken={shareToken} />
 
           <CredentialBlockchainVerificationCard
             audience="public"
@@ -242,9 +249,9 @@ function MockVerify({ cred }: { cred: NonNullable<ReturnType<typeof useStore>["c
             {cred.ects && <Field label="Workload" value={`${cred.ects} ECTS`} />}
           </dl>
 
-          {cred.sharing.showSkills && cred.skills.length > 0 && (
+          {cred.skills.length > 0 && (
             <div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">Skills & competencies</div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Learning outcomes</div>
               <div className="mt-2 flex flex-wrap gap-1">
                 {cred.skills.map((s) => (
                   <Badge key={s} variant="secondary">{s}</Badge>
@@ -332,6 +339,63 @@ function TemplateInfo({ cred }: { cred: PublicCred }) {
           </div>
         ))}
       </dl>
+    </div>
+  );
+}
+
+function QaDocumentsSection({ cred, shareToken }: { cred: PublicCred; shareToken: string }) {
+  const anyOf = cred as any;
+  const paths: string[] = Array.from(
+    new Set<string>([
+      ...((anyOf.qa_document_paths as string[] | null) ?? []),
+      ...(anyOf.qa_document_path ? [anyOf.qa_document_path as string] : []),
+    ].filter(Boolean)),
+  );
+  const getUrl = useServerFn(getPublicQaDocumentUrl);
+  const [pending, setPending] = useState<string | null>(null);
+  if (paths.length === 0) return null;
+
+  async function open(path: string) {
+    try {
+      setPending(path);
+      const res = await getUrl({ data: { shareToken, path } });
+      window.open(res.url, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not open document");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  const fileName = (p: string) => p.split("/").pop() ?? p;
+
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+        Quality assurance documents
+      </div>
+      <ul className="space-y-2">
+        {paths.map((p) => (
+          <li
+            key={p}
+            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm"
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="truncate font-medium">{fileName(p)}</span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending === p}
+              onClick={() => open(p)}
+            >
+              <Download className="mr-1 h-3.5 w-3.5" />
+              {pending === p ? "Opening…" : "Download"}
+            </Button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
