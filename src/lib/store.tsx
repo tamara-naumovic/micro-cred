@@ -180,6 +180,7 @@ function mapTemplate(r: Row, orgName: Map<string, string>): MicroCredentialTempl
     expiryDate: (r.expiry_date as string | null) ?? undefined,
     status: (r.status as TemplateStatus) ?? "draft",
     version: (r.version as string) ?? "1.0",
+    blockchainStatus: (r.blockchain_status as MicroCredentialTemplate["blockchainStatus"] | null) ?? "not_requested",
   };
 }
 
