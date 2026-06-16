@@ -244,9 +244,9 @@ function MockVerify({ cred }: { cred: NonNullable<ReturnType<typeof useStore>["c
             {cred.ects && <Field label="Workload" value={`${cred.ects} ECTS`} />}
           </dl>
 
-          {cred.sharing.showSkills && cred.skills.length > 0 && (
+          {cred.skills.length > 0 && (
             <div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">Skills & competencies</div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Learning outcomes</div>
               <div className="mt-2 flex flex-wrap gap-1">
                 {cred.skills.map((s) => (
                   <Badge key={s} variant="secondary">{s}</Badge>
