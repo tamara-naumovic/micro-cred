@@ -128,6 +128,7 @@ export interface MicroCredentialTemplate {
   expiryDate?: string;
   status: TemplateStatus;
   version: string;
+  blockchainStatus?: "not_requested" | "queued" | "submitting" | "submitted" | "pending" | "confirmed" | "failed" | "cancelled" | "disabled";
 }
 
 export interface BlockchainPlaceholder {
