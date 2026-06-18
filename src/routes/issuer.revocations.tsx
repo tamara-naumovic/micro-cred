@@ -53,32 +53,52 @@ type Cred = {
   status: string;
 };
 
-function filterCreds<T extends Cred>(rows: T[], q: string): T[] {
-  const needle = q.trim().toLowerCase();
-  if (!needle) return rows;
-  return rows.filter(
-    (c) =>
-      c.earnerName.toLowerCase().includes(needle) ||
-      c.title.toLowerCase().includes(needle),
-  );
+function filterCreds<T extends Cred>(rows: T[], earnerQ: string, templateFilter: string): T[] {
+  const needle = earnerQ.trim().toLowerCase();
+  return rows.filter((c) => {
+    if (needle && !c.earnerName.toLowerCase().includes(needle)) return false;
+    if (templateFilter !== "all" && c.title !== templateFilter) return false;
+    return true;
+  });
 }
 
-function SearchBar({
-  value,
-  onChange,
+function FilterBar({
+  earnerQ,
+  onEarnerQ,
+  templateFilter,
+  onTemplateFilter,
+  templates,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  earnerQ: string;
+  onEarnerQ: (v: string) => void;
+  templateFilter: string;
+  onTemplateFilter: (v: string) => void;
+  templates: string[];
 }) {
   return (
-    <div className="relative max-w-sm">
-      <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-      <Input
-        placeholder="Search earner or micro-credential…"
-        className="pl-8"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
+    <div className="flex flex-wrap gap-3">
+      <div className="relative max-w-sm flex-1">
+        <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search earner…"
+          className="pl-8"
+          value={earnerQ}
+          onChange={(e) => onEarnerQ(e.target.value)}
+        />
+      </div>
+      <Select value={templateFilter} onValueChange={onTemplateFilter}>
+        <SelectTrigger className="w-[240px]">
+          <SelectValue placeholder="All templates" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All templates</SelectItem>
+          {templates.map((t) => (
+            <SelectItem key={t} value={t}>
+              {t}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
