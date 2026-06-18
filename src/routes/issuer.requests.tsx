@@ -61,15 +61,47 @@ function Queue() {
   } | null>(null);
   const [grade, setGrade] = useState("");
   const [expiry, setExpiry] = useState("");
+  const [earnerQuery, setEarnerQuery] = useState("");
+  const [templateFilter, setTemplateFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   if (!activeUser) return null;
   const isStaff = activeUser.subRole === "staff";
   const assignedIds = new Set(
     templateAssignees.filter((a) => a.userId === activeUser.id).map((a) => a.templateId),
   );
-  const queue = applications
+  const baseQueue = applications
     .filter((a) => a.issuerId === activeUser.organizationId && a.status !== "issued" && a.status !== "rejected")
     .filter((a) => (isStaff ? assignedIds.has(a.templateId) : true));
+
+  const templateOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    baseQueue.forEach((a) => map.set(a.templateId, a.templateTitle));
+    return Array.from(map, ([id, title]) => ({ id, title })).sort((a, b) =>
+      a.title.localeCompare(b.title),
+    );
+  }, [baseQueue]);
+
+  const statusOptions = useMemo(() => {
+    const present = new Set(baseQueue.map((a) => a.status));
+    return LIFECYCLE_STAGES.filter((s) => s !== "issued" && present.has(s));
+  }, [baseQueue]);
+
+  const q = earnerQuery.trim().toLowerCase();
+  const queue = baseQueue.filter((a) => {
+    if (q && !a.earnerName.toLowerCase().includes(q)) return false;
+    if (templateFilter !== "all" && a.templateId !== templateFilter) return false;
+    if (statusFilter !== "all" && a.status !== statusFilter) return false;
+    return true;
+  });
+
+  const filtersActive =
+    q.length > 0 || templateFilter !== "all" || statusFilter !== "all";
+  const clearFilters = () => {
+    setEarnerQuery("");
+    setTemplateFilter("all");
+    setStatusFilter("all");
+  };
 
   const openIssueDialog = (a: typeof queue[number]) => {
     const tpl = templates.find((t) => t.id === a.templateId);
