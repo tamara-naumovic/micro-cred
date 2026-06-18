@@ -174,11 +174,13 @@ function Revocations() {
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
 
-  const [historyQ, setHistoryQ] = useState("");
+  const [historyEarnerQ, setHistoryEarnerQ] = useState("");
+  const [historyTemplate, setHistoryTemplate] = useState("all");
   const [historyPage, setHistoryPage] = useState(1);
   const [historySize, setHistorySize] = useState(10);
 
-  const [activeQ, setActiveQ] = useState("");
+  const [activeEarnerQ, setActiveEarnerQ] = useState("");
+  const [activeTemplate, setActiveTemplate] = useState("all");
   const [activePage, setActivePage] = useState(1);
   const [activeSize, setActiveSize] = useState(10);
 
@@ -187,8 +189,23 @@ function Revocations() {
   const active = mine.filter((c) => c.status === "active");
   const revoked = mine.filter((c) => c.status === "revoked");
 
-  const filteredRevoked = useMemo(() => filterCreds(revoked, historyQ), [revoked, historyQ]);
-  const filteredActive = useMemo(() => filterCreds(active, activeQ), [active, activeQ]);
+  const revokedTemplates = useMemo(
+    () => Array.from(new Set(revoked.map((c) => c.title))).sort(),
+    [revoked],
+  );
+  const activeTemplates = useMemo(
+    () => Array.from(new Set(active.map((c) => c.title))).sort(),
+    [active],
+  );
+
+  const filteredRevoked = useMemo(
+    () => filterCreds(revoked, historyEarnerQ, historyTemplate),
+    [revoked, historyEarnerQ, historyTemplate],
+  );
+  const filteredActive = useMemo(
+    () => filterCreds(active, activeEarnerQ, activeTemplate),
+    [active, activeEarnerQ, activeTemplate],
+  );
 
   const revokedPages = Math.max(1, Math.ceil(filteredRevoked.length / historySize));
   const activePages = Math.max(1, Math.ceil(filteredActive.length / activeSize));
