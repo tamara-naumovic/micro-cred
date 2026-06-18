@@ -382,7 +382,7 @@ function Revocations() {
               {filteredActive.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="p-6 text-center text-sm text-muted-foreground">
-                    {activeQ ? "No matching credentials." : "No active credentials."}
+                    {activeEarnerQ || activeTemplate !== "all" ? "No matching credentials." : "No active credentials."}
                   </TableCell>
                 </TableRow>
               )}
