@@ -258,12 +258,18 @@ function Revocations() {
       <h2 className="mb-3 font-display text-lg font-semibold">Revocation history</h2>
       <Card className="mb-6">
         <CardContent className="space-y-3 p-4">
-          <SearchBar
-            value={historyQ}
-            onChange={(v) => {
-              setHistoryQ(v);
+          <FilterBar
+            earnerQ={historyEarnerQ}
+            onEarnerQ={(v) => {
+              setHistoryEarnerQ(v);
               setHistoryPage(1);
             }}
+            templateFilter={historyTemplate}
+            onTemplateFilter={(v) => {
+              setHistoryTemplate(v);
+              setHistoryPage(1);
+            }}
+            templates={revokedTemplates}
           />
         </CardContent>
         <div className="border-t">
