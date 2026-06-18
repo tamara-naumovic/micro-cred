@@ -298,7 +298,7 @@ function Revocations() {
               {filteredRevoked.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="p-6 text-center text-sm text-muted-foreground">
-                    {historyQ ? "No matching revocations." : "No revocations on record."}
+                    {historyEarnerQ || historyTemplate !== "all" ? "No matching revocations." : "No revocations on record."}
                   </TableCell>
                 </TableRow>
               )}
