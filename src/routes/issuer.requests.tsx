@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowRight, Send, XCircle } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight, Search, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -18,6 +18,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useStore } from "@/lib/store";
 import { LIFECYCLE_STAGES, type RequestStatus } from "@/lib/types";
 
@@ -54,15 +61,47 @@ function Queue() {
   } | null>(null);
   const [grade, setGrade] = useState("");
   const [expiry, setExpiry] = useState("");
+  const [earnerQuery, setEarnerQuery] = useState("");
+  const [templateFilter, setTemplateFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   if (!activeUser) return null;
   const isStaff = activeUser.subRole === "staff";
   const assignedIds = new Set(
     templateAssignees.filter((a) => a.userId === activeUser.id).map((a) => a.templateId),
   );
-  const queue = applications
+  const baseQueue = applications
     .filter((a) => a.issuerId === activeUser.organizationId && a.status !== "issued" && a.status !== "rejected")
     .filter((a) => (isStaff ? assignedIds.has(a.templateId) : true));
+
+  const templateOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    baseQueue.forEach((a) => map.set(a.templateId, a.templateTitle));
+    return Array.from(map, ([id, title]) => ({ id, title })).sort((a, b) =>
+      a.title.localeCompare(b.title),
+    );
+  }, [baseQueue]);
+
+  const statusOptions = useMemo(() => {
+    const present = new Set(baseQueue.map((a) => a.status));
+    return LIFECYCLE_STAGES.filter((s) => s !== "issued" && present.has(s));
+  }, [baseQueue]);
+
+  const q = earnerQuery.trim().toLowerCase();
+  const queue = baseQueue.filter((a) => {
+    if (q && !a.earnerName.toLowerCase().includes(q)) return false;
+    if (templateFilter !== "all" && a.templateId !== templateFilter) return false;
+    if (statusFilter !== "all" && a.status !== statusFilter) return false;
+    return true;
+  });
+
+  const filtersActive =
+    q.length > 0 || templateFilter !== "all" || statusFilter !== "all";
+  const clearFilters = () => {
+    setEarnerQuery("");
+    setTemplateFilter("all");
+    setStatusFilter("all");
+  };
 
   const openIssueDialog = (a: typeof queue[number]) => {
     const tpl = templates.find((t) => t.id === a.templateId);
@@ -93,9 +132,62 @@ function Queue() {
       title="Issuance Requests"
       description="Move each application through the lifecycle. The final step issues and signs the credential."
     >
+      <Card>
+        <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_220px_220px_auto] md:items-end">
+          <div className="grid gap-1.5">
+            <Label htmlFor="earner-search" className="text-xs">Earner name</Label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="earner-search"
+                placeholder="Search earner…"
+                className="pl-8"
+                value={earnerQuery}
+                onChange={(e) => setEarnerQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs">Micro-credential</Label>
+            <Select value={templateFilter} onValueChange={setTemplateFilter}>
+              <SelectTrigger><SelectValue placeholder="All templates" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All templates</SelectItem>
+                {templateOptions.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs">Status</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {statusOptions.map((s) => (
+                  <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {filtersActive && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>Clear filters</Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {filtersActive && (
+        <p className="text-xs text-muted-foreground">
+          Showing {queue.length} of {baseQueue.length} requests
+        </p>
+      )}
+
       {queue.length === 0 && (
         <Card>
-          <CardContent className="p-8 text-sm text-muted-foreground">No active applications.</CardContent>
+          <CardContent className="p-8 text-sm text-muted-foreground">
+            {filtersActive ? "No requests match the current filters." : "No active applications."}
+          </CardContent>
         </Card>
       )}
       <div className="space-y-4">
