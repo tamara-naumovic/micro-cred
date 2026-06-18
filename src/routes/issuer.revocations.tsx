@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { XOctagon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Search, XOctagon } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -8,8 +8,29 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/issuer/revocations")({
@@ -22,16 +43,146 @@ export const Route = createFileRoute("/issuer/revocations")({
 });
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const PAGE_SIZES = [10, 20, 50, 100];
+
+type Cred = {
+  id: string;
+  earnerName: string;
+  title: string;
+  revocationReason?: string | null;
+  status: string;
+};
+
+function filterCreds<T extends Cred>(rows: T[], q: string): T[] {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return rows;
+  return rows.filter(
+    (c) =>
+      c.earnerName.toLowerCase().includes(needle) ||
+      c.title.toLowerCase().includes(needle),
+  );
+}
+
+function SearchBar({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="relative max-w-sm">
+      <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Input
+        placeholder="Search earner or micro-credential…"
+        className="pl-8"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
+function Pager({
+  total,
+  page,
+  pageSize,
+  onPage,
+  onPageSize,
+}: {
+  total: number;
+  page: number;
+  pageSize: number;
+  onPage: (p: number) => void;
+  onPageSize: (n: number) => void;
+}) {
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const current = Math.min(page, pages);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t p-3 text-sm">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <span>Rows per page</span>
+        <Select
+          value={String(pageSize)}
+          onValueChange={(v) => {
+            onPageSize(Number(v));
+            onPage(1);
+          }}
+        >
+          <SelectTrigger className="h-8 w-[80px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PAGE_SIZES.map((n) => (
+              <SelectItem key={n} value={String(n)}>
+                {n}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex items-center gap-3 text-muted-foreground">
+        <span>
+          Page {current} of {pages} · {total} result{total === 1 ? "" : "s"}
+        </span>
+        <div className="flex gap-1">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onPage(current - 1)}
+            disabled={current <= 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onPage(current + 1)}
+            disabled={current >= pages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Revocations() {
   const { activeUser, credentials, revokeCredential } = useStore();
   const [target, setTarget] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
+
+  const [historyQ, setHistoryQ] = useState("");
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historySize, setHistorySize] = useState(10);
+
+  const [activeQ, setActiveQ] = useState("");
+  const [activePage, setActivePage] = useState(1);
+  const [activeSize, setActiveSize] = useState(10);
+
   if (!activeUser) return null;
   const mine = credentials.filter((c) => c.issuerId === activeUser.organizationId);
   const active = mine.filter((c) => c.status === "active");
   const revoked = mine.filter((c) => c.status === "revoked");
+
+  const filteredRevoked = useMemo(() => filterCreds(revoked, historyQ), [revoked, historyQ]);
+  const filteredActive = useMemo(() => filterCreds(active, activeQ), [active, activeQ]);
+
+  const revokedPages = Math.max(1, Math.ceil(filteredRevoked.length / historySize));
+  const activePages = Math.max(1, Math.ceil(filteredActive.length / activeSize));
+  const revokedPageSafe = Math.min(historyPage, revokedPages);
+  const activePageSafe = Math.min(activePage, activePages);
+
+  const revokedSlice = filteredRevoked.slice(
+    (revokedPageSafe - 1) * historySize,
+    revokedPageSafe * historySize,
+  );
+  const activeSlice = filteredActive.slice(
+    (activePageSafe - 1) * activeSize,
+    activePageSafe * activeSize,
+  );
 
   async function handleRevoke(id: string) {
     if (!reason.trim()) {
@@ -63,15 +214,88 @@ function Revocations() {
   }
 
   return (
-    <PageShell title="Revocations" description="Mark credentials as revoked when integrity issues are confirmed.">
+    <PageShell
+      title="Revocations"
+      description="Mark credentials as revoked when integrity issues are confirmed."
+    >
+      <h2 className="mb-3 font-display text-lg font-semibold">Revocation history</h2>
       <Card className="mb-6">
-        <CardContent className="p-0">
+        <CardContent className="space-y-3 p-4">
+          <SearchBar
+            value={historyQ}
+            onChange={(v) => {
+              setHistoryQ(v);
+              setHistoryPage(1);
+            }}
+          />
+        </CardContent>
+        <div className="border-t">
           <Table>
             <TableHeader>
-              <TableRow><TableHead>ID</TableHead><TableHead>Earner</TableHead><TableHead>Title</TableHead><TableHead></TableHead></TableRow>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Earner</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
             </TableHeader>
             <TableBody>
-              {active.map((c) => (
+              {revokedSlice.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                  <TableCell>{c.earnerName}</TableCell>
+                  <TableCell>{c.title}</TableCell>
+                  <TableCell className="text-sm">{c.revocationReason ?? "—"}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={c.status} />
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredRevoked.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="p-6 text-center text-sm text-muted-foreground">
+                    {historyQ ? "No matching revocations." : "No revocations on record."}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        {filteredRevoked.length > 0 && (
+          <Pager
+            total={filteredRevoked.length}
+            page={revokedPageSafe}
+            pageSize={historySize}
+            onPage={setHistoryPage}
+            onPageSize={setHistorySize}
+          />
+        )}
+      </Card>
+
+      <h2 className="mb-3 font-display text-lg font-semibold">Revoke a credential</h2>
+      <Card>
+        <CardContent className="space-y-3 p-4">
+          <SearchBar
+            value={activeQ}
+            onChange={(v) => {
+              setActiveQ(v);
+              setActivePage(1);
+            }}
+          />
+        </CardContent>
+        <div className="border-t">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Earner</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {activeSlice.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-mono text-xs">{c.id}</TableCell>
                   <TableCell>{c.earnerName}</TableCell>
@@ -79,13 +303,24 @@ function Revocations() {
                   <TableCell>
                     <Dialog open={target === c.id} onOpenChange={(o) => setTarget(o ? c.id : null)}>
                       <DialogTrigger asChild>
-                        <Button size="sm" variant="outline"><XOctagon className="mr-2 h-4 w-4" />Revoke</Button>
+                        <Button size="sm" variant="outline">
+                          <XOctagon className="mr-2 h-4 w-4" />
+                          Revoke
+                        </Button>
                       </DialogTrigger>
                       <DialogContent>
-                        <DialogHeader><DialogTitle>Revoke {c.id}</DialogTitle></DialogHeader>
-                        <Input placeholder="Reason for revocation" value={reason} onChange={(e) => setReason(e.target.value)} />
+                        <DialogHeader>
+                          <DialogTitle>Revoke {c.id}</DialogTitle>
+                        </DialogHeader>
+                        <Input
+                          placeholder="Reason for revocation"
+                          value={reason}
+                          onChange={(e) => setReason(e.target.value)}
+                        />
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setTarget(null)} disabled={pending}>Cancel</Button>
+                          <Button variant="outline" onClick={() => setTarget(null)} disabled={pending}>
+                            Cancel
+                          </Button>
                           <Button onClick={() => handleRevoke(c.id)} disabled={pending}>
                             {pending ? "Revoking…" : "Confirm revocation"}
                           </Button>
@@ -95,32 +330,25 @@ function Revocations() {
                   </TableCell>
                 </TableRow>
               ))}
-              {active.length === 0 && <TableRow><TableCell colSpan={4} className="p-6 text-center text-sm text-muted-foreground">No active credentials.</TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <h2 className="mb-3 font-display text-lg font-semibold">Revocation history</h2>
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow><TableHead>ID</TableHead><TableHead>Earner</TableHead><TableHead>Reason</TableHead><TableHead>Status</TableHead></TableRow>
-            </TableHeader>
-            <TableBody>
-              {revoked.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
-                  <TableCell>{c.earnerName}</TableCell>
-                  <TableCell className="text-sm">{c.revocationReason ?? "—"}</TableCell>
-                  <TableCell><StatusBadge status={c.status} /></TableCell>
+              {filteredActive.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="p-6 text-center text-sm text-muted-foreground">
+                    {activeQ ? "No matching credentials." : "No active credentials."}
+                  </TableCell>
                 </TableRow>
-              ))}
-              {revoked.length === 0 && <TableRow><TableCell colSpan={4} className="p-6 text-center text-sm text-muted-foreground">No revocations on record.</TableCell></TableRow>}
+              )}
             </TableBody>
           </Table>
-        </CardContent>
+        </div>
+        {filteredActive.length > 0 && (
+          <Pager
+            total={filteredActive.length}
+            page={activePageSafe}
+            pageSize={activeSize}
+            onPage={setActivePage}
+            onPageSize={setActiveSize}
+          />
+        )}
       </Card>
     </PageShell>
   );
