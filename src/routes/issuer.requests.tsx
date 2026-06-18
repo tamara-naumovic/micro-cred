@@ -132,9 +132,62 @@ function Queue() {
       title="Issuance Requests"
       description="Move each application through the lifecycle. The final step issues and signs the credential."
     >
+      <Card>
+        <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_220px_220px_auto] md:items-end">
+          <div className="grid gap-1.5">
+            <Label htmlFor="earner-search" className="text-xs">Earner name</Label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="earner-search"
+                placeholder="Search earner…"
+                className="pl-8"
+                value={earnerQuery}
+                onChange={(e) => setEarnerQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs">Micro-credential</Label>
+            <Select value={templateFilter} onValueChange={setTemplateFilter}>
+              <SelectTrigger><SelectValue placeholder="All templates" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All templates</SelectItem>
+                {templateOptions.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs">Status</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {statusOptions.map((s) => (
+                  <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {filtersActive && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>Clear filters</Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {filtersActive && (
+        <p className="text-xs text-muted-foreground">
+          Showing {queue.length} of {baseQueue.length} requests
+        </p>
+      )}
+
       {queue.length === 0 && (
         <Card>
-          <CardContent className="p-8 text-sm text-muted-foreground">No active applications.</CardContent>
+          <CardContent className="p-8 text-sm text-muted-foreground">
+            {filtersActive ? "No requests match the current filters." : "No active applications."}
+          </CardContent>
         </Card>
       )}
       <div className="space-y-4">
