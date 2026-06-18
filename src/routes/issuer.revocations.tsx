@@ -53,32 +53,52 @@ type Cred = {
   status: string;
 };
 
-function filterCreds<T extends Cred>(rows: T[], q: string): T[] {
-  const needle = q.trim().toLowerCase();
-  if (!needle) return rows;
-  return rows.filter(
-    (c) =>
-      c.earnerName.toLowerCase().includes(needle) ||
-      c.title.toLowerCase().includes(needle),
-  );
+function filterCreds<T extends Cred>(rows: T[], earnerQ: string, templateFilter: string): T[] {
+  const needle = earnerQ.trim().toLowerCase();
+  return rows.filter((c) => {
+    if (needle && !c.earnerName.toLowerCase().includes(needle)) return false;
+    if (templateFilter !== "all" && c.title !== templateFilter) return false;
+    return true;
+  });
 }
 
-function SearchBar({
-  value,
-  onChange,
+function FilterBar({
+  earnerQ,
+  onEarnerQ,
+  templateFilter,
+  onTemplateFilter,
+  templates,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  earnerQ: string;
+  onEarnerQ: (v: string) => void;
+  templateFilter: string;
+  onTemplateFilter: (v: string) => void;
+  templates: string[];
 }) {
   return (
-    <div className="relative max-w-sm">
-      <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-      <Input
-        placeholder="Search earner or micro-credential…"
-        className="pl-8"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
+    <div className="flex flex-wrap gap-3">
+      <div className="relative max-w-sm flex-1">
+        <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search earner…"
+          className="pl-8"
+          value={earnerQ}
+          onChange={(e) => onEarnerQ(e.target.value)}
+        />
+      </div>
+      <Select value={templateFilter} onValueChange={onTemplateFilter}>
+        <SelectTrigger className="w-[240px]">
+          <SelectValue placeholder="All templates" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All templates</SelectItem>
+          {templates.map((t) => (
+            <SelectItem key={t} value={t}>
+              {t}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -154,11 +174,13 @@ function Revocations() {
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
 
-  const [historyQ, setHistoryQ] = useState("");
+  const [historyEarnerQ, setHistoryEarnerQ] = useState("");
+  const [historyTemplate, setHistoryTemplate] = useState("all");
   const [historyPage, setHistoryPage] = useState(1);
   const [historySize, setHistorySize] = useState(10);
 
-  const [activeQ, setActiveQ] = useState("");
+  const [activeEarnerQ, setActiveEarnerQ] = useState("");
+  const [activeTemplate, setActiveTemplate] = useState("all");
   const [activePage, setActivePage] = useState(1);
   const [activeSize, setActiveSize] = useState(10);
 
@@ -167,8 +189,23 @@ function Revocations() {
   const active = mine.filter((c) => c.status === "active");
   const revoked = mine.filter((c) => c.status === "revoked");
 
-  const filteredRevoked = useMemo(() => filterCreds(revoked, historyQ), [revoked, historyQ]);
-  const filteredActive = useMemo(() => filterCreds(active, activeQ), [active, activeQ]);
+  const revokedTemplates = useMemo(
+    () => Array.from(new Set(revoked.map((c) => c.title))).sort(),
+    [revoked],
+  );
+  const activeTemplates = useMemo(
+    () => Array.from(new Set(active.map((c) => c.title))).sort(),
+    [active],
+  );
+
+  const filteredRevoked = useMemo(
+    () => filterCreds(revoked, historyEarnerQ, historyTemplate),
+    [revoked, historyEarnerQ, historyTemplate],
+  );
+  const filteredActive = useMemo(
+    () => filterCreds(active, activeEarnerQ, activeTemplate),
+    [active, activeEarnerQ, activeTemplate],
+  );
 
   const revokedPages = Math.max(1, Math.ceil(filteredRevoked.length / historySize));
   const activePages = Math.max(1, Math.ceil(filteredActive.length / activeSize));
@@ -221,12 +258,18 @@ function Revocations() {
       <h2 className="mb-3 font-display text-lg font-semibold">Revocation history</h2>
       <Card className="mb-6">
         <CardContent className="space-y-3 p-4">
-          <SearchBar
-            value={historyQ}
-            onChange={(v) => {
-              setHistoryQ(v);
+          <FilterBar
+            earnerQ={historyEarnerQ}
+            onEarnerQ={(v) => {
+              setHistoryEarnerQ(v);
               setHistoryPage(1);
             }}
+            templateFilter={historyTemplate}
+            onTemplateFilter={(v) => {
+              setHistoryTemplate(v);
+              setHistoryPage(1);
+            }}
+            templates={revokedTemplates}
           />
         </CardContent>
         <div className="border-t">
@@ -255,7 +298,7 @@ function Revocations() {
               {filteredRevoked.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="p-6 text-center text-sm text-muted-foreground">
-                    {historyQ ? "No matching revocations." : "No revocations on record."}
+                    {historyEarnerQ || historyTemplate !== "all" ? "No matching revocations." : "No revocations on record."}
                   </TableCell>
                 </TableRow>
               )}
@@ -276,12 +319,18 @@ function Revocations() {
       <h2 className="mb-3 font-display text-lg font-semibold">Revoke a credential</h2>
       <Card>
         <CardContent className="space-y-3 p-4">
-          <SearchBar
-            value={activeQ}
-            onChange={(v) => {
-              setActiveQ(v);
+          <FilterBar
+            earnerQ={activeEarnerQ}
+            onEarnerQ={(v) => {
+              setActiveEarnerQ(v);
               setActivePage(1);
             }}
+            templateFilter={activeTemplate}
+            onTemplateFilter={(v) => {
+              setActiveTemplate(v);
+              setActivePage(1);
+            }}
+            templates={activeTemplates}
           />
         </CardContent>
         <div className="border-t">
@@ -333,7 +382,7 @@ function Revocations() {
               {filteredActive.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="p-6 text-center text-sm text-muted-foreground">
-                    {activeQ ? "No matching credentials." : "No active credentials."}
+                    {activeEarnerQ || activeTemplate !== "all" ? "No matching credentials." : "No active credentials."}
                   </TableCell>
                 </TableRow>
               )}
