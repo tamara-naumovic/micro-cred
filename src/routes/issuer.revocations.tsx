@@ -319,12 +319,18 @@ function Revocations() {
       <h2 className="mb-3 font-display text-lg font-semibold">Revoke a credential</h2>
       <Card>
         <CardContent className="space-y-3 p-4">
-          <SearchBar
-            value={activeQ}
-            onChange={(v) => {
-              setActiveQ(v);
+          <FilterBar
+            earnerQ={activeEarnerQ}
+            onEarnerQ={(v) => {
+              setActiveEarnerQ(v);
               setActivePage(1);
             }}
+            templateFilter={activeTemplate}
+            onTemplateFilter={(v) => {
+              setActiveTemplate(v);
+              setActivePage(1);
+            }}
+            templates={activeTemplates}
           />
         </CardContent>
         <div className="border-t">
