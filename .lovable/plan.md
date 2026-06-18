@@ -1,56 +1,23 @@
-## Problem
+## Goal
+Add filters to Issuance Requests (`/issuer/requests`): by earner name, by micro‑credential template, and by current status.
 
-Template ima dva odvojena polja: **Learning outcomes** (`templates.outcomes`) i **Skills** (`templates.skills`). Na kredencijalu se čuva samo `credentials.skills`, a stranica za verifikaciju (`/verify/:id`) prikazuje te skill-ove pod oznakom **"Learning outcomes"** — što je pogrešno. Pravi learning outcomes iz šablona se uopšte ne pojavljuju ni na verifikaciji ni na earner-ovoj stranici kredencijala. Šablonska stranica (`issuer.microcredential-templates.$id`) je već ispravna (prikazuje oba odvojeno).
+## UI changes (`src/routes/issuer.requests.tsx`)
+Add a filter bar above the queue list, in a Card:
 
-## Rešenje
+1. **Earner name** — `Input` with search icon, free-text, case-insensitive substring match on `a.earnerName`.
+2. **Template** — `Select` listing all distinct templates present in the current issuer's queue (value = templateId, plus "All templates").
+3. **Status** — `Select` over lifecycle stages currently used in the queue (excluding `issued`/`rejected` which are already filtered out), plus "All statuses". Labels via existing status formatting (replace `_` with space, matching `StatusBadge`).
 
-Dovući `outcomes` iz povezanog šablona u javnu RPC-u i prikazati ih kao zasebnu sekciju, a Skills vratiti pod ispravnu oznaku.
+State held locally with `useState` (3 vars). A "Clear filters" ghost button appears when any filter is active.
 
-### 1. DB migracija — `get_public_credential`
+Empty-state copy adapts: if filters are active and no results → "No requests match the current filters." Otherwise existing "No active applications."
 
-Dodati `outcomes text[]` u povratni tip funkcije (LEFT JOIN na `templates` preko `c.template_id`):
+A small count line under the title: "Showing X of Y requests" when filters active.
 
-```sql
-DROP FUNCTION IF EXISTS public.get_public_credential(text);
-CREATE OR REPLACE FUNCTION public.get_public_credential(_share_token text)
-RETURNS TABLE(
-  ... postojeća polja ...,
-  skills text[],
-  outcomes text[],            -- NOVO
-  ... ostalo ...
-)
-...
-  SELECT
-    ...,
-    c.skills,
-    COALESCE(t.outcomes, '{}'::text[]) AS outcomes,
-    ...
-  FROM credentials c
-  LEFT JOIN templates t ON t.id = c.template_id
-  WHERE c.share_token = _share_token AND c.share_is_public = true;
-```
+## Out of scope
+- URL search params persistence (keeping it simple with local state, consistent with current page).
+- Changes to data model or store.
+- Filtering on closed (issued/rejected) applications — page intentionally shows only the active queue.
 
-Takođe dodati `outcomes` u `get_public_credential_evidence` JSON payload (ako se koristi) i ažurirati `get_public_profile` da vraća `outcomes` po kredencijalu na isti način.
-
-### 2. `src/routes/verify.$id.tsx` (Cloud grana, ~linije 139–165)
-
-- Preimenovati postojeću sekciju "Learning outcomes" (koja zapravo prikazuje `cred.skills`) → **"Skills"**.
-- Iznad nje dodati novu sekciju **"Learning outcomes"** koja renderuje `cred.outcomes` kao bullet listu (isti format kao na template detail-u: `<ul class="list-disc">`).
-- Obe sekcije se prikazuju bezuslovno ako imaju sadržaja (outcomes su obavezni za public share po prethodnoj odluci).
-
-Mock grana (linije 252–261): isti tretman — Skills ostaje, ali pošto mock store nema outcomes, prikazati outcomes samo ako postoji `cred.outcomes` (neobavezno za demo).
-
-### 3. `src/routes/earner.credentials.$id.tsx`
-
-- U Cloud preview kartici (oko linije 110/164, gde se prosleđuje `skills={cred.skills}`) dovući i prikazati `outcomes` iz povezanog šablona. Učitati `templates.outcomes` zajedno sa postojećim template fetch-om (već postoji `template_id`).
-- Render: dve odvojene sekcije — **Learning outcomes** (bullet lista) iznad **Skills** (badge-ovi). Isti raspored kao na verifikaciji da bi earner video tačno ono što gledalac vidi.
-
-### 4. Types
-
-- `src/integrations/supabase/types.ts`: dodati `outcomes: string[]` u Returns tip za `get_public_credential` (i `get_public_profile` ako se ažurira).
-
-## Van obima
-
-- Promene na `issuer.microcredential-templates.$id.tsx` i `.new.tsx` (već ispravno razdvajaju outcomes/skills).
-- Denormalizacija `outcomes` u sam `credentials` red — dovoljno je čitanje preko JOIN-a; sprečava razilaženje sa šablonom.
-- Promene na VC/blockchain payload-ima.
+## Files touched
+- `src/routes/issuer.requests.tsx` (only)
