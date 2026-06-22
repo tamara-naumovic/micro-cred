@@ -1,97 +1,56 @@
 
-# Plan: Višejezičnost (EN/SR) za earner deo
+# Plan: Završetak earner i18n + dropdown za jezik u header-u
 
-Ovaj plan uvodi internacionalizaciju samo za **earner** deo aplikacije, sa engleskim kao podrazumevanim jezikom i srpskim kao alternativom. Jezik se čuva na nivou korisničkog profila i sinhronizuje između uređaja. Vodiči (guided tours) i ručno uputstvo (manual) za earner-a se prevode na srpski.
+## 1. Dropdown za promenu jezika u header-u
 
-## Obuhvat
+Pored ikonice za obaveštenja u `AppSidebarLayout` dodajem kompaktan dropdown (`Globe` ikonica + kratak indikator EN/SR) sa dve opcije: English / Srpski.
 
-**U obuhvatu (earner):**
-- Sve `src/routes/earner.*.tsx` stranice
-- Earner navigacija i sidebar grupe za earner ulogu
-- `src/lib/tour/earnerTour.ts` (svi koraci tour-a)
-- `src/routes/earner.manual.tsx` (kompletan sadržaj)
-- Earner notifikacije UI tekstovi (ne i sadržaj iz baze)
-- Zajedničke UI komponente koje earner koristi (StatusBadge labele, dugmad, dijalozi) — samo prikazni tekstovi
-- Status/lifecycle labele iz `src/lib/status-labels.ts` i `src/lib/evidence/labels.ts` koje vidi earner
+- Prikazuje se samo kada je korisnik earner (issuer i admin za sada nisu u obuhvatu).
+- On-change: poziva `updateMyLanguage` server fn i `setAppLanguage`, pokazuje toast.
+- Inicijalna vrednost: trenutni `i18n.language`.
 
-**Van obuhvata (za sada):**
-- Issuer i admin rute, tour-i, manual
-- Public rute (login, verify, profile/$token, issuers/*) — ostaju EN
-- Email šabloni i server-side notifikacije (sadržaj iz baze, triggera)
-- SEO meta tagovi (ostavljamo EN)
-- Zod validacione poruke (ostaju EN)
+## 2. Terminologija na srpskom
 
-## Korisničko iskustvo
+Ispravka u svim postojećim i novim srpskim prevodima: **mikrokredencijal** (jedna reč, bez crtice), padeži:
+- mikrokredencijal / mikrokredencijala / mikrokredencijale / mikrokredencijalima
+- "micro-credentials" → "mikrokredencijali"
+- "Micro-credential templates" → "Šabloni mikrokredencijala"
 
-1. Novi korisnik dobija engleski po defaultu.
-2. U `src/routes/earner.settings.tsx` se dodaje sekcija "Language / Jezik" sa dva izbora: English / Srpski.
-3. Promena se odmah primenjuje u UI-u i upisuje u `profiles.language` u bazi.
-4. Pri sledećoj prijavi (i na drugim uređajima) jezik se učitava iz profila.
-5. Ako je jezik srpski i korisnik prvi put otvori earner stranicu sa tour-om, tour se prikazuje na srpskom.
-6. Manual (`/earner/manual`) prikazuje sadržaj na izabranom jeziku.
+Ažuriram postojeće `sr/common.json`, `sr/earner.json`, `sr/tour.json`, `sr/manual.json` gde se pojavljuje "mikro-kredencijal".
 
-## Tehnički pristup
+## 3. Prevod preostalih earner ruta
 
-**Biblioteka:** `react-i18next` + `i18next` (laka integracija sa TanStack Start, ne zahteva SSR konfiguraciju jer earner rute idu kroz `_authenticated` layout sa `ssr: false`).
+Redosled (svaka ruta dobija novi namespace ključ u `earner.json` na oba jezika):
 
-**Struktura prevoda:**
-```
-src/i18n/
-  index.ts                 # i18next inicijalizacija
-  LanguageProvider.tsx     # context provider + sync sa profilom
-  locales/
-    en/
-      common.json          # zajedničke labele, dugmad, statusi
-      earner.json          # earner rute (po sekcijama)
-      tour.json            # tour koraci
-      manual.json          # manual sadržaj
-    sr/
-      common.json
-      earner.json
-      tour.json
-      manual.json
-```
+1. **`earner.credentials.index.tsx`** — naslovi, filteri, kolone tabele, prazna stanja, dugmad.
+2. **`earner.credentials.$id.tsx`** — naslovi sekcija (Details, Evidence, Blockchain proof, Sharing/privacy), dugmad (Accept/Reject, Copy link, Download), labele za sve toggle-ove privatnosti.
+3. **`earner.applications.tsx`** — naslov, filteri, status labele (kroz `common.credentialStatus` + nove `applicationStatus`), prazna stanja, akcije ("Edit & resend", "Accept rejection").
+4. **`earner.apply.tsx`** — naslov, filteri (po izdavaocu / oblasti / nivou), kartice šablona, dugme "Apply".
+5. **`earner.profile.tsx`** — naslov, sekcije, dugmad za deljenje.
+6. **`earner.notifications.tsx`** — naslov, "Mark all as read", prazno stanje.
+7. **`earner.microcredential-templates.$id.tsx`** — naslovi sekcija (Description, Outcomes, Skills, Prerequisites, Quality assurance), dugme za prijavu.
 
-**Baza podataka:**
-- Migracija: `ALTER TABLE public.profiles ADD COLUMN language text NOT NULL DEFAULT 'en' CHECK (language IN ('en','sr'));`
-- Postojeća RLS politika za update sopstvenog profila pokriva ovo polje.
+Za svaku rutu:
+- `useTranslation("earner")` u komponenti.
+- Sve hardcoded UI tekstove zameniti `t(...)` pozivima.
+- Dinamički sadržaj iz baze (naslovi šablona, imena izdavaoca, opisi) ostaje na originalnom jeziku — ne prevodi se.
 
-**Provider:**
-- `LanguageProvider` čita `language` iz `profiles` pri mountu (preko postojećeg auth context-a), poziva `i18n.changeLanguage(lang)`.
-- Fallback redosled: profil → `localStorage` (za brz inicijalni prikaz pre nego što auth učita profil) → `'en'`.
-- Provider se uključuje u `src/routes/__root.tsx`.
+## 4. Status labele
 
-**Switcher:**
-- U `src/routes/earner.settings.tsx`: Select sa dve opcije, on-change poziva server fn `updateLanguagePreference(lang)` koji upisuje u `profiles`, zatim `i18n.changeLanguage(lang)` i `localStorage.setItem`.
+Refaktorisati `src/lib/status-labels.ts` i `src/lib/evidence/labels.ts`:
+- Dodati helper `useCredentialLifecycleLabel()` i `useBlockchainLabel()` koji koriste `i18n.t`.
+- Postojeće `CREDENTIAL_LIFECYCLE_LABEL` itd. mape ostaju (za server kontekst / fallback), ali komponente koje ih trenutno koriste u earner ruti prelaze na hook.
+- `StatusBadge` komponenta — prepraviti da pokušava prevod preko `i18n.t("credentialStatus.<key>", { ns: "common" })` sa fallback-om na original string (tako issuer/admin koji prosleđuje drugi enum ne pukne).
 
-**Tour-ovi:**
-- `earnerTour.ts` se refaktoriše da uzima `t` funkciju (ili da čita `i18n.t('tour:...')`) umesto hardcoded stringova.
-- `startEarnerTour(...)` čita trenutni jezik iz `i18n.language` i bira odgovarajuće tekstove.
+## 5. Tehnički detalji
 
-**Manual:**
-- `earner.manual.tsx` koristi `useTranslation('manual')` za sve sekcije.
+- Novi UI elementi (dropdown za jezik) koriste postojeću `DropdownMenu` shadcn komponentu i `Globe` ikonicu iz `lucide-react`.
+- Dropdown u header-u i Select u `earner/settings` slušaju isti i18n state — promena na jednom mestu odmah se odražava na drugom.
+- Default vrednost ostaje `en`; svi novi korisnici dobijaju engleski.
 
-**Komponente:**
-- Svaka earner ruta dobija `const { t } = useTranslation('earner')` i zamenjuje hardcoded tekstove sa `t('section.key')`.
-- Zajedničke komponente (StatusBadge, dugmad u dijalozima) koriste `useTranslation('common')`.
+## Van obuhvata (i dalje)
 
-## Plan rada (sekvencijalno)
-
-1. **Infrastruktura** — instaliranje `i18next` + `react-i18next`, kreiranje `src/i18n/`, provider, migracija za `profiles.language`, server fn za update jezika.
-2. **Switcher** — UI u `earner.settings.tsx`.
-3. **Zajednički prevodi** — `common.json` (statusi, lifecycle, dugmad, "Cancel", "Save", "Loading", "Error" itd.) i refaktor `status-labels.ts` / `evidence/labels.ts`.
-4. **Earner rute** — redom: `earner.index`, `earner.credentials.index`, `earner.credentials.$id`, `earner.applications`, `earner.apply`, `earner.profile`, `earner.settings`, `earner.notifications`, `earner.microcredential-templates.$id`.
-5. **Tour** — `earnerTour.ts` na oba jezika.
-6. **Manual** — `earner.manual.tsx` na oba jezika.
-7. **Sidebar** — earner grupe i stavke u `AppSidebarLayout.tsx` (samo earner deo navigacije).
-
-## Šta ostaje na engleskom (za sada)
-
-- Issuer/admin UI i tour-ovi
-- Public stranice
-- Email i baza-pokretane notifikacije
-- Validacione poruke i SEO meta
-
-## Otvorena pitanja
-
-Nijedno — sve glavne odluke su definisane iz korisničkih odgovora (samo earner, srpski tour, EN default, čuvanje na profilu).
+- Issuer i admin rute, njihovi tour-i i manual.
+- Public stranice (login, verify, profile/$token, issuers/*).
+- Email notifikacije i sadržaj iz baze.
+- SEO meta tagovi, Zod validacione poruke.

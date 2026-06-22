@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ExternalLink, GraduationCap, Share2, UserCircle } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/earner/profile")({
 
 function Profile() {
   const { activeUser, credentials } = useStore();
+  const { t } = useTranslation("earner");
   const [profileToken, setProfileToken] = useState<string | null>(null);
 
   const mine = useMemo(
@@ -50,18 +52,18 @@ function Profile() {
 
   return (
     <PageShell
-      title="Public profile"
-      description="A single shareable page that aggregates all credentials you've made public. Share it on LinkedIn, by link, or via QR."
+      title={t("profile.title")}
+      description={t("profile.description")}
       actions={
         profileUrl && (
           <ShareDialog
             url={profileUrl}
-            title={`${activeUser.name} — Verified credentials`}
-            summary={`${activeUser.name}'s public micro-credential profile on MicroCred.`}
+            title={t("profile.shareTitle", { name: activeUser.name })}
+            summary={t("profile.shareSummary", { name: activeUser.name })}
             qrId="qr-profile"
             trigger={
               <Button>
-                <Share2 className="mr-1 h-4 w-4" /> Share profile
+                <Share2 className="mr-1 h-4 w-4" /> {t("profile.shareBtn")}
               </Button>
             }
           />
@@ -81,14 +83,14 @@ function Profile() {
                 {activeUser.organization ?? activeUser.email}
               </div>
               <div className="mt-3 flex flex-wrap gap-1 text-xs">
-                <Badge variant="secondary">{publicCreds.length} public</Badge>
-                <Badge variant="outline">{mine.length} total</Badge>
+                <Badge variant="secondary">{t("profile.publicBadge", { count: publicCreds.length })}</Badge>
+                <Badge variant="outline">{t("profile.totalBadge", { count: mine.length })}</Badge>
               </div>
             </div>
             {profileUrl && (
               <Button variant="outline" size="sm" asChild>
                 <Link to={profileUrl}>
-                  <ExternalLink className="mr-1 h-3 w-3" /> Preview
+                  <ExternalLink className="mr-1 h-3 w-3" /> {t("profile.preview")}
                 </Link>
               </Button>
             )}
@@ -97,27 +99,27 @@ function Profile() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">How sharing works</CardTitle>
+            <CardTitle className="text-base">{t("profile.howItWorks")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>Toggle individual credentials as public from each credential's detail page.</p>
-            <p>Your public profile shows only credentials you've explicitly enabled.</p>
-            <p>Share via direct link, LinkedIn post, or downloadable QR code.</p>
+            <p>{t("profile.howIt1")}</p>
+            <p>{t("profile.howIt2")}</p>
+            <p>{t("profile.howIt3")}</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold">Public credentials</h2>
+          <h2 className="font-display text-lg font-semibold">{t("profile.publicCredentials")}</h2>
           <span className="text-xs text-muted-foreground">
-            {publicCreds.length} of {mine.length} visible
+            {t("profile.publicCount", { visible: publicCreds.length, total: mine.length })}
           </span>
         </div>
         {publicCreds.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-sm text-muted-foreground">
-              You haven't made any credentials public yet. Open a credential and toggle "Publicly verifiable".
+              {t("profile.emptyPublic")}
             </CardContent>
           </Card>
         ) : (

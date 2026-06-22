@@ -3,6 +3,9 @@
     "save": "Sačuvaj",
     "cancel": "Otkaži",
     "close": "Zatvori",
+    "back": "Nazad",
+    "continue": "Dalje",
+    "apply": "Prijavi se",
     "loading": "Učitavanje…",
     "error": "Greška"
   },
@@ -11,7 +14,8 @@
     "description": "Izaberite jezik koji se koristi u earner radnom prostoru, uključujući uputstvo i vodič kroz platformu.",
     "en": "English",
     "sr": "Srpski",
-    "updated": "Jezik je promenjen"
+    "updated": "Jezik je promenjen",
+    "selector": "Promeni jezik"
   },
   "role": {
     "earner": "Polaznik",
@@ -39,6 +43,11 @@
       "settings": "Podešavanja"
     }
   },
+  "source": {
+    "all": "Sve",
+    "formal": "Formalno",
+    "non_formal": "Neformalno"
+  },
   "credentialLifecycle": {
     "draft": "Nacrt",
     "pending_earner_acceptance": "Čeka prihvatanje",
@@ -56,6 +65,28 @@
     "rejected": "Odbijen",
     "pending_acceptance": "Čeka prihvatanje",
     "issued": "Izdat"
+  },
+  "status": {
+    "active": "Aktivan",
+    "pending": "Na čekanju",
+    "pending_earner_acceptance": "Čeka prihvatanje",
+    "processing": "U obradi",
+    "expired": "Istekao",
+    "revoked": "Opozvan",
+    "renewed": "Obnovljen",
+    "draft": "Nacrt",
+    "submitted": "Podneto",
+    "in_review": "U pregledu",
+    "evidence_collected": "Dokazi prikupljeni",
+    "verified_by_provider": "Verifikovano od strane provajdera",
+    "under_review": "U pregledu",
+    "changes_requested": "Tražene izmene",
+    "approved_by_provider": "Odobreno od strane provajdera",
+    "sent_to_issuer": "Poslato izdavaocu",
+    "issued": "Izdato",
+    "rejected": "Odbijeno",
+    "approved": "Odobreno",
+    "archived": "Arhivirano"
   },
   "blockchain": {
     "not_requested": "Nije zatraženo",

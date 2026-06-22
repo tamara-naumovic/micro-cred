@@ -32,5 +32,228 @@
       "title": "Language preference",
       "description": "Your selected language is remembered on your profile and applied on every device."
     }
+  },
+  "credentials": {
+    "title": "My credentials",
+    "description": "Review and accept new credentials, then manage your wallet.",
+    "sourceLabel": "Source:",
+    "searchPlaceholder": "Search by credential name or skill",
+    "allIssuers": "All issuers",
+    "tabs": {
+      "pending": "Pending acceptance",
+      "all": "All",
+      "active": "Active",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "pendingBanner": "Review each credential below. Once you accept it, the credential becomes valid and is anchored on the blockchain. If something is wrong, you can reject it and provide a reason for the issuer.",
+    "empty": "No credentials in this view.",
+    "pendingCard": {
+      "title": "Awaiting your acceptance",
+      "issuedBy": "Issued by {{name}}",
+      "issued": "Issued",
+      "expires": "Expires",
+      "grade": "Grade",
+      "level": "Level",
+      "accept": "Accept",
+      "reject": "Reject",
+      "viewDetails": "View details"
+    },
+    "rejectedCard": {
+      "title": "Rejected",
+      "issuedBy": "Issued by {{name}}",
+      "yourReason": "Your reason:",
+      "waiting": "Waiting for the issuer to update the credential and resend, or to accept the rejection."
+    },
+    "rejectDialog": {
+      "title": "Reject credential",
+      "description": "Let the issuer know why you are rejecting <strong>{{title}}</strong>. They can edit the issuance details and resend, or accept the rejection.",
+      "placeholder": "e.g. The grade is incorrect — should be 9/10.",
+      "confirm": "Reject credential",
+      "reasonRequired": "Please provide a reason"
+    },
+    "toasts": {
+      "accepted": "Credential accepted",
+      "acceptedPending": "Blockchain confirmation is pending — it will appear once anchored.",
+      "rejected": "Credential rejected",
+      "couldNotAccept": "Could not accept",
+      "couldNotReject": "Could not reject"
+    }
+  },
+  "credentialDetail": {
+    "loading": "Loading…",
+    "back": "Back",
+    "rejectedBanner": {
+      "title": "You rejected this credential.",
+      "reason": "Reason: {{reason}}",
+      "waiting": "Waiting for the issuer to update and resend, or to accept the rejection."
+    },
+    "acceptance": {
+      "title": "Please review and accept this credential",
+      "description": "This credential is not yet valid and is not anchored on the blockchain. Once you accept it, it becomes valid in your wallet and is anchored automatically. If something is wrong, reject it with a reason for the issuer.",
+      "acceptBtn": "Accept credential",
+      "rejectBtn": "Reject",
+      "demoNotice": "Demo credential — acceptance is disabled."
+    },
+    "rejectDialog": {
+      "title": "Reject credential",
+      "description": "Explain to the issuer why you are rejecting this credential. They can update the issuance details and resend, or accept your rejection.",
+      "placeholder": "e.g. The grade is incorrect — should be 9/10.",
+      "confirm": "Reject credential"
+    },
+    "fields": {
+      "status": "Status",
+      "issuer": "Issuer",
+      "courseProvider": "Course provider",
+      "issued": "Issued",
+      "expires": "Expires",
+      "grade": "Grade",
+      "outcomes": "Learning outcomes",
+      "skills": "Skills"
+    },
+    "shareCard": {
+      "title": "Share & verification",
+      "share": "Share",
+      "copy": "Copy",
+      "open": "Open",
+      "summary": "Verifiable micro-credential issued by {{name}}.",
+      "linkCopied": "Link copied",
+      "copyDenied": "Copy not allowed in this preview — select the link manually."
+    },
+    "visibility": {
+      "title": "Visibility",
+      "demoNotice": "Demo credential — toggles change only your local view.",
+      "liveNotice": "Changes apply immediately to the public verification page.",
+      "isPublic": "Publicly verifiable",
+      "showSource": "Show learning source",
+      "showGrade": "Show grade",
+      "showExpiry": "Show expiry date",
+      "showLevel": "Show level",
+      "showPrerequisites": "Show prerequisites",
+      "showSupervision": "Show supervision & ID verification",
+      "showIntegration": "Show integration / stackability",
+      "footer": "Learning outcomes and quality assurance documents are always visible on the shared verification page.",
+      "saveFailed": "Could not save"
+    }
+  },
+  "applications": {
+    "title": "My applications",
+    "description": "Track every credential application you've submitted.",
+    "newApplication": "New application",
+    "listTitle": "Applications ({{count}})",
+    "empty": "No applications yet.",
+    "lifecycle": "Lifecycle",
+    "lifecycleEmpty": "Select an application to view its timeline."
+  },
+  "apply": {
+    "title": "Apply for a micro-credential",
+    "description": "Pick a credential template and submit your application. The issuer handles all verification internally.",
+    "steps": {
+      "choose": "Choose template",
+      "review": "Review & apply"
+    },
+    "filters": {
+      "allIssuers": "All issuers",
+      "allTypes": "All types",
+      "allLevels": "All levels"
+    },
+    "card": {
+      "alreadyApplied": "Already applied",
+      "alreadyIssued": "Already issued",
+      "issuedBy": "Issued by {{name}}",
+      "seeMore": "See more",
+      "continue": "Continue"
+    },
+    "empty": {
+      "notLinked": "You are not linked to any institution yet. Contact the platform admin to be linked to an institution.",
+      "noTemplates": "No active micro-credentials available from your institution(s) yet.",
+      "noMatches": "No micro-credentials match the current filters."
+    },
+    "review": {
+      "title": "Review & apply",
+      "skills": "Skills",
+      "info": "After you apply, the issuer will internally verify your participation and progress this application through the lifecycle. You can track the status from your Applications page."
+    },
+    "actions": {
+      "back": "Back",
+      "apply": "Apply"
+    },
+    "toasts": {
+      "blocked": "You already have an active application or credential for this template.",
+      "submitted": "Application submitted"
+    }
+  },
+  "profile": {
+    "title": "Public profile",
+    "description": "A single shareable page that aggregates all credentials you've made public. Share it on LinkedIn, by link, or via QR.",
+    "shareBtn": "Share profile",
+    "shareSummary": "{{name}}'s public micro-credential profile on MicroCred.",
+    "shareTitle": "{{name}} — Verified credentials",
+    "publicBadge": "{{count}} public",
+    "totalBadge": "{{count}} total",
+    "preview": "Preview",
+    "howItWorks": "How sharing works",
+    "howIt1": "Toggle individual credentials as public from each credential's detail page.",
+    "howIt2": "Your public profile shows only credentials you've explicitly enabled.",
+    "howIt3": "Share via direct link, LinkedIn post, or downloadable QR code.",
+    "publicCredentials": "Public credentials",
+    "publicCount": "{{visible}} of {{total}} visible",
+    "emptyPublic": "You haven't made any credentials public yet. Open a credential and toggle \"Publicly verifiable\"."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Updates about your credentials, applications and institutions.",
+    "count_one": "{{count}} notification",
+    "count_other": "{{count}} notifications",
+    "unread": "{{count}} unread",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet.",
+    "timeAgo": {
+      "secs": "{{n}}s ago",
+      "mins": "{{n}}m ago",
+      "hours": "{{n}}h ago",
+      "days": "{{n}}d ago"
+    },
+    "unreadAria": "Unread"
+  },
+  "templateDetail": {
+    "notFound": "Micro-credential not found",
+    "back": "Back",
+    "backToApply": "Back to apply",
+    "specification": "Specification",
+    "fields": {
+      "outcomes": "Learning outcomes",
+      "skills": "Skills",
+      "assessment": "Assessment",
+      "qualityAssurance": "Quality assurance",
+      "prerequisites": "Prerequisites",
+      "supervision": "Supervision and identity verification",
+      "stackability": "Integration / Stackability",
+      "expiry": "Expiry"
+    },
+    "noPrerequisites": "No prerequisites",
+    "noDocs": "No documents uploaded.",
+    "expiresOn": "Expires on {{date}}",
+    "doesNotExpire": "Does not expire",
+    "couldNotOpen": "Could not open document",
+    "qa": {
+      "internal": "Internal",
+      "external": "External",
+      "internal_and_external": "Internal and external",
+      "other": "Other",
+      "not_specified": "Not specified"
+    },
+    "supervisionLabel": {
+      "unsupervised_no_id": "Unsupervised with no identity verification",
+      "supervised_no_id": "Supervised with no identity verification",
+      "supervised_online_with_id": "Supervised online with identity verification",
+      "supervised_onsite_with_id": "Supervised onsite with identity verification"
+    },
+    "stackabilityLabel": {
+      "stand_alone": "Stand-alone",
+      "independent_integrated": "Independent micro-credential / integrated",
+      "stackable": "Stackable towards another credential"
+    }
   }
 }

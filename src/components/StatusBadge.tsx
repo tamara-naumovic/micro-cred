@@ -1,10 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { CredentialStatus, RequestStatus, TemplateStatus } from "@/lib/types";
 
 type AnyStatus = CredentialStatus | RequestStatus | TemplateStatus | "approved" | "pending" | "rejected" | "changes_requested" | "pending_earner_acceptance";
 
-const LABELS: Record<string, string> = {
+const FALLBACK_LABELS: Record<string, string> = {
   active: "Active",
   pending: "Pending",
   pending_earner_acceptance: "Awaiting acceptance",
@@ -52,9 +53,13 @@ const TONE: Record<string, string> = {
 };
 
 export function StatusBadge({ status, className }: { status: AnyStatus; className?: string }) {
+  const { t } = useTranslation("common");
+  const key = String(status);
+  const translated = t(`status.${key}`, { defaultValue: "" });
+  const label = translated || FALLBACK_LABELS[key] || key;
   return (
-    <Badge variant="outline" className={cn("border", TONE[status] ?? "", className)}>
-      {LABELS[status] ?? status}
+    <Badge variant="outline" className={cn("border", TONE[key] ?? "", className)}>
+      {label}
     </Badge>
   );
 }

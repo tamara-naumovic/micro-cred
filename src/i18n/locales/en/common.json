@@ -3,6 +3,9 @@
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close",
+    "back": "Back",
+    "continue": "Continue",
+    "apply": "Apply",
     "loading": "Loading…",
     "error": "Error"
   },
@@ -11,7 +14,8 @@
     "description": "Choose the language used across the earner workspace, including the manual and the guided tour.",
     "en": "English",
     "sr": "Srpski",
-    "updated": "Language updated"
+    "updated": "Language updated",
+    "selector": "Change language"
   },
   "role": {
     "earner": "Earner",
@@ -39,6 +43,11 @@
       "settings": "Settings"
     }
   },
+  "source": {
+    "all": "All",
+    "formal": "Formal",
+    "non_formal": "Non-formal"
+  },
   "credentialLifecycle": {
     "draft": "Draft",
     "pending_earner_acceptance": "Awaiting acceptance",
@@ -56,6 +65,28 @@
     "rejected": "Rejected",
     "pending_acceptance": "Awaiting acceptance",
     "issued": "Issued"
+  },
+  "status": {
+    "active": "Active",
+    "pending": "Pending",
+    "pending_earner_acceptance": "Awaiting acceptance",
+    "processing": "Processing",
+    "expired": "Expired",
+    "revoked": "Revoked",
+    "renewed": "Renewed",
+    "draft": "Draft",
+    "submitted": "Submitted",
+    "in_review": "In review",
+    "evidence_collected": "Evidence collected",
+    "verified_by_provider": "Verified by provider",
+    "under_review": "Under review",
+    "changes_requested": "Changes requested",
+    "approved_by_provider": "Approved by provider",
+    "sent_to_issuer": "Sent to issuer",
+    "issued": "Issued",
+    "rejected": "Rejected",
+    "approved": "Approved",
+    "archived": "Archived"
   },
   "blockchain": {
     "not_requested": "Not requested",
