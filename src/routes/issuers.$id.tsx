@@ -20,8 +20,15 @@ export const Route = createFileRoute("/issuers/$id")({
 
 function IssuerProfile() {
   const { id } = Route.useParams();
-  const { organizations, templates, credentials } = useStore();
+  const { organizations, templates, credentials, loading } = useStore();
   const issuer = organizations.find((o) => o.id === id && o.type === "issuer");
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-10 md:px-8">
+        <p className="text-sm text-muted-foreground">Loading issuer…</p>
+      </main>
+    );
+  }
   if (!issuer) throw notFound();
   const tpls = templates.filter((t) => t.issuerId === id && t.status !== "archived");
   const formal = tpls.filter((t) => t.source === "formal");
@@ -133,8 +140,8 @@ function TemplateSection({
         {items.map((t) => (
           <Link
             key={t.id}
-            to="/issuers/$id_/microcredential-templates/$templateId"
-            params={{ id_: issuerId, templateId: t.id }}
+            to="/issuers/$id/microcredential-templates/$templateId"
+            params={{ id: issuerId, templateId: t.id }}
             className="block transition hover:-translate-y-0.5"
           >
             <Card className="h-full hover:border-primary/40 hover:shadow-sm">
