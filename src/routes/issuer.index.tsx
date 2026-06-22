@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { startIssuerTour } from "@/lib/tour/issuerTour";
 import { useServerFn } from "@tanstack/react-start";
 import { getChainAvailabilityFn } from "@/lib/chain/anchor.functions";
 import {
@@ -121,10 +122,18 @@ function Overview() {
   } = useStore();
   const [templateFilter, setTemplateFilter] = useState<string>("all");
 
+  useEffect(() => {
+    if (!activeUser || activeUser.role !== "issuer") return;
+    const sub = activeUser.subRole ?? "admin";
+    const t = window.setTimeout(() => startIssuerTour(activeUser.id, sub), 400);
+    return () => window.clearTimeout(t);
+  }, [activeUser]);
+
   if (!activeUser) return null;
   const orgId = activeUser.organizationId;
   const orgName = activeUser.organization ?? "Your institution";
   const isStaff = activeUser.subRole === "staff";
+
 
   const assignedIds = useMemo(
     () =>
@@ -315,7 +324,7 @@ function Overview() {
       }
     >
       {/* Row 1 — KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-tour="dash-issuer-metrics">
         <MetricCard
           label="Published MC templates"
           value={publishedTemplates.length}

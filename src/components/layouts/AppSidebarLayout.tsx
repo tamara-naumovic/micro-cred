@@ -82,59 +82,61 @@ const EARNER_NAV: NavGroups = [
 ];
 
 const ISSUER_ADMIN_NAV: NavGroups = [
-  { group: "Overview", items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard }] },
+  { group: "Overview", items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard, dataTour: "nav-issuer-overview" }] },
   {
     group: "Micro-credentials",
     items: [
-      { to: "/issuer/microcredential-templates", label: "Micro-credentials", icon: BookOpen },
-      { to: "/issuer/microcredential-templates/new", label: "Create Micro-credential", icon: FilePlus2 },
-      { to: "/issuer/staff", label: "Staff", icon: Users },
-      { to: "/issuer/earners", label: "Earners", icon: GraduationCap },
+      { to: "/issuer/microcredential-templates", label: "Micro-credentials", icon: BookOpen, dataTour: "nav-issuer-templates" },
+      { to: "/issuer/microcredential-templates/new", label: "Create Micro-credential", icon: FilePlus2, dataTour: "nav-issuer-template-new" },
+      { to: "/issuer/staff", label: "Staff", icon: Users, dataTour: "nav-issuer-staff" },
+      { to: "/issuer/earners", label: "Earners", icon: GraduationCap, dataTour: "nav-issuer-earners" },
     ],
   },
   {
     group: "Issuance",
     items: [
-      { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox },
-      { to: "/issuer/issue", label: "Direct Issuance", icon: Send },
-      { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud },
-      { to: "/issuer/credentials", label: "Issued Credentials", icon: Award },
-      { to: "/issuer/revocations", label: "Revocations", icon: XOctagon },
-      { to: "/issuer/anchoring-queue", label: "Blockchain Queue", icon: Link2 },
+      { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox, dataTour: "nav-issuer-requests" },
+      { to: "/issuer/issue", label: "Direct Issuance", icon: Send, dataTour: "nav-issuer-issue" },
+      { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud, dataTour: "nav-issuer-bulk" },
+      { to: "/issuer/credentials", label: "Issued Credentials", icon: Award, dataTour: "nav-issuer-credentials" },
+      { to: "/issuer/revocations", label: "Revocations", icon: XOctagon, dataTour: "nav-issuer-revocations" },
+      { to: "/issuer/anchoring-queue", label: "Blockchain Queue", icon: Link2, dataTour: "nav-issuer-anchoring" },
     ],
   },
   {
     group: "Network",
     items: [
-      { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck },
-      { to: "/issuer/notifications", label: "Notifications", icon: Bell },
+      { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck, dataTour: "nav-issuer-profile" },
+      { to: "/issuer/notifications", label: "Notifications", icon: Bell, dataTour: "nav-issuer-notifications" },
+      { to: "/issuer/manual", label: "Manual", icon: BookOpen, dataTour: "nav-issuer-manual" },
       { to: "/issuer/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
 
 const ISSUER_STAFF_NAV: NavGroups = [
-  { group: "Overview", items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard }] },
+  { group: "Overview", items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard, dataTour: "nav-issuer-overview" }] },
   {
     group: "Micro-credentials",
     items: [
-      { to: "/issuer/microcredential-templates", label: "My Micro-credentials", icon: BookOpen },
+      { to: "/issuer/microcredential-templates", label: "My Micro-credentials", icon: BookOpen, dataTour: "nav-issuer-templates" },
     ],
   },
   {
     group: "Issuance",
     items: [
-      { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox },
-      { to: "/issuer/issue", label: "Direct Issuance", icon: Send },
-      { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud },
-      { to: "/issuer/credentials", label: "Issued Credentials", icon: Award },
-      { to: "/issuer/anchoring-queue", label: "Blockchain Queue", icon: Link2 },
+      { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox, dataTour: "nav-issuer-requests" },
+      { to: "/issuer/issue", label: "Direct Issuance", icon: Send, dataTour: "nav-issuer-issue" },
+      { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud, dataTour: "nav-issuer-bulk" },
+      { to: "/issuer/credentials", label: "Issued Credentials", icon: Award, dataTour: "nav-issuer-credentials" },
+      { to: "/issuer/anchoring-queue", label: "Blockchain Queue", icon: Link2, dataTour: "nav-issuer-anchoring" },
     ],
   },
   {
     group: "Account",
     items: [
-      { to: "/issuer/notifications", label: "Notifications", icon: Bell },
+      { to: "/issuer/notifications", label: "Notifications", icon: Bell, dataTour: "nav-issuer-notifications" },
+      { to: "/issuer/manual", label: "Manual", icon: BookOpen, dataTour: "nav-issuer-manual" },
       { to: "/issuer/settings", label: "Settings", icon: Settings },
     ],
   },
