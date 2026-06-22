@@ -95,14 +95,22 @@ export function NotificationsList({ role }: { role: Role }) {
                           aria-label={t("notifications.unreadAria")}
                         />
                       )}
-                      <div className="font-medium">{n.title}</div>
+                      <div className="font-medium">
+                        {n.titleKey
+                          ? t(`notifications.${n.titleKey}`, { defaultValue: n.title, ...(n.params ?? {}) })
+                          : n.title}
+                      </div>
                     </div>
                     <Badge variant="outline" className="shrink-0 text-[10px] font-normal">
                       {timeAgo(n.createdAt)}
                     </Badge>
                   </div>
-                  {n.body && (
-                    <div className="text-sm text-muted-foreground">{n.body}</div>
+                  {(n.bodyKey || n.body) && (
+                    <div className="text-sm text-muted-foreground">
+                      {n.bodyKey
+                        ? t(`notifications.${n.bodyKey}`, { defaultValue: n.body, ...(n.params ?? {}) })
+                        : n.body}
+                    </div>
                   )}
                 </CardContent>
               </Card>
