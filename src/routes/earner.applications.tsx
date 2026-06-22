@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/earner/applications")({
 
 function Apps() {
   const { activeUser, applications } = useStore();
+  const { t } = useTranslation("earner");
   const [openId, setOpen] = useState<string | null>(null);
 
   if (!activeUser) return null;
@@ -27,18 +29,18 @@ function Apps() {
 
   return (
     <PageShell
-      title="My applications"
-      description="Track every credential application you've submitted."
+      title={t("applications.title")}
+      description={t("applications.description")}
       actions={
         <Button asChild>
-          <Link to="/earner/apply">New application</Link>
+          <Link to="/earner/apply">{t("applications.newApplication")}</Link>
         </Button>
       }
     >
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Applications ({mine.length})</CardTitle>
+            <CardTitle className="text-base">{t("applications.listTitle", { count: mine.length })}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {mine.map((a) => (
@@ -56,19 +58,19 @@ function Apps() {
                 <StatusBadge status={a.status} />
               </button>
             ))}
-            {mine.length === 0 && <p className="text-sm text-muted-foreground">No applications yet.</p>}
+            {mine.length === 0 && <p className="text-sm text-muted-foreground">{t("applications.empty")}</p>}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Lifecycle</CardTitle>
+            <CardTitle className="text-base">{t("applications.lifecycle")}</CardTitle>
           </CardHeader>
           <CardContent>
             {open ? (
               <LifecycleTimeline events={open.timeline} />
             ) : (
-              <p className="text-sm text-muted-foreground">Select an application to view its timeline.</p>
+              <p className="text-sm text-muted-foreground">{t("applications.lifecycleEmpty")}</p>
             )}
           </CardContent>
         </Card>
