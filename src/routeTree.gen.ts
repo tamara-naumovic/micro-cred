@@ -31,6 +31,7 @@ import { Route as IssuerAnchoringQueueRouteImport } from './routes/issuer.anchor
 import { Route as EarnerSettingsRouteImport } from './routes/earner.settings'
 import { Route as EarnerProfileRouteImport } from './routes/earner.profile'
 import { Route as EarnerNotificationsRouteImport } from './routes/earner.notifications'
+import { Route as EarnerManualRouteImport } from './routes/earner.manual'
 import { Route as EarnerApplyRouteImport } from './routes/earner.apply'
 import { Route as EarnerApplicationsRouteImport } from './routes/earner.applications'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -161,6 +162,11 @@ const EarnerNotificationsRoute = EarnerNotificationsRouteImport.update({
   path: '/earner/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EarnerManualRoute = EarnerManualRouteImport.update({
+  id: '/earner/manual',
+  path: '/earner/manual',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EarnerApplyRoute = EarnerApplyRouteImport.update({
   id: '/earner/apply',
   path: '/earner/apply',
@@ -276,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/earner/applications': typeof EarnerApplicationsRoute
   '/earner/apply': typeof EarnerApplyRoute
+  '/earner/manual': typeof EarnerManualRoute
   '/earner/notifications': typeof EarnerNotificationsRoute
   '/earner/profile': typeof EarnerProfileRoute
   '/earner/settings': typeof EarnerSettingsRoute
@@ -319,6 +326,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/earner/applications': typeof EarnerApplicationsRoute
   '/earner/apply': typeof EarnerApplyRoute
+  '/earner/manual': typeof EarnerManualRoute
   '/earner/notifications': typeof EarnerNotificationsRoute
   '/earner/profile': typeof EarnerProfileRoute
   '/earner/settings': typeof EarnerSettingsRoute
@@ -363,6 +371,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/earner/applications': typeof EarnerApplicationsRoute
   '/earner/apply': typeof EarnerApplyRoute
+  '/earner/manual': typeof EarnerManualRoute
   '/earner/notifications': typeof EarnerNotificationsRoute
   '/earner/profile': typeof EarnerProfileRoute
   '/earner/settings': typeof EarnerSettingsRoute
@@ -408,6 +417,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/earner/applications'
     | '/earner/apply'
+    | '/earner/manual'
     | '/earner/notifications'
     | '/earner/profile'
     | '/earner/settings'
@@ -451,6 +461,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/earner/applications'
     | '/earner/apply'
+    | '/earner/manual'
     | '/earner/notifications'
     | '/earner/profile'
     | '/earner/settings'
@@ -494,6 +505,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/earner/applications'
     | '/earner/apply'
+    | '/earner/manual'
     | '/earner/notifications'
     | '/earner/profile'
     | '/earner/settings'
@@ -538,6 +550,7 @@ export interface RootRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   EarnerApplicationsRoute: typeof EarnerApplicationsRoute
   EarnerApplyRoute: typeof EarnerApplyRoute
+  EarnerManualRoute: typeof EarnerManualRoute
   EarnerNotificationsRoute: typeof EarnerNotificationsRoute
   EarnerProfileRoute: typeof EarnerProfileRoute
   EarnerSettingsRoute: typeof EarnerSettingsRoute
@@ -725,6 +738,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EarnerNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/earner/manual': {
+      id: '/earner/manual'
+      path: '/earner/manual'
+      fullPath: '/earner/manual'
+      preLoaderRoute: typeof EarnerManualRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/earner/apply': {
       id: '/earner/apply'
       path: '/earner/apply'
@@ -874,6 +894,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   EarnerApplicationsRoute: EarnerApplicationsRoute,
   EarnerApplyRoute: EarnerApplyRoute,
+  EarnerManualRoute: EarnerManualRoute,
   EarnerNotificationsRoute: EarnerNotificationsRoute,
   EarnerProfileRoute: EarnerProfileRoute,
   EarnerSettingsRoute: EarnerSettingsRoute,
