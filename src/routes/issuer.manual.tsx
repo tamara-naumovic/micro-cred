@@ -115,7 +115,7 @@ const SECTIONS: Section[] = [
     to: "/issuer/credentials",
     linkLabel: "Open Issued Credentials",
     body:
-      'All credentials your institution has issued. Use search and filters (status, template, date range, blockchain status) to narrow the list — the search box has an "x" to reset it. Open a credential to view evidence and blockchain anchoring details.',
+      'All credentials your institution has issued. Use search (by earner, title or ID) and filters (template, lifecycle status) to narrow the list — the search box has an "x" to reset it. The first time you open this page a short guided tour walks you through the available actions. Per-row actions depend on the lifecycle: "Edit & resend" for rejected credentials (update grade and/or expiry, then resend to the earner for acceptance); "Accept rejection" to permanently delete a rejected credential; "Renew expiry" for issued or expired credentials with an expiry date (walks through review → evidence collected → verified, then issues the new expiry on chain without requiring earner acceptance).',
   },
   {
     icon: XOctagon,
