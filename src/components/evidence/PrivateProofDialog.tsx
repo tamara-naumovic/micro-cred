@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function PrivateProofDialog({ busy, disabled, onConfirm }: Props) {
+  const { t } = useTranslation("earner");
   const [open, setOpen] = useState(false);
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -31,30 +33,29 @@ export function PrivateProofDialog({ busy, disabled, onConfirm }: Props) {
           className="border-destructive/40 text-destructive hover:bg-destructive/5"
         >
           <Lock className="mr-1 h-3.5 w-3.5" />
-          {busy ? "Preparing…" : "Download private ownership proof"}
+          {busy ? t("evidence.privateProof.preparing") : t("evidence.privateProof.trigger")}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Download private ownership proof</AlertDialogTitle>
+          <AlertDialogTitle>{t("evidence.privateProof.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            This file contains confidential recovery information associated with
-            your credential. Keep it private. Do not send it to employers,
-            verifiers or other third parties.
+            {t("evidence.privateProof.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("evidence.privateProof.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               setOpen(false);
               onConfirm();
             }}
           >
-            Download private proof
+            {t("evidence.privateProof.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
 }
+
