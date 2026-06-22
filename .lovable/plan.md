@@ -1,28 +1,18 @@
-# Plan: Make blockchain proof publicly readable
+# Plan: Search + issuer filter on /earner/credentials
 
-## Change
-Replace the SELECT policy on `public.template_blockchain_records` with a permissive policy that allows **any** caller (anon and authenticated) to read all rows. INSERT/UPDATE policies stay unchanged (admins/staff only).
+## Changes (single file: `src/routes/earner.credentials.index.tsx`)
 
-Also do the same for `public.credential_blockchain_records` so credential-level proofs are consistently public.
+1. **State**: add `searchQ: string` and `issuerFilter: string` (`"all"` default) alongside existing `src`.
 
-### Migration
-```sql
--- Templates
-DROP POLICY IF EXISTS tbr_select ON public.template_blockchain_records;
-CREATE POLICY tbr_select ON public.template_blockchain_records
-  FOR SELECT TO anon, authenticated
-  USING (true);
-GRANT SELECT ON public.template_blockchain_records TO anon;
+2. **Filter bar** above the Tabs:
+   - `Input` (icon: `Search`) — placeholder `"Search by credential name or skill"`. Width ~ `max-w-sm`.
+   - `Select` for issuer — options: `All issuers` + distinct `issuerName` values from `mine`, derived via `useMemo`. Width ~ `w-56`.
+   - Keep the existing Source pill row as-is.
 
--- Credentials
-DROP POLICY IF EXISTS cbr_select ON public.credential_blockchain_records;
-CREATE POLICY cbr_select ON public.credential_blockchain_records
-  FOR SELECT TO anon, authenticated
-  USING (true);
-GRANT SELECT ON public.credential_blockchain_records TO anon;
-```
+3. **Filtering**: extend the per-tab `items` computation so it also passes when:
+   - `issuerFilter === "all" || c.issuerName === issuerFilter`
+   - `searchQ` empty OR `c.title` (case-insensitive contains) OR any `c.skills[i]` (case-insensitive contains).
 
-(The `authenticated` grants already exist; only `anon` needs the SELECT grant added.)
+4. **Empty state** copy already reads "No credentials in this view." — keep it; it covers the filtered case.
 
-## Out of scope
-No client changes. INSERT/UPDATE remain restricted to admins/template staff.
+No other logic, routing, or data changes.
