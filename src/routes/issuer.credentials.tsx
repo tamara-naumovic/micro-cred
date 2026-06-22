@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, CalendarClock, Check, Pencil, Send, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, Pencil, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -190,12 +190,24 @@ function List() {
       description="All micro-credentials your organisation has issued."
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <Input
-            placeholder="Search…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="w-56"
-          />
+          <div className="relative">
+            <Input
+              placeholder="Search…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="w-56 pr-8"
+            />
+            {q && (
+              <button
+                type="button"
+                onClick={() => setQ("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
           <Select value={templateFilter} onValueChange={setTemplateFilter}>
             <SelectTrigger className="w-56">
               <SelectValue placeholder="All templates" />
