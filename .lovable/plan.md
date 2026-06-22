@@ -1,18 +1,17 @@
-# Plan: Search + issuer filter on /earner/credentials
+# Plan: Filter bar on /earner/apply
 
-## Changes (single file: `src/routes/earner.credentials.index.tsx`)
+Add three filters above the template grid on step 1 of `src/routes/earner.apply.tsx`. All applied together (AND).
 
-1. **State**: add `searchQ: string` and `issuerFilter: string` (`"all"` default) alongside existing `src`.
+## Changes (single file)
 
-2. **Filter bar** above the Tabs:
-   - `Input` (icon: `Search`) — placeholder `"Search by credential name or skill"`. Width ~ `max-w-sm`.
-   - `Select` for issuer — options: `All issuers` + distinct `issuerName` values from `mine`, derived via `useMemo`. Width ~ `w-56`.
-   - Keep the existing Source pill row as-is.
+1. **State**: `issuerFilter` (`"all"` default), `sourceFilter` (`"all" | "formal" | "non_formal"`), `levelFilter` (`"all"` default).
 
-3. **Filtering**: extend the per-tab `items` computation so it also passes when:
-   - `issuerFilter === "all" || c.issuerName === issuerFilter`
-   - `searchQ` empty OR `c.title` (case-insensitive contains) OR any `c.skills[i]` (case-insensitive contains).
+2. **Derived options** via `useMemo` from `active`:
+   - `issuerOptions` = distinct `t.issuerName`, sorted.
+   - `levelOptions` = distinct `t.level` excluding `"N/A"`, sorted.
 
-4. **Empty state** copy already reads "No credentials in this view." — keep it; it covers the filtered case.
+3. **Filter bar** (rendered only on step 1, above the grid): three `Select`s (`Issuer`, `Type` formal/non-formal, `Level`) with an `All …` option each. Compact `flex flex-wrap gap-2`.
 
-No other logic, routing, or data changes.
+4. **Filtering**: replace the rendered list with `active.filter(t => …)` applying all three filters. Empty-state message extended: when filters are active and result is empty → "No micro-credentials match the current filters."
+
+No other logic, routing, or UI changes (Continue / See more buttons untouched).
