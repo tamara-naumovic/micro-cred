@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Download, FileText, FileJson, ShieldCheck, Package, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import {
 } from "@/lib/evidence/package.functions";
 import { triggerDownload } from "@/lib/evidence/use-download";
 import { PrivateProofDialog } from "./PrivateProofDialog";
+
 
 interface Props {
   credentialId: string;
@@ -27,6 +29,7 @@ export function EvidenceSection({
   isOwner,
   privateProofAvailable = true,
 }: Props) {
+  const { t } = useTranslation("earner");
   const generate = useServerFn(generateCredentialEvidence);
   const [busy, setBusy] = useState<EvidenceFileType | null>(null);
 
@@ -43,10 +46,10 @@ export function EvidenceSection({
       const file = await generate({ data: { credentialId, fileType } });
       triggerDownload(file);
       if (tid) toast.dismiss(tid);
-      toast.success(opts?.successToast ?? "Download ready");
+      toast.success(opts?.successToast ?? t("evidence.downloadReady"));
     } catch (e) {
       if (tid) toast.dismiss(tid);
-      const msg = (e as Error)?.message ?? "Download failed";
+      const msg = (e as Error)?.message ?? t("evidence.downloadFailed");
       toast.error(msg);
     } finally {
       setBusy(null);
@@ -56,49 +59,52 @@ export function EvidenceSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Credential files and evidence</CardTitle>
+        <CardTitle className="text-base">{t("evidence.title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Download your credential, machine-readable data and verification evidence.
-          Private ownership proof must not be shared publicly.
+          {t("evidence.description")}
         </p>
 
         <div className="grid gap-2 sm:grid-cols-2">
           <EvidenceButton
             icon={<FileText className="h-4 w-4" />}
-            label="Download PDF"
-            description="Human-readable credential certificate."
+            label={t("evidence.pdf.label")}
+            description={t("evidence.pdf.description")}
+            busyLabel={t("evidence.preparing")}
             busy={busy === "pdf"}
             disabled={!!busy && busy !== "pdf"}
             onClick={() => download("pdf")}
           />
           <EvidenceButton
             icon={<FileJson className="h-4 w-4" />}
-            label="Download credential JSON"
-            description="Machine-readable credential record."
+            label={t("evidence.json.label")}
+            description={t("evidence.json.description")}
+            busyLabel={t("evidence.preparing")}
             busy={busy === "json"}
             disabled={!!busy && busy !== "json"}
             onClick={() => download("json")}
           />
           <EvidenceButton
             icon={<ShieldCheck className="h-4 w-4" />}
-            label="Download verification receipt"
-            description="Blockchain and integrity evidence."
+            label={t("evidence.receipt.label")}
+            description={t("evidence.receipt.description")}
+            busyLabel={t("evidence.preparing")}
             busy={busy === "receipt"}
             disabled={!!busy && busy !== "receipt"}
             onClick={() => download("receipt")}
           />
           <EvidenceButton
             icon={<Package className="h-4 w-4" />}
-            label="Download complete package"
-            description="All public credential files in one ZIP."
+            label={t("evidence.package.label")}
+            description={t("evidence.package.description")}
+            busyLabel={t("evidence.preparing")}
             busy={busy === "package"}
             disabled={!!busy && busy !== "package"}
             onClick={() =>
               download("package", {
-                loadingToast: "Preparing your credential package…",
-                successToast: "Package ready",
+                loadingToast: t("evidence.package.loadingToast"),
+                successToast: t("evidence.package.successToast"),
               })
             }
           />
@@ -109,7 +115,7 @@ export function EvidenceSection({
             <Separator />
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-                <Lock className="h-3 w-3" /> Private files
+                <Lock className="h-3 w-3" /> {t("evidence.privateFiles")}
               </div>
               {privateProofAvailable ? (
                 <PrivateProofDialog
@@ -119,7 +125,7 @@ export function EvidenceSection({
                 />
               ) : (
                 <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-                  Private ownership proof is not available for this credential.
+                  {t("evidence.privateUnavailable")}
                 </div>
               )}
             </div>
@@ -130,10 +136,12 @@ export function EvidenceSection({
   );
 }
 
+
 function EvidenceButton({
   icon,
   label,
   description,
+  busyLabel,
   busy,
   disabled,
   onClick,
@@ -141,6 +149,7 @@ function EvidenceButton({
   icon: React.ReactNode;
   label: string;
   description: string;
+  busyLabel: string;
   busy: boolean;
   disabled: boolean;
   onClick: () => void;
@@ -159,10 +168,11 @@ function EvidenceButton({
           {label}
           {busy && (
             <span className="text-xs font-normal text-muted-foreground">
-              preparing…
+              {busyLabel}
             </span>
           )}
         </div>
+
         <div className="mt-0.5 text-xs text-muted-foreground">{description}</div>
       </div>
       <Download className="mt-1 h-4 w-4 text-muted-foreground opacity-0 transition group-hover:opacity-100" />

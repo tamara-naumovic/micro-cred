@@ -256,5 +256,41 @@
       "independent_integrated": "Nezavisni mikrokredencijal / integrisan",
       "stackable": "Nadogradiv ka drugom kredencijalu"
     }
+  },
+  "evidence": {
+    "title": "Fajlovi i dokazi mikrokredencijala",
+    "description": "Preuzmite svoj mikrokredencijal, mašinski čitljive podatke i dokaze o verifikaciji. Privatni dokaz o vlasništvu ne sme se javno deliti.",
+    "preparing": "priprema se…",
+    "downloadReady": "Preuzimanje je spremno",
+    "downloadFailed": "Preuzimanje nije uspelo",
+    "pdf": {
+      "label": "Preuzmi PDF",
+      "description": "Sertifikat mikrokredencijala čitljiv ljudima."
+    },
+    "json": {
+      "label": "Preuzmi JSON mikrokredencijala",
+      "description": "Mašinski čitljiv zapis mikrokredencijala."
+    },
+    "receipt": {
+      "label": "Preuzmi potvrdu verifikacije",
+      "description": "Blockchain dokaz i dokaz integriteta."
+    },
+    "package": {
+      "label": "Preuzmi kompletan paket",
+      "description": "Svi javni fajlovi mikrokredencijala u jednom ZIP-u.",
+      "loadingToast": "Pripremamo paket vašeg mikrokredencijala…",
+      "successToast": "Paket je spreman"
+    },
+    "privateFiles": "Privatni fajlovi",
+    "privateUnavailable": "Privatni dokaz o vlasništvu nije dostupan za ovaj mikrokredencijal.",
+    "privateProof": {
+      "trigger": "Preuzmi privatni dokaz o vlasništvu",
+      "preparing": "Priprema se…",
+      "title": "Preuzmi privatni dokaz o vlasništvu",
+      "description": "Ovaj fajl sadrži poverljive podatke za oporavak povezane sa vašim mikrokredencijalom. Čuvajte ga privatno. Nemojte ga slati poslodavcima, verifikatorima niti trećim licima.",
+      "cancel": "Otkaži",
+      "confirm": "Preuzmi privatni dokaz"
+    }
   }
 }
+
