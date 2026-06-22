@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 import { useStore } from "@/lib/store";
 import type { MockUser, Role } from "@/lib/types";
 
@@ -60,26 +61,28 @@ interface NavItem {
 
 type NavGroups = { group: string; items: NavItem[] }[];
 
-const EARNER_NAV: NavGroups = [
-  {
-    group: "Workspace",
-    items: [
-      { to: "/earner", label: "Dashboard", icon: LayoutDashboard, dataTour: "nav-dashboard" },
-      { to: "/earner/credentials", label: "My Credentials", icon: Award, dataTour: "nav-my-credentials" },
-      { to: "/earner/applications", label: "Applications", icon: ClipboardList, dataTour: "nav-applications" },
-      { to: "/earner/apply", label: "Apply for Credential", icon: FilePlus2, dataTour: "nav-apply" },
-    ],
-  },
-  {
-    group: "Sharing",
-    items: [
-      { to: "/earner/profile", label: "Public Profile", icon: UserCircle, dataTour: "nav-profile" },
-      { to: "/earner/notifications", label: "Notifications", icon: Bell, dataTour: "nav-notifications" },
-      { to: "/earner/manual", label: "Manual", icon: BookOpen, dataTour: "nav-manual" },
-      { to: "/earner/settings", label: "Settings", icon: Settings },
-    ],
-  },
-];
+function buildEarnerNav(t: (k: string) => string): NavGroups {
+  return [
+    {
+      group: t("sidebar.groups.workspace"),
+      items: [
+        { to: "/earner", label: t("sidebar.earner.dashboard"), icon: LayoutDashboard, dataTour: "nav-dashboard" },
+        { to: "/earner/credentials", label: t("sidebar.earner.credentials"), icon: Award, dataTour: "nav-my-credentials" },
+        { to: "/earner/applications", label: t("sidebar.earner.applications"), icon: ClipboardList, dataTour: "nav-applications" },
+        { to: "/earner/apply", label: t("sidebar.earner.apply"), icon: FilePlus2, dataTour: "nav-apply" },
+      ],
+    },
+    {
+      group: t("sidebar.groups.sharing"),
+      items: [
+        { to: "/earner/profile", label: t("sidebar.earner.profile"), icon: UserCircle, dataTour: "nav-profile" },
+        { to: "/earner/notifications", label: t("sidebar.earner.notifications"), icon: Bell, dataTour: "nav-notifications" },
+        { to: "/earner/manual", label: t("sidebar.earner.manual"), icon: BookOpen, dataTour: "nav-manual" },
+        { to: "/earner/settings", label: t("sidebar.earner.settings"), icon: Settings },
+      ],
+    },
+  ];
+}
 
 const ISSUER_ADMIN_NAV: NavGroups = [
   { group: "Overview", items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard, dataTour: "nav-issuer-overview" }] },
@@ -163,8 +166,8 @@ const ADMIN_NAV: NavGroups = [
   },
 ];
 
-function getNav(user: MockUser): NavGroups {
-  if (user.role === "earner") return EARNER_NAV;
+function getNav(user: MockUser, tEarner: (k: string) => string): NavGroups {
+  if (user.role === "earner") return buildEarnerNav(tEarner);
   if (user.role === "admin") return ADMIN_NAV;
   if (user.role === "issuer") return user.subRole === "staff" ? ISSUER_STAFF_NAV : ISSUER_ADMIN_NAV;
   return [];
@@ -184,6 +187,7 @@ const ROLE_ICON: Record<Role, typeof GraduationCap> = {
 
 export function AppSidebarLayout() {
   const { activeUser, setActiveUser, notifications } = useStore();
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
@@ -191,8 +195,10 @@ export function AppSidebarLayout() {
     return null;
   }
 
-  const groups = getNav(activeUser);
+  const groups = getNav(activeUser, t);
   const RoleIcon = ROLE_ICON[activeUser.role];
+  const roleLabel =
+    activeUser.role === "earner" ? t("role.earner") : ROLE_LABEL[activeUser.role];
   const unread = notifications.filter(
     (n) => !n.read && n.forRole === activeUser.role && (!n.forUserId || n.forUserId === activeUser.id),
   ).length;
