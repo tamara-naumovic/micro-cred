@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { ArrowLeft, Copy, ExternalLink, Share2, Check, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -25,6 +26,7 @@ import { ShareDialog } from "@/components/ShareDialog";
 import { Switch } from "@/components/ui/switch";
 import { useStore } from "@/lib/store";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 import {
   fetchMyCredential,
   isUuid,
@@ -46,9 +48,9 @@ export const Route = createFileRoute("/earner/credentials/$id")({
 async function copyToClipboard(text: string) {
   try {
     await navigator.clipboard.writeText(text);
-    toast.success("Link copied");
+    toast.success(i18n.t("credentialDetail.shareCard.linkCopied", { ns: "earner" }));
   } catch {
-    toast.error("Copy not allowed in this preview — select the link manually.");
+    toast.error(i18n.t("credentialDetail.shareCard.copyDenied", { ns: "earner" }));
   }
 }
 
@@ -62,12 +64,13 @@ function Detail() {
 
 function RealDetail({ credentialId }: { credentialId: string }) {
   const qc = useQueryClient();
+  const { t } = useTranslation("earner");
   const { data, isLoading, error } = useQuery({
     queryKey: ["credential", credentialId],
     queryFn: () => fetchMyCredential(credentialId),
   });
 
-  if (isLoading) return <PageShell title="Loading…" description=""><div /></PageShell>;
+  if (isLoading) return <PageShell title={t("credentialDetail.loading")} description=""><div /></PageShell>;
   if (error || !data) throw notFound();
 
   const cred = data;
@@ -79,7 +82,7 @@ function RealDetail({ credentialId }: { credentialId: string }) {
       await updateCredentialSharing(credentialId, patch);
       await qc.invalidateQueries({ queryKey: ["credential", credentialId] });
     } catch (e) {
-      toast.error("Could not save", { description: (e as Error).message });
+      toast.error(t("credentialDetail.visibility.saveFailed"), { description: (e as Error).message });
     }
   }
 
@@ -98,7 +101,7 @@ function RealDetail({ credentialId }: { credentialId: string }) {
   return (
     <DetailLayout
       title={cred.title}
-      subtitle={`Issued by ${cred.issuer_name}`}
+      subtitle={t("credentials.pendingCard.issuedBy", { name: cred.issuer_name })}
       status={cred.status as IssuedCredential["status"]}
       source={cred.source as IssuedCredential["source"]}
       level={cred.level as IssuedCredential["level"]}
@@ -144,6 +147,7 @@ function dbToBlockchain(c: DbCredential) {
 
 function MockDetail({ credentialId }: { credentialId: string }) {
   const { credentials, updateSharing } = useStore();
+  const { t } = useTranslation("earner");
   const cred = credentials.find((c) => c.id === credentialId);
   if (!cred) throw notFound();
 
@@ -153,7 +157,7 @@ function MockDetail({ credentialId }: { credentialId: string }) {
   return (
     <DetailLayout
       title={cred.title}
-      subtitle={`Issued by ${cred.issuerName}`}
+      subtitle={t("credentials.pendingCard.issuedBy", { name: cred.issuerName })}
       status={cred.status}
       source={cred.source}
       level={cred.level}
@@ -206,8 +210,19 @@ interface DetailLayoutProps {
 }
 
 function DetailLayout(p: DetailLayoutProps) {
+  const { t } = useTranslation(["earner", "common"]);
   const isPending = p.lifecycle === "pending_earner_acceptance";
   const isRejected = p.lifecycle === "rejected";
+  const VISIBILITY_KEYS = [
+    "isPublic",
+    "showSource",
+    "showGrade",
+    "showExpiry",
+    "showLevel",
+    "showPrerequisites",
+    "showSupervision",
+    "showIntegration",
+  ] as const;
   return (
     <PageShell
       title={p.title}
@@ -215,7 +230,7 @@ function DetailLayout(p: DetailLayoutProps) {
       actions={
         <Button variant="outline" asChild>
           <Link to="/earner/credentials">
-            <ArrowLeft className="mr-1 h-4 w-4" /> Back
+            <ArrowLeft className="mr-1 h-4 w-4" /> {t("credentialDetail.back")}
           </Link>
         </Button>
       }
@@ -229,12 +244,12 @@ function DetailLayout(p: DetailLayoutProps) {
       )}
       {isRejected && (
         <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
-          <div className="font-medium text-destructive">You rejected this credential.</div>
+          <div className="font-medium text-destructive">{t("credentialDetail.rejectedBanner.title")}</div>
           {p.rejectionReason && (
-            <div className="mt-1 text-muted-foreground">Reason: {p.rejectionReason}</div>
+            <div className="mt-1 text-muted-foreground">{t("credentialDetail.rejectedBanner.reason", { reason: p.rejectionReason })}</div>
           )}
           <div className="mt-1 text-xs text-muted-foreground">
-            Waiting for the issuer to update and resend, or to accept the rejection.
+            {t("credentialDetail.rejectedBanner.waiting")}
           </div>
         </div>
       )}
@@ -244,7 +259,7 @@ function DetailLayout(p: DetailLayoutProps) {
             <CardContent className="space-y-4 p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Status</div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("credentialDetail.fields.status")}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <StatusBadge status={p.status} />
                     {p.status === "active" && <ChainPendingChip status={p.blockchain?.chainStatus} />}
@@ -252,22 +267,22 @@ function DetailLayout(p: DetailLayoutProps) {
                 </div>
                 <div className="flex flex-wrap gap-1">
                   <Badge variant="secondary" className="capitalize">
-                    {p.source === "formal" ? "Formal" : "Non-formal"}
+                    {p.source === "formal" ? t("source.formal", { ns: "common" }) : t("source.non_formal", { ns: "common" })}
                   </Badge>
                   {p.level !== "N/A" && <Badge variant="outline">{p.level}</Badge>}
                   {p.ects && <Badge variant="outline">{p.ects} ECTS</Badge>}
                 </div>
               </div>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                <Field label="Issuer" value={p.issuerName} />
-                {p.providerName && <Field label="Course provider" value={p.providerName} />}
-                <Field label="Issued" value={new Date(p.issuedAt).toLocaleDateString()} />
-                {p.expiresAt && <Field label="Expires" value={new Date(p.expiresAt).toLocaleDateString()} />}
-                {p.grade && <Field label="Grade" value={p.grade} />}
+                <Field label={t("credentialDetail.fields.issuer")} value={p.issuerName} />
+                {p.providerName && <Field label={t("credentialDetail.fields.courseProvider")} value={p.providerName} />}
+                <Field label={t("credentialDetail.fields.issued")} value={new Date(p.issuedAt).toLocaleDateString()} />
+                {p.expiresAt && <Field label={t("credentialDetail.fields.expires")} value={new Date(p.expiresAt).toLocaleDateString()} />}
+                {p.grade && <Field label={t("credentialDetail.fields.grade")} value={p.grade} />}
               </dl>
               {p.outcomes && p.outcomes.length > 0 && (
                 <div>
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Learning outcomes</div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("credentialDetail.fields.outcomes")}</div>
                   <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
                     {p.outcomes.map((o) => (
                       <li key={o}>{o}</li>
@@ -277,7 +292,7 @@ function DetailLayout(p: DetailLayoutProps) {
               )}
               {p.skills.length > 0 && (
                 <div>
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Skills</div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("credentialDetail.fields.skills")}</div>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {p.skills.map((s) => (
                       <Badge key={s} variant="secondary">{s}</Badge>
@@ -318,7 +333,7 @@ function DetailLayout(p: DetailLayoutProps) {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Share & verification</CardTitle>
+              <CardTitle className="text-base">{t("credentialDetail.shareCard.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="rounded-md border border-border bg-muted/40 p-2 font-mono text-xs break-all">{p.shareUrl}</div>
@@ -326,7 +341,7 @@ function DetailLayout(p: DetailLayoutProps) {
                 <ShareDialog
                   url={p.verifyPath}
                   title={p.title}
-                  summary={`Verifiable micro-credential issued by ${p.issuerName}.`}
+                  summary={t("credentialDetail.shareCard.summary", { name: p.issuerName })}
                   qrId={`qr-${p.credentialId}`}
                   certification={{
                     name: p.title,
@@ -337,16 +352,16 @@ function DetailLayout(p: DetailLayoutProps) {
                   }}
                   trigger={
                     <Button size="sm">
-                      <Share2 className="mr-1 h-3 w-3" /> Share
+                      <Share2 className="mr-1 h-3 w-3" /> {t("credentialDetail.shareCard.share")}
                     </Button>
                   }
                 />
                 <Button size="sm" variant="outline" onClick={() => copyToClipboard(p.shareUrl)}>
-                  <Copy className="mr-1 h-3 w-3" /> Copy
+                  <Copy className="mr-1 h-3 w-3" /> {t("credentialDetail.shareCard.copy")}
                 </Button>
                 <Button size="sm" variant="ghost" asChild>
                   <a href={p.verifyPath} target="_blank" rel="noreferrer">
-                    <ExternalLink className="mr-1 h-3 w-3" /> Open
+                    <ExternalLink className="mr-1 h-3 w-3" /> {t("credentialDetail.shareCard.open")}
                   </a>
                 </Button>
               </div>
@@ -355,26 +370,17 @@ function DetailLayout(p: DetailLayoutProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Visibility</CardTitle>
+              <CardTitle className="text-base">{t("credentialDetail.visibility.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-xs text-muted-foreground">
                 {p.mockNotice
-                  ? "Demo credential — toggles change only your local view."
-                  : "Changes apply immediately to the public verification page."}
+                  ? t("credentialDetail.visibility.demoNotice")
+                  : t("credentialDetail.visibility.liveNotice")}
               </p>
-              {([
-                ["isPublic", "Publicly verifiable"],
-                ["showSource", "Show learning source"],
-                ["showGrade", "Show grade"],
-                ["showExpiry", "Show expiry date"],
-                ["showLevel", "Show level"],
-                ["showPrerequisites", "Show prerequisites"],
-                ["showSupervision", "Show supervision & ID verification"],
-                ["showIntegration", "Show integration / stackability"],
-              ] as const).map(([k, label]) => (
+              {VISIBILITY_KEYS.map((k) => (
                 <label key={k} className="flex items-center justify-between text-sm">
-                  <span>{label}</span>
+                  <span>{t(`credentialDetail.visibility.${k}`)}</span>
                   <Switch
                     checked={p.sharing[k]}
                     onCheckedChange={(v) => p.onToggle({ [k]: v } as Partial<SharingSettings>)}
@@ -382,7 +388,7 @@ function DetailLayout(p: DetailLayoutProps) {
                 </label>
               ))}
               <p className="pt-2 text-xs text-muted-foreground border-t border-border">
-                Learning outcomes and quality assurance documents are always visible on the shared verification page.
+                {t("credentialDetail.visibility.footer")}
               </p>
             </CardContent>
           </Card>
@@ -410,6 +416,7 @@ function AcceptanceBanner({
   onChanged?: () => void;
   mockNotice?: boolean;
 }) {
+  const { t } = useTranslation(["earner", "common"]);
   const accept = useServerFn(acceptCredential);
   const reject = useServerFn(rejectCredential);
   const [open, setOpen] = useState(false);
@@ -418,22 +425,22 @@ function AcceptanceBanner({
 
   const onAccept = async () => {
     if (mockNotice) {
-      toast.info("Demo credential — acceptance is disabled.");
+      toast.info(t("credentialDetail.acceptance.demoNotice"));
       return;
     }
     setBusy(true);
     try {
       const res = await accept({ data: { credentialId } });
       if ((res as any)?.chainPending) {
-        toast.success("Credential accepted", {
-          description: "Blockchain confirmation is pending — it will appear once anchored.",
+        toast.success(t("credentials.toasts.accepted"), {
+          description: t("credentials.toasts.acceptedPending"),
         });
       } else {
-        toast.success("Credential accepted");
+        toast.success(t("credentials.toasts.accepted"));
       }
       onChanged?.();
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not accept");
+      toast.error(e?.message ?? t("credentials.toasts.couldNotAccept"));
     } finally {
       setBusy(false);
     }
@@ -441,18 +448,18 @@ function AcceptanceBanner({
 
   const onReject = async () => {
     if (!reason.trim()) {
-      toast.error("Please provide a reason");
+      toast.error(t("credentials.rejectDialog.reasonRequired"));
       return;
     }
     setBusy(true);
     try {
       await reject({ data: { credentialId, reason: reason.trim() } });
-      toast.success("Credential rejected");
+      toast.success(t("credentials.toasts.rejected"));
       setOpen(false);
       setReason("");
       onChanged?.();
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not reject");
+      toast.error(e?.message ?? t("credentials.toasts.couldNotReject"));
     } finally {
       setBusy(false);
     }
@@ -460,36 +467,36 @@ function AcceptanceBanner({
 
   return (
     <div className="mb-4 rounded-md border border-warning/40 bg-warning/10 p-4">
-      <div className="font-medium text-warning-foreground">Please review and accept this credential</div>
+      <div className="font-medium text-warning-foreground">{t("credentialDetail.acceptance.title")}</div>
       <p className="mt-1 text-sm text-muted-foreground">
-        This credential is not yet valid and is not anchored on the blockchain. Once you accept it, it becomes valid in your wallet and is anchored automatically. If something is wrong, reject it with a reason for the issuer.
+        {t("credentialDetail.acceptance.description")}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button size="sm" onClick={onAccept} disabled={busy}>
-          <Check className="mr-1 h-3.5 w-3.5" /> Accept credential
+          <Check className="mr-1 h-3.5 w-3.5" /> {t("credentialDetail.acceptance.acceptBtn")}
         </Button>
         <Button size="sm" variant="outline" onClick={() => setOpen(true)} disabled={busy}>
-          <X className="mr-1 h-3.5 w-3.5" /> Reject
+          <X className="mr-1 h-3.5 w-3.5" /> {t("credentialDetail.acceptance.rejectBtn")}
         </Button>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject credential</DialogTitle>
+            <DialogTitle>{t("credentialDetail.rejectDialog.title")}</DialogTitle>
             <DialogDescription>
-              Explain to the issuer why you are rejecting this credential. They can update the issuance details and resend, or accept your rejection.
+              {t("credentialDetail.rejectDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="e.g. The grade is incorrect — should be 9/10."
+            placeholder={t("credentialDetail.rejectDialog.placeholder")}
             rows={4}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button variant="destructive" disabled={busy} onClick={onReject}>Reject credential</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("actions.cancel", { ns: "common" })}</Button>
+            <Button variant="destructive" disabled={busy} onClick={onReject}>{t("credentialDetail.rejectDialog.confirm")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
