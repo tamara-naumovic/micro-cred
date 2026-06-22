@@ -1460,6 +1460,7 @@ export const renewCredential = createServerFn({ method: "POST" })
     } as never);
     await supabaseAdmin.from("audit_log").insert({
       actor_id: userId,
+      actor_name: "issuer",
       action: "renewed credential expiry",
       target: c.id,
     } as never);
