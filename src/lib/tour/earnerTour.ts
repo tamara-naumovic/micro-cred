@@ -1,100 +1,62 @@
 import { driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
+import i18n from "@/i18n";
 
 const storageKey = (userId: string) => `tour:earner:${userId}`;
 
-const steps: DriveStep[] = [
-  {
-    popover: {
-      title: "Welcome to MicroCred!",
-      description:
-        "A quick tour of the key parts of the platform. You can skip it and re-launch it later from the <b>Manual</b> page.",
+function buildSteps(): DriveStep[] {
+  const t = (key: string) => i18n.t(key, { ns: "tour" });
+  return [
+    { popover: { title: t("earner.welcome.title"), description: t("earner.welcome.description") } },
+    {
+      element: '[data-tour="nav-dashboard"]',
+      popover: { title: t("earner.dashboard.title"), description: t("earner.dashboard.description"), side: "right" },
     },
-  },
-  {
-    element: '[data-tour="nav-dashboard"]',
-    popover: {
-      title: "Dashboard",
-      description: "Overview of your credentials, applications and notifications.",
-      side: "right",
+    {
+      element: '[data-tour="dash-metrics"]',
+      popover: { title: t("earner.metrics.title"), description: t("earner.metrics.description"), side: "bottom" },
     },
-  },
-  {
-    element: '[data-tour="dash-metrics"]',
-    popover: {
-      title: "Your key metrics",
-      description: "Active credentials, pending applications and credentials expiring soon.",
-      side: "bottom",
+    {
+      element: '[data-tour="nav-my-credentials"]',
+      popover: { title: t("earner.myCredentials.title"), description: t("earner.myCredentials.description"), side: "right" },
     },
-  },
-  {
-    element: '[data-tour="nav-my-credentials"]',
-    popover: {
-      title: "My Credentials",
-      description: "All of your issued credentials — details, blockchain proof and sharing options.",
-      side: "right",
+    {
+      element: '[data-tour="nav-applications"]',
+      popover: { title: t("earner.applications.title"), description: t("earner.applications.description"), side: "right" },
     },
-  },
-  {
-    element: '[data-tour="nav-applications"]',
-    popover: {
-      title: "Applications",
-      description: "Track application status (In review, Evidence collected, Verified, Issued, Rejected).",
-      side: "right",
+    {
+      element: '[data-tour="nav-apply"]',
+      popover: { title: t("earner.apply.title"), description: t("earner.apply.description"), side: "right" },
     },
-  },
-  {
-    element: '[data-tour="nav-apply"]',
-    popover: {
-      title: "Apply for Credential",
-      description: "Browse available micro-credential templates and submit an application.",
-      side: "right",
+    {
+      element: '[data-tour="nav-profile"]',
+      popover: { title: t("earner.profile.title"), description: t("earner.profile.description"), side: "right" },
     },
-  },
-  {
-    element: '[data-tour="nav-profile"]',
-    popover: {
-      title: "Public Profile",
-      description: "Your public profile that you can share with employers and institutions.",
-      side: "right",
+    {
+      element: '[data-tour="nav-notifications"]',
+      popover: { title: t("earner.notifications.title"), description: t("earner.notifications.description"), side: "right" },
     },
-  },
-  {
-    element: '[data-tour="nav-notifications"]',
-    popover: {
-      title: "Notifications",
-      description: "Updates on status changes, expirations and newly issued credentials.",
-      side: "right",
+    {
+      element: '[data-tour="nav-manual"]',
+      popover: { title: t("earner.manual.title"), description: t("earner.manual.description"), side: "right" },
     },
-  },
-  {
-    element: '[data-tour="nav-manual"]',
-    popover: {
-      title: "Manual",
-      description: "Detailed guidance for every part of the platform — always available here.",
-      side: "right",
-    },
-  },
-  {
-    popover: {
-      title: "You're all set!",
-      description: "Good luck collecting your credentials. You can re-launch this tour anytime from the Manual page.",
-    },
-  },
-];
+    { popover: { title: t("earner.done.title"), description: t("earner.done.description") } },
+  ];
+}
 
 export function startEarnerTour(userId: string, opts?: { force?: boolean }) {
   if (typeof window === "undefined") return;
   const key = storageKey(userId);
   if (!opts?.force && window.localStorage.getItem(key) === "1") return;
 
+  const t = (k: string) => i18n.t(k, { ns: "tour" });
   const d = driver({
     showProgress: true,
     allowClose: true,
-    nextBtnText: "Next",
-    prevBtnText: "Back",
-    doneBtnText: "Done",
-    steps,
+    nextBtnText: t("buttons.next"),
+    prevBtnText: t("buttons.back"),
+    doneBtnText: t("buttons.done"),
+    steps: buildSteps(),
     onDestroyed: () => {
       try {
         window.localStorage.setItem(key, "1");
