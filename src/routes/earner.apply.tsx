@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 import { RoleGuard } from "@/components/RoleGuard";
@@ -7,8 +7,17 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useStore } from "@/lib/store";
 import { toast } from "sonner";
+
+
 
 export const Route = createFileRoute("/earner/apply")({
   head: () => ({ meta: [{ title: "Apply for credential — MicroCred" }] }),
@@ -24,6 +33,10 @@ function Apply() {
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2>(1);
   const [templateId, setTemplateId] = useState<string | null>(null);
+  const [issuerFilter, setIssuerFilter] = useState<string>("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "formal" | "non_formal">("all");
+  const [levelFilter, setLevelFilter] = useState<string>("all");
+
 
   const tpl = templates.find((t) => t.id === templateId);
   const myOrgIds = new Set(
@@ -32,6 +45,22 @@ function Apply() {
       : [],
   );
   const active = templates.filter((t) => t.status === "active" && myOrgIds.has(t.issuerId));
+  const issuerOptions = useMemo(
+    () => Array.from(new Set(active.map((t) => t.issuerName).filter(Boolean))).sort(),
+    [active],
+  );
+  const levelOptions = useMemo(
+    () => Array.from(new Set(active.map((t) => t.level).filter((l) => l && l !== "N/A"))).sort(),
+    [active],
+  );
+  const filtersActive = issuerFilter !== "all" || sourceFilter !== "all" || levelFilter !== "all";
+  const visible = active.filter((t) => {
+    if (issuerFilter !== "all" && t.issuerName !== issuerFilter) return false;
+    if (sourceFilter !== "all" && t.source !== sourceFilter) return false;
+    if (levelFilter !== "all" && t.level !== levelFilter) return false;
+    return true;
+  });
+
 
   const appliedTemplateIds = new Set(
     activeUser
@@ -91,8 +120,40 @@ function Apply() {
       </div>
 
       {step === 1 && (
-        <div className="grid gap-3 md:grid-cols-2">
-          {active.map((t) => {
+        <>
+          {active.length > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <Select value={issuerFilter} onValueChange={setIssuerFilter}>
+                <SelectTrigger className="w-56"><SelectValue placeholder="All issuers" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All issuers</SelectItem>
+                  {issuerOptions.map((name) => (
+                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={sourceFilter} onValueChange={(v) => setSourceFilter(v as typeof sourceFilter)}>
+                <SelectTrigger className="w-44"><SelectValue placeholder="All types" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  <SelectItem value="formal">Formal</SelectItem>
+                  <SelectItem value="non_formal">Non-formal</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
+                <SelectTrigger className="w-44"><SelectValue placeholder="All levels" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All levels</SelectItem>
+                  {levelOptions.map((lvl) => (
+                    <SelectItem key={lvl} value={lvl}>{lvl}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="grid gap-3 md:grid-cols-2">
+            {visible.map((t) => {
+
             const blocked = blockedReason(t.id);
             return (
               <Card
@@ -166,8 +227,13 @@ function Apply() {
                 : "No active micro-credentials available from your institution(s) yet."}
             </p>
           )}
-        </div>
+          {active.length > 0 && visible.length === 0 && filtersActive && (
+            <p className="text-sm text-muted-foreground">No micro-credentials match the current filters.</p>
+          )}
+          </div>
+        </>
       )}
+
 
       {step === 2 && tpl && (
         <Card>
