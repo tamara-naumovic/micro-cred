@@ -110,7 +110,7 @@ export function NotificationsList({ role }: { role: Role }) {
                       )}
                       <div className="font-medium">
                         {n.titleKey
-                          ? t(`notifications.${n.titleKey}`, { defaultValue: n.title, ...(n.params ?? {}) })
+                          ? t(`notifications.${n.titleKey}`, { defaultValue: n.title, ...buildParams(n.params) })
                           : n.title}
                       </div>
                     </div>
@@ -121,7 +121,7 @@ export function NotificationsList({ role }: { role: Role }) {
                   {(n.bodyKey || n.body) && (
                     <div className="text-sm text-muted-foreground">
                       {n.bodyKey
-                        ? t(`notifications.${n.bodyKey}`, { defaultValue: n.body, ...(n.params ?? {}) })
+                        ? t(`notifications.${n.bodyKey}`, { defaultValue: n.body, ...buildParams(n.params) })
                         : n.body}
                     </div>
                   )}
