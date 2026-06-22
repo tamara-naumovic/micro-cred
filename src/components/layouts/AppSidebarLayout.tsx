@@ -104,7 +104,7 @@ const ISSUER_ADMIN_NAV: NavGroups = [
     ],
   },
   {
-    group: "Network",
+    group: "Account and settings",
     items: [
       { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck, dataTour: "nav-issuer-profile" },
       { to: "/issuer/notifications", label: "Notifications", icon: Bell, dataTour: "nav-issuer-notifications" },
