@@ -50,6 +50,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { useStore } from "@/lib/store";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { MockUser, Role } from "@/lib/types";
 
 interface NavItem {
@@ -259,6 +260,7 @@ export function AppSidebarLayout() {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
+              <LanguageSwitcher />
               <Button
                 variant="ghost"
                 size="icon"
