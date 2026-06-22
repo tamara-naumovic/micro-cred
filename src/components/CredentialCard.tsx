@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Award, CalendarClock, Clock, GraduationCap, Share2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,10 @@ import { ShareDialog } from "@/components/ShareDialog";
 import type { IssuedCredential } from "@/lib/types";
 
 export function ChainPendingChip({ status }: { status?: string }) {
+  const { t } = useTranslation("common");
   if (!status) return null;
   if (status === "confirmed" || status === "disabled" || status === "not_requested") return null;
-  const label = status === "failed" ? "Blockchain retrying" : "Blockchain pending";
+  const label = status === "failed" ? t("credentialCard.blockchainRetrying") : t("credentialCard.blockchainPending");
   return (
     <Badge
       variant="outline"
@@ -20,6 +22,7 @@ export function ChainPendingChip({ status }: { status?: string }) {
     </Badge>
   );
 }
+
 
 export function CredentialCard({
   credential,
