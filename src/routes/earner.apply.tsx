@@ -1,6 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,7 +126,20 @@ function Apply() {
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground">Issued by {t.issuerName}</div>
-                  <div className="flex justify-end pt-2">
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      asChild
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link
+                        to="/earner/microcredential-templates/$id"
+                        params={{ id: t.id }}
+                      >
+                        See more
+                      </Link>
+                    </Button>
                     <Button
                       size="sm"
                       disabled={!!blocked}
@@ -139,6 +153,7 @@ function Apply() {
                       Continue
                     </Button>
                   </div>
+
                 </CardContent>
               </Card>
 

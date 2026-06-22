@@ -46,6 +46,7 @@ import { Route as EarnerCredentialsIndexRouteImport } from './routes/earner.cred
 import { Route as IssuerMicrocredentialTemplatesNewRouteImport } from './routes/issuer.microcredential-templates.new'
 import { Route as IssuerMicrocredentialTemplatesIdRouteImport } from './routes/issuer.microcredential-templates.$id'
 import { Route as IssuerIssueBulkRouteImport } from './routes/issuer.issue.bulk'
+import { Route as EarnerMicrocredentialTemplatesIdRouteImport } from './routes/earner.microcredential-templates.$id'
 import { Route as EarnerCredentialsIdRouteImport } from './routes/earner.credentials.$id'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
 
@@ -237,6 +238,12 @@ const IssuerIssueBulkRoute = IssuerIssueBulkRouteImport.update({
   path: '/issuer/issue/bulk',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EarnerMicrocredentialTemplatesIdRoute =
+  EarnerMicrocredentialTemplatesIdRouteImport.update({
+    id: '/earner/microcredential-templates/$id',
+    path: '/earner/microcredential-templates/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const EarnerCredentialsIdRoute = EarnerCredentialsIdRouteImport.update({
   id: '/earner/credentials/$id',
   path: '/earner/credentials/$id',
@@ -282,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/issuer/': typeof IssuerIndexRoute
   '/issuers/': typeof IssuersIndexRoute
   '/earner/credentials/$id': typeof EarnerCredentialsIdRoute
+  '/earner/microcredential-templates/$id': typeof EarnerMicrocredentialTemplatesIdRoute
   '/issuer/issue/bulk': typeof IssuerIssueBulkRoute
   '/issuer/microcredential-templates/$id': typeof IssuerMicrocredentialTemplatesIdRoute
   '/issuer/microcredential-templates/new': typeof IssuerMicrocredentialTemplatesNewRoute
@@ -323,6 +331,7 @@ export interface FileRoutesByTo {
   '/issuer': typeof IssuerIndexRoute
   '/issuers': typeof IssuersIndexRoute
   '/earner/credentials/$id': typeof EarnerCredentialsIdRoute
+  '/earner/microcredential-templates/$id': typeof EarnerMicrocredentialTemplatesIdRoute
   '/issuer/issue/bulk': typeof IssuerIssueBulkRoute
   '/issuer/microcredential-templates/$id': typeof IssuerMicrocredentialTemplatesIdRoute
   '/issuer/microcredential-templates/new': typeof IssuerMicrocredentialTemplatesNewRoute
@@ -365,6 +374,7 @@ export interface FileRoutesById {
   '/issuer/': typeof IssuerIndexRoute
   '/issuers/': typeof IssuersIndexRoute
   '/earner/credentials/$id': typeof EarnerCredentialsIdRoute
+  '/earner/microcredential-templates/$id': typeof EarnerMicrocredentialTemplatesIdRoute
   '/issuer/issue/bulk': typeof IssuerIssueBulkRoute
   '/issuer/microcredential-templates/$id': typeof IssuerMicrocredentialTemplatesIdRoute
   '/issuer/microcredential-templates/new': typeof IssuerMicrocredentialTemplatesNewRoute
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/issuer/'
     | '/issuers/'
     | '/earner/credentials/$id'
+    | '/earner/microcredential-templates/$id'
     | '/issuer/issue/bulk'
     | '/issuer/microcredential-templates/$id'
     | '/issuer/microcredential-templates/new'
@@ -449,6 +460,7 @@ export interface FileRouteTypes {
     | '/issuer'
     | '/issuers'
     | '/earner/credentials/$id'
+    | '/earner/microcredential-templates/$id'
     | '/issuer/issue/bulk'
     | '/issuer/microcredential-templates/$id'
     | '/issuer/microcredential-templates/new'
@@ -490,6 +502,7 @@ export interface FileRouteTypes {
     | '/issuer/'
     | '/issuers/'
     | '/earner/credentials/$id'
+    | '/earner/microcredential-templates/$id'
     | '/issuer/issue/bulk'
     | '/issuer/microcredential-templates/$id'
     | '/issuer/microcredential-templates/new'
@@ -532,6 +545,7 @@ export interface RootRouteChildren {
   IssuerIndexRoute: typeof IssuerIndexRoute
   IssuersIndexRoute: typeof IssuersIndexRoute
   EarnerCredentialsIdRoute: typeof EarnerCredentialsIdRoute
+  EarnerMicrocredentialTemplatesIdRoute: typeof EarnerMicrocredentialTemplatesIdRoute
   IssuerIssueBulkRoute: typeof IssuerIssueBulkRoute
   IssuerMicrocredentialTemplatesIdRoute: typeof IssuerMicrocredentialTemplatesIdRoute
   IssuerMicrocredentialTemplatesNewRoute: typeof IssuerMicrocredentialTemplatesNewRoute
@@ -802,6 +816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IssuerIssueBulkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/earner/microcredential-templates/$id': {
+      id: '/earner/microcredential-templates/$id'
+      path: '/earner/microcredential-templates/$id'
+      fullPath: '/earner/microcredential-templates/$id'
+      preLoaderRoute: typeof EarnerMicrocredentialTemplatesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/earner/credentials/$id': {
       id: '/earner/credentials/$id'
       path: '/earner/credentials/$id'
@@ -852,6 +873,7 @@ const rootRouteChildren: RootRouteChildren = {
   IssuerIndexRoute: IssuerIndexRoute,
   IssuersIndexRoute: IssuersIndexRoute,
   EarnerCredentialsIdRoute: EarnerCredentialsIdRoute,
+  EarnerMicrocredentialTemplatesIdRoute: EarnerMicrocredentialTemplatesIdRoute,
   IssuerIssueBulkRoute: IssuerIssueBulkRoute,
   IssuerMicrocredentialTemplatesIdRoute: IssuerMicrocredentialTemplatesIdRoute,
   IssuerMicrocredentialTemplatesNewRoute:
