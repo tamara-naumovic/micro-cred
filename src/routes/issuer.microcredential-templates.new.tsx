@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CalendarIcon, Upload, AlertTriangle, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { publishTemplateAndAnchor, getChainAvailabilityFn } from "@/lib/chain/anchor.functions";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -47,11 +48,12 @@ export const Route = createFileRoute("/issuer/microcredential-templates/new")({
 });
 
 function Guarded() {
+  const { t } = useTranslation("issuer");
   const { activeUser } = useStore();
   const isStaff = activeUser?.subRole === "staff";
   useEffect(() => {
     if (isStaff) {
-      toast.error("You don't have permission to create micro-credentials.");
+      toast.error(t("templates.new.noPermission"));
     }
   }, [isStaff]);
   if (!activeUser) return null;
@@ -60,28 +62,8 @@ function Guarded() {
   return <Form />;
 }
 
-const QA_OPTIONS: { value: QaType; label: string }[] = [
-  { value: "internal", label: "Internal" },
-  { value: "external", label: "External" },
-  { value: "internal_and_external", label: "Internal and external" },
-  { value: "other", label: "Other" },
-  { value: "not_specified", label: "Not specified" },
-];
-
-const SUPERVISION_OPTIONS: { value: SupervisionType; label: string }[] = [
-  { value: "unsupervised_no_id", label: "Unsupervised with no identity verification" },
-  { value: "supervised_no_id", label: "Supervised with no identity verification" },
-  { value: "supervised_online_with_id", label: "Supervised online with identity verification" },
-  { value: "supervised_onsite_with_id", label: "Supervised onsite with identity verification" },
-];
-
-const STACKABILITY_OPTIONS: { value: StackabilityType; label: string }[] = [
-  { value: "stand_alone", label: "Stand-alone" },
-  { value: "independent_integrated", label: "Independent micro-credential / integrated" },
-  { value: "stackable", label: "Stackable towards another credential" },
-];
-
 function Form() {
+  const { t } = useTranslation("issuer");
   const { activeUser, upsertTemplate, organizations, users, assignTemplateUsers } = useStore();
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
@@ -124,9 +106,30 @@ function Form() {
     (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === activeUser.organizationId,
   );
 
+  const QA_OPTIONS: { value: QaType; label: string }[] = [
+    { value: "internal", label: t("templates.qaOptions.internal") },
+    { value: "external", label: t("templates.qaOptions.external") },
+    { value: "internal_and_external", label: t("templates.qaOptions.internal_and_external") },
+    { value: "other", label: t("templates.qaOptions.other") },
+    { value: "not_specified", label: t("templates.qaOptions.not_specified") },
+  ];
+
+  const SUPERVISION_OPTIONS: { value: SupervisionType; label: string }[] = [
+    { value: "unsupervised_no_id", label: t("templates.supervisionOptions.unsupervised_no_id") },
+    { value: "supervised_no_id", label: t("templates.supervisionOptions.supervised_no_id") },
+    { value: "supervised_online_with_id", label: t("templates.supervisionOptions.supervised_online_with_id") },
+    { value: "supervised_onsite_with_id", label: t("templates.supervisionOptions.supervised_onsite_with_id") },
+  ];
+
+  const STACKABILITY_OPTIONS: { value: StackabilityType; label: string }[] = [
+    { value: "stand_alone", label: t("templates.stackabilityOptions.stand_alone") },
+    { value: "independent_integrated", label: t("templates.stackabilityOptions.independent_integrated") },
+    { value: "stackable", label: t("templates.stackabilityOptions.stackable") },
+  ];
+
   const submit = async (status: "draft" | "publish") => {
     if (!activeUser.organizationId) {
-      toast.error("Your account is not linked to an issuer organisation");
+      toast.error(t("templates.new.toasts.noOrg"));
       return;
     }
     // Required fields
@@ -141,7 +144,7 @@ function Form() {
     if (qaType && qaType !== "not_specified" && qaFiles.length === 0) requiredErrors.push("Quality assurance document");
     if (expiryMode === "fixed_date" && !expiryDate) requiredErrors.push("Expiration date");
     if (requiredErrors.length > 0) {
-      toast.error(`Required: ${requiredErrors.join(", ")}`);
+      toast.error(t("templates.new.toasts.required", { fields: requiredErrors.join(", ") }));
       return;
     }
 
@@ -156,7 +159,7 @@ function Form() {
           .from("qa-documents")
           .upload(path, f, { upsert: false, contentType: f.type || undefined });
         if (upErr) {
-          toast.error(`Failed to upload ${f.name}: ${upErr.message}`);
+          toast.error(t("templates.new.toasts.uploadFail", { name: f.name, message: upErr.message }));
           setSubmitting(false);
           return;
         }
@@ -200,7 +203,7 @@ function Form() {
         try {
           await assignTemplateUsers(id, assignedStaff);
         } catch (e: any) {
-          toast.error(e?.message ?? "Failed to assign staff");
+          toast.error(e?.message ?? t("templates.new.toasts.assignFail"));
         }
       }
       if (status === "publish") {
@@ -210,14 +213,14 @@ function Form() {
           const res: any = await publishFn({ data: { templateId: id, anchorMode } });
           toast.success(
             res?.mode === "now"
-              ? "Published and anchored on Bloxberg"
-              : "Published · Blockchain anchoring queued",
+              ? t("templates.new.toasts.publishedAnchored")
+              : t("templates.new.toasts.publishedQueued"),
           );
         } catch (e: any) {
-          toast.error(`Published, but anchoring failed: ${e?.message ?? "unknown error"}`);
+          toast.error(t("templates.new.toasts.anchorFail", { message: e?.message ?? "unknown error" }));
         }
       } else {
-        toast.success("Micro-credential saved as draft");
+        toast.success(t("templates.new.toasts.savedDraft"));
       }
       navigate({ to: "/issuer/microcredential-templates" });
     } finally {
@@ -226,30 +229,30 @@ function Form() {
   };
 
   return (
-    <PageShell title="Create Micro-credential" description="Define a new micro-credential offered by your organisation.">
+    <PageShell title={t("templates.new.title")} description={t("templates.new.description")}>
       <Card>
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <Label>Title *</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Data Visualization Essentials" />
+              <Label>{t("templates.new.fields.title")}</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("templates.new.fields.titlePlaceholder")} />
             </div>
             <div className="md:col-span-2">
-              <Label>Description *</Label>
+              <Label>{t("templates.new.fields.description")}</Label>
               <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
             <div>
-              <Label>Source *</Label>
+              <Label>{t("templates.new.fields.source")}</Label>
               <Select value={source} onValueChange={(v) => setSource(v as LearningSource)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="formal">Formal</SelectItem>
-                  <SelectItem value="non_formal">Non-formal</SelectItem>
+                  <SelectItem value="formal">{t("templates.new.fields.sourceFormal")}</SelectItem>
+                  <SelectItem value="non_formal">{t("templates.new.fields.sourceNonFormal")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Level *</Label>
+              <Label>{t("templates.new.fields.level")}</Label>
               <Select value={level} onValueChange={(v) => setLevel(v as Level)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -260,7 +263,7 @@ function Form() {
               </Select>
             </div>
             <div>
-              <Label>Participation *</Label>
+              <Label>{t("templates.new.fields.participation")}</Label>
               <Select value={participation} onValueChange={(v) => setParticipation(v as Participation)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -271,7 +274,7 @@ function Form() {
               </Select>
             </div>
             <div>
-              <Label>ECTS {source === "formal" ? "*" : "(optional)"}</Label>
+              <Label>{source === "formal" ? t("templates.new.fields.ectsRequired") : t("templates.new.fields.ectsOptional")}</Label>
               <Input
                 value={ectsNotApplicable ? "" : ects}
                 onChange={(e) => setEcts(e.target.value)}
@@ -279,7 +282,7 @@ function Form() {
                 min={0}
                 max={60}
                 disabled={source === "non_formal" && ectsNotApplicable}
-                placeholder={source === "non_formal" && ectsNotApplicable ? "Does not apply" : undefined}
+                placeholder={source === "non_formal" && ectsNotApplicable ? t("templates.new.fields.ectsPlaceholder") : undefined}
               />
               {source === "non_formal" && (
                 <div className="mt-2 flex items-center gap-2">
@@ -292,28 +295,28 @@ function Form() {
                       if (v) setEcts("");
                     }}
                   />
-                  <Label htmlFor="ects-na" className="font-normal cursor-pointer">Does not apply</Label>
+                  <Label htmlFor="ects-na" className="font-normal cursor-pointer">{t("templates.new.fields.ectsNotApplicable")}</Label>
                 </div>
               )}
             </div>
             <div className="md:col-span-2">
-              <Label>Skills * (comma-separated)</Label>
-              <Input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="Data analysis, Tableau, Storytelling" />
+              <Label>{t("templates.new.fields.skills")}</Label>
+              <Input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder={t("templates.new.fields.skillsPlaceholder")} />
             </div>
             <div className="md:col-span-2">
-              <Label>Learning outcomes * (one per line)</Label>
+              <Label>{t("templates.new.fields.outcomes")}</Label>
               <Textarea rows={3} value={outcomes} onChange={(e) => setOutcomes(e.target.value)} />
             </div>
             <div className="md:col-span-2">
-              <Label>Assessment *</Label>
-              <Input value={assessment} onChange={(e) => setAssessment(e.target.value)} placeholder="Final project + oral defence" />
+              <Label>{t("templates.new.fields.assessment")}</Label>
+              <Input value={assessment} onChange={(e) => setAssessment(e.target.value)} placeholder={t("templates.new.fields.assessmentPlaceholder")} />
             </div>
 
             {/* Quality Assurance */}
             <div className="md:col-span-2 space-y-3 rounded-md border p-4">
-              <Label>Type of Quality Assurance *</Label>
+              <Label>{t("templates.new.fields.qaType")}</Label>
               <Select value={qaType} onValueChange={(v) => setQaType(v as QaType)}>
-                <SelectTrigger><SelectValue placeholder="Select QA type" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("templates.new.fields.qaTypePlaceholder")} /></SelectTrigger>
                 <SelectContent>
                   {QA_OPTIONS.map((o) => (
                     <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -322,7 +325,7 @@ function Form() {
               </Select>
               {qaType && qaType !== "not_specified" && (
                 <div>
-                  <Label className="text-sm">QA confirmation documents *</Label>
+                  <Label className="text-sm">{t("templates.new.fields.qaDocs")}</Label>
                   <div
                     onDragOver={(e) => { e.preventDefault(); setQaDragOver(true); }}
                     onDragLeave={() => setQaDragOver(false)}
@@ -339,9 +342,9 @@ function Form() {
                   >
                     <Upload className="h-6 w-6 text-muted-foreground" />
                     <div className="text-sm">
-                      Drag &amp; drop files here, or{" "}
+                      {t("templates.new.fields.qaDropHint")}{" "}
                       <label className="cursor-pointer text-primary underline">
-                        browse
+                        {t("templates.new.fields.qaBrowse")}
                         <input
                           type="file"
                           multiple
@@ -355,7 +358,7 @@ function Form() {
                         />
                       </label>
                     </div>
-                    <p className="text-xs text-muted-foreground">PDF or images. Multiple files allowed.</p>
+                    <p className="text-xs text-muted-foreground">{t("templates.new.fields.qaFileHint")}</p>
                   </div>
                   {qaFiles.length > 0 && (
                     <ul className="mt-2 space-y-1">
@@ -380,30 +383,30 @@ function Form() {
 
             {/* Prerequisites */}
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
-              <Label>Prerequisites (optional)</Label>
+              <Label>{t("templates.new.fields.prerequisites")}</Label>
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="prereq-none"
                   checked={prereqNone}
                   onCheckedChange={(c) => setPrereqNone(!!c)}
                 />
-                <Label htmlFor="prereq-none" className="font-normal cursor-pointer">No prerequisites</Label>
+                <Label htmlFor="prereq-none" className="font-normal cursor-pointer">{t("templates.new.fields.prereqNone")}</Label>
               </div>
               {!prereqNone && (
                 <Textarea
                   rows={3}
                   value={prereqText}
                   onChange={(e) => setPrereqText(e.target.value)}
-                  placeholder="Describe the prerequisites"
+                  placeholder={t("templates.new.fields.prereqPlaceholder")}
                 />
               )}
             </div>
 
             {/* Supervision */}
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
-              <Label>Supervision and identity verification (optional)</Label>
+              <Label>{t("templates.new.fields.supervision")}</Label>
               <Select value={supervisionType} onValueChange={(v) => setSupervisionType(v as SupervisionType)}>
-                <SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("templates.new.fields.selectPlaceholder")} /></SelectTrigger>
                 <SelectContent>
                   {SUPERVISION_OPTIONS.map((o) => (
                     <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -414,9 +417,9 @@ function Form() {
 
             {/* Stackability */}
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
-              <Label>Integration / Stackability (optional)</Label>
+              <Label>{t("templates.new.fields.stackability")}</Label>
               <Select value={stackabilityType} onValueChange={(v) => setStackabilityType(v as StackabilityType)}>
-                <SelectTrigger><SelectValue placeholder="Select an option" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("templates.new.fields.selectPlaceholder")} /></SelectTrigger>
                 <SelectContent>
                   {STACKABILITY_OPTIONS.map((o) => (
                     <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -426,15 +429,15 @@ function Form() {
             </div>
 
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
-              <Label>Expiration *</Label>
+              <Label>{t("templates.new.fields.expiration")}</Label>
               <RadioGroup value={expiryMode} onValueChange={(v) => setExpiryMode(v as "never" | "fixed_date")}>
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="never" id="ex-never" />
-                  <Label htmlFor="ex-never" className="font-normal cursor-pointer">Does not expire</Label>
+                  <Label htmlFor="ex-never" className="font-normal cursor-pointer">{t("templates.new.fields.expiryNever")}</Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="fixed_date" id="ex-date" />
-                  <Label htmlFor="ex-date" className="font-normal cursor-pointer">Expires on</Label>
+                  <Label htmlFor="ex-date" className="font-normal cursor-pointer">{t("templates.new.fields.expiryFixed")}</Label>
                   {expiryMode === "fixed_date" && (
                     <Popover>
                       <PopoverTrigger asChild>
@@ -443,7 +446,7 @@ function Form() {
                           className={cn("w-[220px] justify-start text-left font-normal", !expiryDate && "text-muted-foreground")}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {expiryDate ? format(expiryDate, "PPP") : <span>Pick a date</span>}
+                          {expiryDate ? format(expiryDate, "PPP") : <span>{t("templates.new.fields.expiryPickDate")}</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -456,9 +459,9 @@ function Form() {
             </div>
 
             <div className="md:col-span-2 space-y-2 rounded-md border p-4">
-              <Label>Assign staff (optional)</Label>
+              <Label>{t("templates.new.fields.assignStaff")}</Label>
               {staffUsers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No staff yet for your institution.</p>
+                <p className="text-sm text-muted-foreground">{t("templates.new.fields.noStaff")}</p>
               ) : (
                 <StaffPicker staff={staffUsers} selected={assignedStaff} onChange={setAssignedStaff} />
               )}
@@ -467,38 +470,42 @@ function Form() {
 
           <div className="rounded-md border p-4 space-y-3">
             <div>
-              <Label>Blockchain registration</Label>
+              <Label>{t("templates.new.fields.blockchain")}</Label>
               <p className="text-xs text-muted-foreground">
-                Choose when to anchor the template's cryptographic proof on Bloxberg. Publishing happens immediately either way.
+                {t("templates.new.fields.blockchainDesc")}
               </p>
             </div>
             <RadioGroup value={anchorMode} onValueChange={(v) => setAnchorMode(v as "now" | "later")} className="space-y-2">
               <div className="flex items-start gap-2">
                 <RadioGroupItem value="now" id="anchor-now" disabled={chainStatus !== "ok"} />
                 <Label htmlFor="anchor-now" className="font-normal">
-                  Publish and anchor now
-                  <span className="block text-xs text-muted-foreground">Submit the proof transaction to Bloxberg immediately.</span>
+                  {t("templates.new.fields.anchorNow")}
+                  <span className="block text-xs text-muted-foreground">{t("templates.new.fields.anchorNowDesc")}</span>
                 </Label>
               </div>
               <div className="flex items-start gap-2">
                 <RadioGroupItem value="later" id="anchor-later" />
                 <Label htmlFor="anchor-later" className="font-normal">
-                  Publish now, anchor later
-                  <span className="block text-xs text-muted-foreground">The template is published immediately and queued for anchoring.</span>
+                  {t("templates.new.fields.anchorLater")}
+                  <span className="block text-xs text-muted-foreground">{t("templates.new.fields.anchorLaterDesc")}</span>
                 </Label>
               </div>
             </RadioGroup>
             {chainStatus !== "ok" && (
               <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-2 text-xs">
                 <AlertTriangle className="h-3.5 w-3.5 mt-0.5" />
-                <span>Bloxberg integration is not currently available. The template will still publish and can be anchored later.</span>
+                <span>{t("templates.new.fields.chainUnavailable")}</span>
               </div>
             )}
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" disabled={submitting} onClick={() => submit("draft")}>Save as draft</Button>
-            <Button disabled={submitting} onClick={() => submit("publish")}>Publish micro-credential</Button>
+            <Button variant="outline" disabled={submitting} onClick={() => submit("draft")}>
+              {t("templates.new.buttons.saveDraft")}
+            </Button>
+            <Button disabled={submitting} onClick={() => submit("publish")}>
+              {t("templates.new.buttons.publish")}
+            </Button>
           </div>
         </CardContent>
       </Card>

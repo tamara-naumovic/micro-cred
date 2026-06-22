@@ -1,1 +1,86 @@
-{}
+{
+  "manual": {
+    "headTitle": "Manual — MicroCred",
+    "title": "Manual",
+    "description": "A guide to the platform — what each section does and how to use it.",
+    "restartTour": "Restart guided tour",
+    "gettingStarted": {
+      "title": "Getting started",
+      "p1": "MicroCred lets your institution design, issue and manage verifiable micro-credentials. Every issued credential is anchored on the blockchain so anyone can independently verify it.",
+      "p2": "Below you'll find more detail on each part of the platform. Use the \"Open …\" links to jump straight to the matching page.",
+      "staffNote": " As a staff member you see the sections relevant to the micro-credentials you are assigned to."
+    },
+    "sections": {
+      "overview": {
+        "title": "Overview",
+        "linkLabel": "Open Overview",
+        "body": "Institution dashboard with key metrics (published micro-credentials, issued credentials, active learners and staff), credential lifecycle, pending actions, blockchain status and recent activity."
+      },
+      "templates": {
+        "title": "Micro-credentials",
+        "linkLabel": "Open Micro-credentials",
+        "body": "Catalog of micro-credential templates for your institution. Admins see all templates; staff see only the templates they are assigned to. Open a template to view requirements, evidence, supervisors and quality-assurance documents."
+      },
+      "templateNew": {
+        "title": "Create Micro-credential",
+        "linkLabel": "Open Create Micro-credential",
+        "body": "Define a new template: title, description, level, learning outcomes, prerequisites, evidence requirements, supervisors, stackability and quality-assurance documents. Publish when ready so learners can apply."
+      },
+      "staff": {
+        "title": "Staff",
+        "linkLabel": "Open Staff",
+        "body": "Manage staff members in your institution and assign them to specific micro-credentials. Assigned staff can review applications and issue credentials only for their templates."
+      },
+      "earners": {
+        "title": "Earners",
+        "linkLabel": "Open Earners",
+        "body": "Directory of learners who have applied for or received credentials from your institution. Review their history and issued credentials."
+      },
+      "requests": {
+        "title": "Issuance Requests",
+        "linkLabel": "Open Issuance Requests",
+        "body": "Incoming applications. Review submitted evidence, request changes, mark as \"Evidence collected\" and \"Verified\", then issue the credential. You can also reject with a reason — the earner can edit and resend."
+      },
+      "issue": {
+        "title": "Direct Issuance",
+        "linkLabel": "Open Direct Issuance",
+        "body": "Issue a credential directly to a single earner without an application — useful for invited recipients or pre-verified achievements."
+      },
+      "bulk": {
+        "title": "Bulk Issuance",
+        "linkLabel": "Open Bulk Issuance",
+        "body": "Upload a CSV to issue the same micro-credential to many earners at once. Validate the file, review the preview, then submit the batch."
+      },
+      "credentials": {
+        "title": "Issued Credentials",
+        "linkLabel": "Open Issued Credentials",
+        "body": "All credentials your institution has issued. Use search (by earner, title or ID) and filters (template, lifecycle status) to narrow the list — the search box has an \"x\" to reset it. The first time you open this page a short guided tour walks you through the available actions. Per-row actions depend on the lifecycle: \"Edit & resend\" for rejected credentials (update grade and/or expiry, then resend to the earner for acceptance); \"Accept rejection\" to permanently delete a rejected credential; \"Renew expiry\" for issued or expired credentials with an expiry date (walks through review → evidence collected → verified, then issues the new expiry on chain without requiring earner acceptance)."
+      },
+      "revocations": {
+        "title": "Revocations",
+        "linkLabel": "Open Revocations",
+        "body": "Revoke previously issued credentials with a reason. Revocations are anchored on the blockchain so verifiers always see the current status."
+      },
+      "anchoring": {
+        "title": "Blockchain Queue",
+        "linkLabel": "Open Blockchain Queue",
+        "body": "Anchoring status of issued credentials: pending, submitted, confirmed or failed. Retry failed anchors and inspect transaction details."
+      },
+      "profile": {
+        "title": "Public Profile",
+        "linkLabel": "Open Public Profile",
+        "body": "Public page of your institution that learners and employers can visit. Lists your published micro-credentials and lets visitors verify any credential you have issued."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "linkLabel": "Open Notifications",
+        "body": "Updates on new applications, evidence submissions, anchoring failures, revocations and other relevant events."
+      },
+      "settings": {
+        "title": "Settings",
+        "linkLabel": "Open Settings",
+        "body": "Account settings, security, blockchain configuration and notification preferences."
+      }
+    }
+  }
+}

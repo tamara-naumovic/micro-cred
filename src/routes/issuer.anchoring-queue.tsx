@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { listAnchorJobs, retryAnchorJob, cancelAnchorJob, repairCredentialChainFields, processAnchorQueueFn } from "@/lib/chain/anchor.functions";
 import { useAuth } from "@/lib/auth";
 import {
@@ -50,6 +51,7 @@ function fmtDate(s: string | null): string {
 }
 
 function AnchoringQueuePage() {
+  const { t } = useTranslation("issuer");
   const list = useServerFn(listAnchorJobs);
   const retry = useServerFn(retryAnchorJob);
   const cancel = useServerFn(cancelAnchorJob);
@@ -72,8 +74,8 @@ function AnchoringQueuePage() {
     mutationFn: ({ jobId, entityKind }: { jobId: string; entityKind: "template" | "credential" }) =>
       retry({ data: { jobId, entityKind } }),
     onSuccess: (res) => {
-      if (res.ok) toast.success("Anchor retry submitted");
-      else toast.error(res.error ?? "Retry failed");
+      if (res.ok) toast.success(t("anchoringQueue.toasts.retrySubmitted"));
+      else toast.error(res.error ?? t("anchoringQueue.toasts.retryFailed"));
       qc.invalidateQueries({ queryKey: ["anchor-jobs"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -83,7 +85,7 @@ function AnchoringQueuePage() {
     mutationFn: ({ jobId, entityKind }: { jobId: string; entityKind: "template" | "credential" }) =>
       cancel({ data: { jobId, entityKind } }),
     onSuccess: () => {
-      toast.success("Job cancelled");
+      toast.success(t("anchoringQueue.toasts.cancelled"));
       qc.invalidateQueries({ queryKey: ["anchor-jobs"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -93,13 +95,13 @@ function AnchoringQueuePage() {
     mutationFn: (credentialId: string) => repair({ data: { credentialId } }),
     onSuccess: (res: any) => {
       if (res?.anchorResult?.ok) {
-        toast.success("Credential repaired and anchored");
+        toast.success(t("anchoringQueue.toasts.repaired"));
       } else if (res?.ok) {
         toast.success(
-          `Credential fields repaired. ${res.anchorResult?.error ?? "Anchor will retry shortly."}`,
+          t("anchoringQueue.toasts.repairedFields") + (res.anchorResult?.error ? ` ${res.anchorResult.error}` : ""),
         );
       } else {
-        toast.error(res?.anchorResult?.error ?? "Repair failed");
+        toast.error(res?.anchorResult?.error ?? t("anchoringQueue.toasts.repairFailed"));
       }
       qc.invalidateQueries({ queryKey: ["anchor-jobs"] });
     },
@@ -109,7 +111,7 @@ function AnchoringQueuePage() {
   const processMut = useMutation({
     mutationFn: () => processQueue(),
     onSuccess: (res: { processed: number }) => {
-      toast.success(`Processed ${res.processed} job(s)`);
+      toast.success(t("anchoringQueue.toasts.processed", { count: res.processed }));
       qc.invalidateQueries({ queryKey: ["anchor-jobs"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -117,7 +119,6 @@ function AnchoringQueuePage() {
 
   const rows = data?.rows ?? [];
   const maxAttempts = data?.maxAttempts ?? 5;
-
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -142,10 +143,9 @@ function AnchoringQueuePage() {
     <div className="container mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Blockchain Anchoring Queue</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("anchoringQueue.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Independent of credential issuance. Templates and credentials are fully valid once
-            published or issued — anchoring only adds an external integrity proof on Bloxberg.
+            {t("anchoringQueue.description")}
           </p>
         </div>
         <Button
@@ -154,66 +154,64 @@ function AnchoringQueuePage() {
           className="shrink-0"
         >
           <RefreshCcw className={`mr-2 h-4 w-4 ${processMut.isPending ? "animate-spin" : ""}`} />
-          {processMut.isPending ? "Processing…" : "Process queue now"}
+          {processMut.isPending ? t("anchoringQueue.actions.processing") : t("anchoringQueue.actions.processQueue")}
         </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">
-        <SummaryStat label="Queued" value={counts.queued} />
-        <SummaryStat label="Running" value={counts.running} />
-        <SummaryStat label="Failed" value={counts.failed} tone="destructive" />
-        <SummaryStat label="Confirmed" value={counts.done} tone="success" />
+        <SummaryStat label={t("anchoringQueue.stats.queued")} value={counts.queued} />
+        <SummaryStat label={t("anchoringQueue.stats.running")} value={counts.running} />
+        <SummaryStat label={t("anchoringQueue.stats.failed")} value={counts.failed} tone="destructive" />
+        <SummaryStat label={t("anchoringQueue.stats.confirmed")} value={counts.done} tone="success" />
       </div>
-
 
       <Card>
         <CardHeader>
-          <CardTitle>Jobs</CardTitle>
+          <CardTitle>{t("anchoringQueue.card.title")}</CardTitle>
           <CardDescription>
-            Per-job retry honours the {maxAttempts}-attempt cap and does not duplicate confirmed
-            anchors.
+            {t("anchoringQueue.card.description", { max: maxAttempts })}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <Tabs value={entityFilter} onValueChange={(v) => setEntityFilter(v as EntityFilter)}>
               <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="template">Templates</TabsTrigger>
-                <TabsTrigger value="credential">Credentials</TabsTrigger>
+                <TabsTrigger value="all">{t("anchoringQueue.filters.all")}</TabsTrigger>
+                <TabsTrigger value="template">{t("anchoringQueue.filters.templates")}</TabsTrigger>
+                <TabsTrigger value="credential">{t("anchoringQueue.filters.credentials")}</TabsTrigger>
               </TabsList>
             </Tabs>
             <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
               <TabsList>
-                <TabsTrigger value="all">All states</TabsTrigger>
-                <TabsTrigger value="queued">Queued</TabsTrigger>
-                <TabsTrigger value="failed">Failed</TabsTrigger>
-                <TabsTrigger value="done">Done</TabsTrigger>
+                <TabsTrigger value="all">{t("anchoringQueue.filters.allStates")}</TabsTrigger>
+                <TabsTrigger value="queued">{t("anchoringQueue.filters.queued")}</TabsTrigger>
+                <TabsTrigger value="failed">{t("anchoringQueue.filters.failed")}</TabsTrigger>
+                <TabsTrigger value="done">{t("anchoringQueue.filters.done")}</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
 
           {isLoading ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">Loading jobs…</div>
+            <div className="py-12 text-center text-sm text-muted-foreground">{t("anchoringQueue.empty.loading")}</div>
           ) : isError ? (
-            <div className="py-12 text-center text-sm text-destructive">Failed to load jobs.</div>
+            <div className="py-12 text-center text-sm text-destructive">{t("anchoringQueue.empty.error")}</div>
           ) : filtered.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
-              No jobs match the current filters.
+              {t("anchoringQueue.empty.noMatch")}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Version / Learner</TableHead>
-                    <TableHead>Internal status</TableHead>
-                    <TableHead>Blockchain</TableHead>
-                    <TableHead>Attempts</TableHead>
-                    <TableHead>Last attempt</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("anchoringQueue.table.type")}</TableHead>
+                    <TableHead>{t("anchoringQueue.table.title")}</TableHead>
+                    <TableHead>{t("anchoringQueue.table.versionLearner")}</TableHead>
+                    <TableHead>{t("anchoringQueue.table.internalStatus")}</TableHead>
+                    <TableHead>{t("anchoringQueue.table.blockchain")}</TableHead>
+                    <TableHead>{t("anchoringQueue.table.attempts")}</TableHead>
+                    <TableHead>{t("anchoringQueue.table.lastAttempt")}</TableHead>
+                    <TableHead className="text-right">{t("anchoringQueue.table.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -233,7 +231,9 @@ function AnchoringQueuePage() {
                             ) : (
                               <Award className="h-3.5 w-3.5" />
                             )}
-                            {r.entity_type === "template" ? "Template" : "Credential"}
+                            {r.entity_type === "template"
+                              ? t("anchoringQueue.types.template")
+                              : t("anchoringQueue.types.credential")}
                           </span>
                         </TableCell>
                         <TableCell className="font-medium">
@@ -280,7 +280,7 @@ function AnchoringQueuePage() {
                                 size="sm"
                                 variant="ghost"
                                 asChild
-                                title="View transaction"
+                                title={t("anchoringQueue.actions.viewTransaction")}
                               >
                                 <a
                                   href={explorerTxUrl(tx)!}
@@ -301,7 +301,7 @@ function AnchoringQueuePage() {
                                   disabled={retryMut.isPending}
                                 >
                                   <RefreshCcw className="mr-1 h-3.5 w-3.5" />
-                                  Retry
+                                  {t("anchoringQueue.actions.retry")}
                                 </Button>
                               )}
                             {bcStatus !== "confirmed" &&
@@ -312,10 +312,10 @@ function AnchoringQueuePage() {
                                   variant="outline"
                                   onClick={() => repairMut.mutate(r.entity_id)}
                                   disabled={repairMut.isPending}
-                                  title="Recompute missing chain fields and re-queue"
+                                  title={t("anchoringQueue.actions.repairTitle")}
                                 >
                                   <Wrench className="mr-1 h-3.5 w-3.5" />
-                                  Repair
+                                  {t("anchoringQueue.actions.repair")}
                                 </Button>
                               )}
                             {bcStatus !== "confirmed" &&
@@ -325,7 +325,7 @@ function AnchoringQueuePage() {
                                   variant="ghost"
                                   onClick={() => cancelMut.mutate({ jobId: r.id, entityKind: r.entity_type })}
                                   disabled={cancelMut.isPending}
-                                  title="Cancel"
+                                  title={t("anchoringQueue.actions.cancel")}
                                 >
                                   <XOctagon className="h-3.5 w-3.5" />
                                 </Button>
