@@ -25,6 +25,7 @@ import { Route as IssuerRevocationsRouteImport } from './routes/issuer.revocatio
 import { Route as IssuerRequestsRouteImport } from './routes/issuer.requests'
 import { Route as IssuerProfileRouteImport } from './routes/issuer.profile'
 import { Route as IssuerNotificationsRouteImport } from './routes/issuer.notifications'
+import { Route as IssuerManualRouteImport } from './routes/issuer.manual'
 import { Route as IssuerEarnersRouteImport } from './routes/issuer.earners'
 import { Route as IssuerCredentialsRouteImport } from './routes/issuer.credentials'
 import { Route as IssuerAnchoringQueueRouteImport } from './routes/issuer.anchoring-queue'
@@ -130,6 +131,11 @@ const IssuerProfileRoute = IssuerProfileRouteImport.update({
 const IssuerNotificationsRoute = IssuerNotificationsRouteImport.update({
   id: '/issuer/notifications',
   path: '/issuer/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerManualRoute = IssuerManualRouteImport.update({
+  id: '/issuer/manual',
+  path: '/issuer/manual',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IssuerEarnersRoute = IssuerEarnersRouteImport.update({
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/issuer/anchoring-queue': typeof IssuerAnchoringQueueRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
+  '/issuer/manual': typeof IssuerManualRoute
   '/issuer/notifications': typeof IssuerNotificationsRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
@@ -333,6 +340,7 @@ export interface FileRoutesByTo {
   '/issuer/anchoring-queue': typeof IssuerAnchoringQueueRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
+  '/issuer/manual': typeof IssuerManualRoute
   '/issuer/notifications': typeof IssuerNotificationsRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
@@ -378,6 +386,7 @@ export interface FileRoutesById {
   '/issuer/anchoring-queue': typeof IssuerAnchoringQueueRoute
   '/issuer/credentials': typeof IssuerCredentialsRoute
   '/issuer/earners': typeof IssuerEarnersRoute
+  '/issuer/manual': typeof IssuerManualRoute
   '/issuer/notifications': typeof IssuerNotificationsRoute
   '/issuer/profile': typeof IssuerProfileRoute
   '/issuer/requests': typeof IssuerRequestsRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/issuer/anchoring-queue'
     | '/issuer/credentials'
     | '/issuer/earners'
+    | '/issuer/manual'
     | '/issuer/notifications'
     | '/issuer/profile'
     | '/issuer/requests'
@@ -468,6 +478,7 @@ export interface FileRouteTypes {
     | '/issuer/anchoring-queue'
     | '/issuer/credentials'
     | '/issuer/earners'
+    | '/issuer/manual'
     | '/issuer/notifications'
     | '/issuer/profile'
     | '/issuer/requests'
@@ -512,6 +523,7 @@ export interface FileRouteTypes {
     | '/issuer/anchoring-queue'
     | '/issuer/credentials'
     | '/issuer/earners'
+    | '/issuer/manual'
     | '/issuer/notifications'
     | '/issuer/profile'
     | '/issuer/requests'
@@ -557,6 +569,7 @@ export interface RootRouteChildren {
   IssuerAnchoringQueueRoute: typeof IssuerAnchoringQueueRoute
   IssuerCredentialsRoute: typeof IssuerCredentialsRoute
   IssuerEarnersRoute: typeof IssuerEarnersRoute
+  IssuerManualRoute: typeof IssuerManualRoute
   IssuerNotificationsRoute: typeof IssuerNotificationsRoute
   IssuerProfileRoute: typeof IssuerProfileRoute
   IssuerRequestsRoute: typeof IssuerRequestsRoute
@@ -694,6 +707,13 @@ declare module '@tanstack/react-router' {
       path: '/issuer/notifications'
       fullPath: '/issuer/notifications'
       preLoaderRoute: typeof IssuerNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/manual': {
+      id: '/issuer/manual'
+      path: '/issuer/manual'
+      fullPath: '/issuer/manual'
+      preLoaderRoute: typeof IssuerManualRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/issuer/earners': {
@@ -901,6 +921,7 @@ const rootRouteChildren: RootRouteChildren = {
   IssuerAnchoringQueueRoute: IssuerAnchoringQueueRoute,
   IssuerCredentialsRoute: IssuerCredentialsRoute,
   IssuerEarnersRoute: IssuerEarnersRoute,
+  IssuerManualRoute: IssuerManualRoute,
   IssuerNotificationsRoute: IssuerNotificationsRoute,
   IssuerProfileRoute: IssuerProfileRoute,
   IssuerRequestsRoute: IssuerRequestsRoute,
