@@ -129,6 +129,7 @@ function List() {
         },
       });
       toast.success("Credential resent to earner");
+      await refresh();
       setEditTarget(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Could not resend");
@@ -143,6 +144,7 @@ function List() {
     try {
       await discard({ data: { credentialId: discardTarget.id } });
       toast.success("Rejected credential deleted");
+      await refresh();
       setDiscardTarget(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Could not delete");
