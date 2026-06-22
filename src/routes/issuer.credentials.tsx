@@ -254,9 +254,9 @@ function List() {
                 <TableHead>Title</TableHead>
                 <TableHead>Issued</TableHead>
                 <TableHead>Expires</TableHead>
-                <TableHead>Lifecycle</TableHead>
-                <TableHead>Blockchain</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead data-tour="cred-col-lifecycle">Lifecycle</TableHead>
+                <TableHead data-tour="cred-col-blockchain">Blockchain</TableHead>
+                <TableHead data-tour="cred-col-actions">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
