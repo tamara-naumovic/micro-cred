@@ -1,31 +1,29 @@
-# Plan: Public template detail nested under issuer
+## Problem
 
-## Why a new route
-`/earner/microcredential-templates/$id` is gated by `RoleGuard role="earner"` and requires linkage to the issuer org. The `/issuers/$id` directory is fully public, so its template cards need a public detail view.
+Trenutni fajl `src/routes/issuers.$id.microcredential-templates.$templateId.tsx` TanStack Router registruje kao **dete route-a `/issuers/$id`**. Pošto `issuers.$id.tsx` nema `<Outlet />`, dete-route se matchuje ali ništa ne prikazuje — otud "prazna stranica" kada se klikne kartica template-a.
 
-## Route shape
-URL: `/issuers/$id/microcredential-templates/$templateId`
-File: `src/routes/issuers.$id.microcredential-templates.$templateId.tsx`
-(Two distinct param names required since TanStack params must be unique within a path.)
+Isti problem uzrokuje i flicker na `/issuers/$id`: parent sa decom se ponaša kao layout pa router pravi privremeni mismatch koji završi u 404.
 
-## Changes
+## Fix
 
-### 1. New public route file
-- No `RoleGuard`. Uses `useStore()` like other pages.
-- Validates: template exists, `template.issuerId === params.id`, `template.status !== "archived"`. Otherwise show "Not found" with back link to `/issuers/$id`.
-- Layout mirrors `issuers.$id.tsx`: `<main className="mx-auto max-w-5xl px-4 py-10 md:px-8">`.
-- Back button → `/issuers/$id` with `params={{ id }}`.
-- Header: title, description, badges (status, version, source, level, ects, participation).
-- **Specification card**: Learning outcomes, Skills, Assessment, Quality assurance (label + QA document list), Prerequisites, Supervision, Stackability, Expiry — same labels/maps as the earner detail page.
-- `TemplateBlockchainProofCard` with `canManage={false}` (blockchain tables are now publicly readable).
-- **No** staff/assignees card.
-- QA documents: render a button per document that opens a signed URL via `supabase.storage.from("qa-documents").createSignedUrl(...)`. If the call errors (anonymous visitor without storage access), fall back to a toast and keep the filename visible as plain text.
+Iskoristiti TanStack-ovu konvenciju **trailing underscore on parent segment** da bi se child route "izvukao" iz parent layout-a — URL ostaje isti, ali ruta postaje samostalna (sibling, ne child).
 
-### 2. `src/routes/issuers.$id.tsx`
-Wrap each `Card` in `TemplateSection` with `<Link to="/issuers/$id/microcredential-templates/$templateId" params={{ id, templateId: t.id }}>` and add hover affordance: `block hover:border-primary/40 hover:shadow-sm transition`. The whole card is the clickable target — no separate "See more" button.
+1. **Preimenovati fajl** (`mv`):
+   - iz: `src/routes/issuers.$id.microcredential-templates.$templateId.tsx`
+   - u:  `src/routes/issuers.$id_.microcredential-templates.$templateId.tsx`
 
-Pass the issuer `id` into `TemplateSection` as a new prop.
+2. **Ažurirati `createFileRoute(...)`** u tom fajlu:
+   - iz: `createFileRoute("/issuers/$id/microcredential-templates/$templateId")`
+   - u:  `createFileRoute("/issuers/$id_/microcredential-templates/$templateId")`
+
+   URL koji korisnik vidi i dalje je `/issuers/<id>/microcredential-templates/<templateId>` — underscore se ne pojavljuje u URL-u, samo razdvaja route nesting.
+
+3. **`src/routes/issuers.$id.tsx`** — `<Link to=...>` u `TemplateSection` ažurirati na novi route path:
+   - `to="/issuers/$id_/microcredential-templates/$templateId"` (params ostaju `{ id, templateId }`).
+
+4. **`src/routeTree.gen.ts`** će biti automatski regenerisan; ne edituje se ručno.
 
 ## Out of scope
-- No changes to the earner-only template detail page.
-- No shared component extraction across the earner + public detail pages.
+
+- Nema promena u logici prikaza template detalja, ni u `issuers.$id.tsx` izgledu.
+- Ne diramo earner/issuer route-ove.
