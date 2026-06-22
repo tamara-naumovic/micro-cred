@@ -96,5 +96,25 @@
     "confirmed": "Confirmed",
     "failed": "Failed",
     "cancelled": "Cancelled"
+  },
+  "credentialCard": {
+    "details": "Details",
+    "share": "Share",
+    "issued": "Issued",
+    "expires": "expires",
+    "blockchainPending": "Blockchain pending",
+    "blockchainRetrying": "Blockchain retrying",
+    "shareSummary": "Verifiable micro-credential issued by {{issuer}}."
+  },
+  "password": {
+    "title": "Change password",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "submit": "Update password",
+    "tooShort": "New password must be at least 8 characters.",
+    "mismatch": "Passwords do not match.",
+    "updated": "Password updated successfully."
   }
 }
+
