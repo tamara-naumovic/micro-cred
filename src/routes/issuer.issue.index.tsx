@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/issuer/issue/")({
 type RecipientOverride = { grade: string; expiryDate: string };
 
 function Direct() {
+  const { t } = useTranslation("issuer");
   const { activeUser, templates, users, userRolesById, templateAssignees, credentials } = useStore();
   const isStaff = activeUser?.subRole === "staff";
   const issueBatch = useServerFn(issueCredentialsBatch);
@@ -37,9 +39,9 @@ function Direct() {
   );
   const myTemplates = useMemo(
     () => templates.filter(
-      (t) => t.issuerId === activeUser?.organizationId
-        && t.status === "active"
-        && (!isStaff || assignedIds.has(t.id)),
+      (tmpl) => tmpl.issuerId === activeUser?.organizationId
+        && tmpl.status === "active"
+        && (!isStaff || assignedIds.has(tmpl.id)),
     ),
     [templates, activeUser, isStaff, assignedIds],
   );
@@ -109,7 +111,7 @@ function Direct() {
 
   const submit = async () => {
     if (!templateId || selectedIds.length === 0) {
-      toast.error("Pick a micro-credential and at least one earner");
+      toast.error(t("issue.single.toasts.validationError"));
       return;
     }
     const recipients = selectedIds.map((id) => {
@@ -138,7 +140,7 @@ function Direct() {
       setResults(rows);
       // Realtime subscription on credentials triggers refetch automatically.
     } catch (e: any) {
-      toast.error(e?.message ?? "Issuance failed");
+      toast.error(e?.message ?? t("issue.single.toasts.issuanceFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -146,54 +148,54 @@ function Direct() {
 
   return (
     <PageShell
-      title="Direct Issuance"
-      description="Issue micro-credentials directly to one or more earners. Most metadata comes from the template; per-recipient fields are entered below."
+      title={t("issue.single.title")}
+      description={t("issue.single.description")}
     >
       <Card>
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <Label>Micro-credential</Label>
+              <Label>{t("issue.single.fields.microCredential")}</Label>
               <Select value={templateId} onValueChange={setTemplateId}>
-                <SelectTrigger><SelectValue placeholder="Select a micro-credential" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("issue.single.fields.microCredentialPlaceholder")} /></SelectTrigger>
                 <SelectContent>
-                  {myTemplates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.title} (v{t.version})</SelectItem>
+                  {myTemplates.map((tmpl) => (
+                    <SelectItem key={tmpl.id} value={tmpl.id}>{tmpl.title} (v{tmpl.version})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Date of issuing</Label>
+              <Label>{t("issue.single.fields.issueDate")}</Label>
               <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
             </div>
             <div>
-              <Label>Grade <span className="text-muted-foreground">(optional)</span></Label>
+              <Label>{t("issue.single.fields.grade")} <span className="text-muted-foreground">{t("issue.single.fields.gradeOptional")}</span></Label>
               <Input
                 value={defaultGrade}
                 onChange={(e) => setDefaultGrade(e.target.value)}
-                placeholder="e.g. Pass"
+                placeholder={t("issue.single.fields.gradePlaceholder")}
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Applied to all recipients unless overridden below.
+                {t("issue.single.fields.gradeHint")}
               </p>
             </div>
           </div>
 
           <div>
-            <Label>Recipients ({selectedIds.length} selected)</Label>
+            <Label>{t("issue.single.fields.recipients", { count: selectedIds.length })}</Label>
             <div className="mt-2">
               <StaffPicker
                 staff={earners}
                 selected={selectedIds}
                 onChange={setSelectedIds}
-                placeholder="Search earners by name or email"
-                emptyMessage="No earner found"
+                placeholder={t("issue.single.fields.searchPlaceholder")}
+                emptyMessage={t("issue.single.fields.searchEmpty")}
               />
             </div>
             {templateId && earnersWithActive.size > 0 && (
               <p className="mt-2 text-xs text-muted-foreground">
-                {earnersWithActive.size} earner(s) already hold this credential (non-revoked) and are hidden from the list.
+                {t("issue.single.fields.hiddenHint", { count: earnersWithActive.size })}
               </p>
             )}
           </div>
@@ -201,17 +203,17 @@ function Direct() {
 
           {selectedIds.length > 0 && (
             <div>
-              <Label>Per-recipient details</Label>
+              <Label>{t("issue.single.fields.perRecipient")}</Label>
               <p className="mb-2 text-xs text-muted-foreground">
-                Grade and expiry date are optional and set per learner.
+                {t("issue.single.fields.perRecipientHint")}
               </p>
               <div className="overflow-auto rounded-md border border-border">
                 <table className="w-full text-sm">
                   <thead className="bg-muted text-xs uppercase tracking-wide text-muted-foreground">
                     <tr>
-                      <th className="px-3 py-2 text-left">Recipient</th>
-                      <th className="px-3 py-2 text-left">Grade</th>
-                      <th className="px-3 py-2 text-left">Expiry date</th>
+                      <th className="px-3 py-2 text-left">{t("issue.single.fields.colRecipient")}</th>
+                      <th className="px-3 py-2 text-left">{t("issue.single.fields.colGrade")}</th>
+                      <th className="px-3 py-2 text-left">{t("issue.single.fields.colExpiry")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -228,7 +230,7 @@ function Direct() {
                             <Input
                               value={overrides[id].grade}
                               onChange={(ev) => updateField(id, "grade", ev.target.value)}
-                              placeholder="e.g. Pass"
+                              placeholder={t("issue.single.fields.gradePlaceholder")}
                             />
                           </td>
                           <td className="px-3 py-2">
@@ -253,7 +255,7 @@ function Direct() {
           <div className="flex justify-end">
             <Button onClick={submit} disabled={submitting}>
               {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-              Issue credentials
+              {submitting ? t("issue.single.buttons.issuing") : t("issue.single.buttons.issue")}
             </Button>
           </div>
         </CardContent>

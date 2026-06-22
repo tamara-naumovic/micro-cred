@@ -1,0 +1,78 @@
+{
+  "issue": {
+    "single": {
+      "headTitle": "Direct Issuance — MicroCred",
+      "title": "Direct Issuance",
+      "description": "Issue micro-credentials directly to one or more earners. Most metadata comes from the template; per-recipient fields are entered below.",
+      "fields": {
+        "microCredential": "Micro-credential",
+        "microCredentialPlaceholder": "Select a micro-credential",
+        "issueDate": "Date of issuing",
+        "grade": "Grade",
+        "gradeOptional": "(optional)",
+        "gradePlaceholder": "e.g. Pass",
+        "gradeHint": "Applied to all recipients unless overridden below.",
+        "recipients": "Recipients ({{count}} selected)",
+        "searchPlaceholder": "Search earners by name or email",
+        "searchEmpty": "No earner found",
+        "hiddenHint_one": "{{count}} earner already holds this credential (non-revoked) and is hidden from the list.",
+        "hiddenHint_other": "{{count}} earner(s) already hold this credential (non-revoked) and are hidden from the list.",
+        "perRecipient": "Per-recipient details",
+        "perRecipientHint": "Grade and expiry date are optional and set per learner.",
+        "colRecipient": "Recipient",
+        "colGrade": "Grade",
+        "colExpiry": "Expiry date"
+      },
+      "buttons": {
+        "issue": "Issue credentials",
+        "issuing": "Issuing…"
+      },
+      "toasts": {
+        "validationError": "Pick a micro-credential and at least one earner",
+        "issuanceFailed": "Issuance failed"
+      }
+    },
+    "bulk": {
+      "headTitle": "Bulk Issuance — MicroCred",
+      "title": "Bulk Issuance",
+      "description": "Paste a CSV or upload a .csv file to issue many credentials at once.",
+      "fields": {
+        "microCredential": "Micro-credential",
+        "microCredentialPlaceholder": "Select a micro-credential",
+        "csvInput": "CSV input",
+        "csvHint": "Headers: email, grade, expiryDate. Paste CSV or upload a .csv file (UTF-8).",
+        "loaded": "Loaded:"
+      },
+      "buttons": {
+        "upload": "Upload CSV",
+        "process": "Process & issue",
+        "processing": "Processing…"
+      },
+      "preview": {
+        "parsed_one": "{{count}} recipient parsed",
+        "parsed_other": "{{count}} recipient(s) parsed",
+        "unmatched_one": "{{count}} email does not match an existing earner account and will be skipped.",
+        "unmatched_other": "{{count}} email(s) do not match an existing earner account and will be skipped.",
+        "duplicates_one": "{{count}} earner already has an active (non-revoked) credential for this micro-credential and will be skipped.",
+        "duplicates_other": "{{count}} earner(s) already have an active (non-revoked) credential for this micro-credential and will be skipped.",
+        "staffConflicts_one": "{{count}} email belongs to issuer staff or admin accounts and will be skipped.",
+        "staffConflicts_other": "{{count}} email(s) belong to issuer staff or admin accounts and will be skipped."
+      },
+      "toasts": {
+        "noTemplate": "Pick a micro-credential",
+        "emptyCSV": "CSV is empty or malformed",
+        "noEligible": "No CSV rows are eligible for issuance",
+        "issuanceFailed": "Issuance failed",
+        "invalidFile": "Please upload a .csv file",
+        "fileTooLarge": "File too large (max 1 MB)",
+        "fileLoadFailed": "Failed to read file",
+        "fileLoaded": "Loaded {{name}}"
+      },
+      "errors": {
+        "noAccount": "No earner account found for this email",
+        "alreadyActive": "Earner already has an active (non-revoked) credential for this micro-credential",
+        "staffConflict": "This account belongs to issuer staff or admin and cannot receive credentials"
+      }
+    }
+  }
+}

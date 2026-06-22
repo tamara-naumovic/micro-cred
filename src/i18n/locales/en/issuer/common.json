@@ -1,0 +1,51 @@
+{
+  "common": {
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "remove": "Remove",
+      "confirm": "Confirm",
+      "close": "Close",
+      "back": "Back",
+      "continue": "Continue",
+      "next": "Next",
+      "previous": "Previous",
+      "view": "View",
+      "viewDetails": "View details",
+      "loading": "Loading…",
+      "search": "Search",
+      "filter": "Filter",
+      "refresh": "Refresh",
+      "retry": "Retry",
+      "more": "More",
+      "open": "Open",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "labels": {
+      "yes": "Yes",
+      "no": "No",
+      "name": "Name",
+      "email": "Email",
+      "status": "Status",
+      "type": "Type",
+      "level": "Level",
+      "created": "Created",
+      "updated": "Updated",
+      "issuedAt": "Issued",
+      "expiresAt": "Expires",
+      "actions": "Actions",
+      "none": "None",
+      "all": "All",
+      "optional": "Optional",
+      "required": "Required",
+      "notSpecified": "Not specified"
+    },
+    "empty": "No results.",
+    "loadFailed": "Failed to load.",
+    "saveFailed": "Failed to save."
+  }
+}

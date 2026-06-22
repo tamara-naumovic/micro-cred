@@ -1,0 +1,148 @@
+{
+  "templates": {
+    "qaOptions": {
+      "internal": "Interno",
+      "external": "Eksterno",
+      "internal_and_external": "Interno i eksterno",
+      "other": "Drugo",
+      "not_specified": "Nije navedeno"
+    },
+    "supervisionOptions": {
+      "unsupervised_no_id": "Bez nadzora i bez verifikacije identiteta",
+      "supervised_no_id": "Sa nadzorom bez verifikacije identiteta",
+      "supervised_online_with_id": "Sa nadzorom online uz verifikaciju identiteta",
+      "supervised_onsite_with_id": "Sa nadzorom uživo uz verifikaciju identiteta"
+    },
+    "stackabilityOptions": {
+      "stand_alone": "Samostalan",
+      "independent_integrated": "Nezavisan mikrokredencijal / integrisano",
+      "stackable": "Može se slagati ka drugom kredencijalu"
+    },
+    "index": {
+      "headTitle": "Mikrokredencijali — MicroCred",
+      "title": "Mikrokredencijali",
+      "titleStaff": "Moji mikrokredencijali",
+      "description": "Definišite koje kredencijale vaša institucija može da izdaje i dodelite ih zaposlenima.",
+      "descriptionStaff": "Mikrokredencijali dodeljeni vama za izdavanje.",
+      "createButton": "Kreiraj mikrokredencijal",
+      "emptyAdmin": "Još nema mikrokredencijala za vašu instituciju.",
+      "emptyStaff": "Još uvek vam nisu dodeljeni mikrokredencijali.",
+      "card": {
+        "sourceFormal": "Formalno",
+        "sourceNonFormal": "Neformalno",
+        "openButton": "Otvori",
+        "archiveButton": "Arhiviraj"
+      }
+    },
+    "new": {
+      "headTitle": "Kreiranje mikrokredencijala — MicroCred",
+      "title": "Kreiranje mikrokredencijala",
+      "description": "Definišite novi mikrokredencijal koji vaša organizacija nudi.",
+      "noPermission": "Nemate dozvolu za kreiranje mikrokredencijala.",
+      "fields": {
+        "title": "Naziv *",
+        "titlePlaceholder": "npr. Osnove vizualizacije podataka",
+        "description": "Opis *",
+        "source": "Izvor *",
+        "sourceFormal": "Formalno",
+        "sourceNonFormal": "Neformalno",
+        "level": "Nivo *",
+        "participation": "Način pohađanja *",
+        "ectsRequired": "ECTS *",
+        "ectsOptional": "ECTS (opciono)",
+        "ectsNotApplicable": "Nije primenjivo",
+        "ectsPlaceholder": "Nije primenjivo",
+        "skills": "Veštine * (razdvojene zarezom)",
+        "skillsPlaceholder": "Analiza podataka, Tableau, Prezentovanje",
+        "outcomes": "Ishodi učenja * (jedan po redu)",
+        "assessment": "Procena *",
+        "assessmentPlaceholder": "Završni projekat + usmena odbrana",
+        "qaType": "Vrsta osiguranja kvaliteta *",
+        "qaTypePlaceholder": "Izaberite vrstu OK",
+        "qaDocs": "Dokumenti za potvrdu OK *",
+        "qaDropHint": "Prevucite datoteke ovde ili",
+        "qaBrowse": "potražite",
+        "qaFileHint": "PDF ili slike. Dozvoljeno više datoteka.",
+        "prerequisites": "Preduslovi (opciono)",
+        "prereqNone": "Bez preduslova",
+        "prereqPlaceholder": "Opišite preduslove",
+        "supervision": "Nadzor i verifikacija identiteta (opciono)",
+        "stackability": "Integracija / Mogućnost slaganja (opciono)",
+        "selectPlaceholder": "Izaberite opciju",
+        "expiration": "Istek *",
+        "expiryNever": "Ne ističe",
+        "expiryFixed": "Ističe",
+        "expiryPickDate": "Izaberite datum",
+        "assignStaff": "Dodeli zaposlene (opciono)",
+        "noStaff": "Još nema zaposlenih u vašoj instituciji.",
+        "blockchain": "Registracija na blockchain",
+        "blockchainDesc": "Odaberite kada da se kriptografski dokaz šablona sidri na Bloxberg-u. Objavljivanje se dešava odmah u svakom slučaju.",
+        "anchorNow": "Objavi i sidri odmah",
+        "anchorNowDesc": "Odmah pošalji transakciju dokaza na Bloxberg.",
+        "anchorLater": "Objavi sada, sidri kasnije",
+        "anchorLaterDesc": "Šablon se odmah objavljuje i stavlja u red za sidrenje.",
+        "chainUnavailable": "Bloxberg integracija trenutno nije dostupna. Šablon će biti objavljen i može se sidriti kasnije."
+      },
+      "buttons": {
+        "saveDraft": "Sačuvaj kao nacrt",
+        "publish": "Objavi mikrokredencijal"
+      },
+      "toasts": {
+        "noOrg": "Vaš nalog nije povezan sa organizacijom izdavaoca",
+        "required": "Obavezno: {{fields}}",
+        "uploadFail": "Greška pri otpremanju {{name}}: {{message}}",
+        "assignFail": "Dodela zaposlenih nije uspela",
+        "publishedAnchored": "Objavljeno i sidrano na Bloxberg-u",
+        "publishedQueued": "Objavljeno · Sidrenje na blockchain-u u redu",
+        "anchorFail": "Objavljeno, ali sidrenje nije uspelo: {{message}}",
+        "savedDraft": "Mikrokredencijal sačuvan kao nacrt"
+      }
+    },
+    "detail": {
+      "headTitle": "Mikrokredencijal — MicroCred",
+      "notFoundTitle": "Mikrokredencijal nije pronađen",
+      "backButton": "Nazad",
+      "allLink": "Svi mikrokredencijali",
+      "notAssigned": "Ovaj mikrokredencijal nije dodeljen vama.",
+      "sections": {
+        "specification": "Specifikacija",
+        "assignedStaff": "Dodeljeni zaposleni"
+      },
+      "fields": {
+        "outcomes": "Ishodi učenja",
+        "skills": "Veštine",
+        "assessment": "Procena",
+        "qualityAssurance": "Osiguranje kvaliteta",
+        "prerequisites": "Preduslovi",
+        "noPrerequisites": "Bez preduslova",
+        "supervision": "Nadzor i verifikacija identiteta",
+        "stackability": "Integracija / Mogućnost slaganja",
+        "expiry": "Istek",
+        "expiresOn": "Ističe {{date}}",
+        "doesNotExpire": "Ne ističe",
+        "sourceFormal": "Formalno",
+        "sourceNonFormal": "Neformalno"
+      },
+      "assignees": {
+        "noStaffAssigned": "Trenutno nema dodeljenih zaposlenih.",
+        "noStaffYet": "Još nema zaposlenih.",
+        "addStaff": "Dodaj zaposlene",
+        "searchPlaceholder": "Pretražite zaposlene po imenu ili e-pošti",
+        "saveButton": "Sačuvaj dodele",
+        "saveSuccess": "Dodele su ažurirane",
+        "saveFail": "Čuvanje nije uspelo"
+      },
+      "qaDocs": {
+        "noDocs": "Nema otpremljenih dokumenata.",
+        "uploading": "Otpremanje…",
+        "addDocs": "Dodaj dokumente",
+        "removeAriaLabel": "Ukloni dokument",
+        "updateSuccess": "Dokumenti OK su ažurirani",
+        "removeSuccess": "Dokument je uklonjen",
+        "uploadFail": "Otpremanje nije uspelo",
+        "removeFail": "Uklanjanje nije uspelo",
+        "openError": "Dokument nije moguće otvoriti"
+      }
+    }
+  }
+}

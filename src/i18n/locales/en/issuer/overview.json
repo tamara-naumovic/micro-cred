@@ -1,0 +1,141 @@
+{
+  "overview": {
+    "headTitle": "Institution Dashboard — MicroCred",
+    "title": "Institution Dashboard",
+    "descriptionAdmin": "{{orgName}} — operations, governance and blockchain status for your institution.",
+    "descriptionStaff": "{{orgName}} — your assigned micro-credentials and issuance activity.",
+    "metrics": {
+      "publishedTemplates": "Published MC templates",
+      "publishedTemplatesHint": "{{count}} active",
+      "totalIssued": "Total issued credentials",
+      "totalIssuedHint": "{{count}} this month",
+      "activeLearners": "Active learners",
+      "activeLearnersHint": "With at least one active credential",
+      "activeIssuers": "Active issuers",
+      "activeIssuersHint": "Admin and staff with access",
+      "pendingActions": "Pending actions",
+      "pendingActionsHint": "Click to review",
+      "blockchainConfirmed": "Blockchain confirmed"
+    },
+    "lifecycle": {
+      "title": "Credential lifecycle",
+      "description": "Click a status to filter",
+      "empty": "No credentials to display yet.",
+      "active": "Active",
+      "pendingAcceptance": "Pending acceptance",
+      "expired": "Expired",
+      "revoked": "Revoked",
+      "superseded": "Superseded"
+    },
+    "pendingActions": {
+      "title": "Actions requiring attention",
+      "empty": "No actions require your attention.",
+      "items": {
+        "sig": "Credentials awaiting signature",
+        "req": "Open learner requests",
+        "acc": "Pending learner acceptance",
+        "q": "Blockchain operations queued",
+        "f": "Blockchain operations failed"
+      },
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items"
+    },
+    "blockchainStatus": {
+      "title": "Bloxberg status",
+      "description": "Blockchain integration scoped to your institution",
+      "network": "Network",
+      "chainId": "Chain ID",
+      "rpcConnection": "RPC connection",
+      "walletBalance": "Wallet balance",
+      "templateRegistry": "TemplateRegistry",
+      "credentialRegistry": "CredentialRegistry",
+      "issuerWallet": "Issuer wallet",
+      "lastConfirmed": "Last confirmed",
+      "templateContract": "Template contract",
+      "credentialContract": "Credential contract",
+      "badgeOperational": "Operational",
+      "badgeChecking": "Checking\u2026",
+      "badgeNotConfigured": "Not configured",
+      "badgeRpcUnreachable": "RPC unreachable",
+      "badgeNoBalance": "No balance",
+      "badgeMissingRole": "Missing role",
+      "badgeConnected": "Connected",
+      "badgeNoIssuerRole": "No ISSUER_ROLE",
+      "badgeUnknown": "Unknown",
+      "queued": "Queued: {{count}}",
+      "failed": "Failed: {{count}}",
+      "confirmed": "Confirmed: {{count}}",
+      "warnInsufficientBalance": "Issuer wallet balance is 0 — fund it on Bloxberg faucet",
+      "warnFailedOps": "Failed operations require retry",
+      "openQueue": "Open blockchain queue"
+    },
+    "topTemplates": {
+      "title": "Top micro-credentials",
+      "description": "Most issued published templates",
+      "empty": "No published templates are available.",
+      "colTemplate": "Micro-credential",
+      "colVersion": "Version",
+      "colIssued": "Issued",
+      "colLearners": "Learners",
+      "colOnChain": "On-chain",
+      "colLastIssued": "Last issued"
+    },
+    "issuerActivity": {
+      "title": "Issuer activity",
+      "description": "Authorised issuers and staff in your institution",
+      "empty": "No issuers or staff have been added yet.",
+      "colIssuer": "Issuer",
+      "colRole": "Role",
+      "colTemplates": "Templates",
+      "colIssued": "Issued",
+      "colPending": "Pending",
+      "colLastActivity": "Last activity",
+      "roleAdmin": "Admin",
+      "roleStaff": "Staff",
+      "manageStaff": "Manage staff",
+      "managedAll": "All"
+    },
+    "learnerOverview": {
+      "title": "Learner overview",
+      "description": "Aggregate institutional view",
+      "uniqueLearners": "Unique learners",
+      "newThisMonth": "New this month",
+      "avgPerLearner": "Avg / learner",
+      "multiCredential": "Multi-credential",
+      "awaitingAcceptance": "Awaiting acceptance",
+      "chartLabel": "Credentials per learner"
+    },
+    "templateStatus": {
+      "title": "MC template status",
+      "description": "Lifecycle and blockchain status",
+      "sectionLifecycle": "Lifecycle",
+      "sectionBlockchain": "Blockchain",
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived",
+      "notAnchored": "Not anchored",
+      "pending": "Pending",
+      "submitted": "Submitted",
+      "confirmedOnBloxberg": "Confirmed on Bloxberg",
+      "failedAnchoring": "Failed anchoring",
+      "anchoringDisabled": "Anchoring disabled"
+    },
+    "recentActivity": {
+      "title": "Recent institutional activity",
+      "empty": "No recent activity for your institution.",
+      "viewAll": "View all activity"
+    },
+    "filters": {
+      "allMicroCredentials": "All micro-credentials"
+    },
+    "buttons": {
+      "directIssue": "Direct issue",
+      "review": "Review",
+      "reviewRequests": "Review requests",
+      "view": "View",
+      "openQueue": "Open queue",
+      "retry": "Retry"
+    },
+    "notConfigured": "Not configured"
+  }
+}

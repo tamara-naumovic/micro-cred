@@ -2,6 +2,7 @@ import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-ro
 import { useMemo, useState, useEffect, useRef } from "react";
 import { ArrowLeft, Users, FileDown, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -15,31 +16,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 type StorageRemoveResult = { error: { message: string } | null };
 
-const QA_LABEL: Record<string, string> = {
-  internal: "Internal",
-  external: "External",
-  internal_and_external: "Internal and external",
-  other: "Other",
-  not_specified: "Not specified",
-};
-const SUPERVISION_LABEL: Record<string, string> = {
-  unsupervised_no_id: "Unsupervised with no identity verification",
-  supervised_no_id: "Supervised with no identity verification",
-  supervised_online_with_id: "Supervised online with identity verification",
-  supervised_onsite_with_id: "Supervised onsite with identity verification",
-};
-const STACKABILITY_LABEL: Record<string, string> = {
-  stand_alone: "Stand-alone",
-  independent_integrated: "Independent micro-credential / integrated",
-  stackable: "Stackable towards another credential",
-};
-
-async function openQaDocument(path: string) {
+async function openQaDocument(path: string, errorMsg: string) {
   const { data, error } = await supabase.storage
     .from("qa-documents")
     .createSignedUrl(path, 3600);
   if (error || !data?.signedUrl) {
-    toast.error(error?.message ?? "Could not open document");
+    toast.error(error?.message ?? errorMsg);
     return;
   }
   window.open(data.signedUrl, "_blank");
@@ -55,10 +37,11 @@ export const Route = createFileRoute("/issuer/microcredential-templates/$id")({
 });
 
 function Detail() {
+  const { t } = useTranslation("issuer");
   const { id } = Route.useParams();
   const { activeUser, templates, templateAssignees } = useStore();
   const navigate = useNavigate();
-  const tpl = templates.find((t) => t.id === id);
+  const tpl = templates.find((tmpl) => tmpl.id === id);
   const isStaff = activeUser?.subRole === "staff";
   const assignedToMe = useMemo(
     () => templateAssignees.some((a) => a.templateId === id && a.userId === activeUser?.id),
@@ -67,24 +50,42 @@ function Detail() {
 
   useEffect(() => {
     if (isStaff && tpl && !assignedToMe) {
-      toast.error("This micro-credential is not assigned to you.");
+      toast.error(t("templates.detail.notAssigned"));
     }
   }, [isStaff, tpl, assignedToMe]);
 
   if (!activeUser) return null;
-  // Staff may only open templates assigned to them
   if (isStaff && tpl && !assignedToMe)
     return <Navigate to="/issuer/microcredential-templates" replace />;
 
   if (!tpl) {
     return (
-      <PageShell title="Micro-credential not found">
+      <PageShell title={t("templates.detail.notFoundTitle")}>
         <Button variant="outline" onClick={() => navigate({ to: "/issuer/microcredential-templates" })}>
-          <ArrowLeft className="mr-2 h-4 w-4" />Back
+          <ArrowLeft className="mr-2 h-4 w-4" />{t("templates.detail.backButton")}
         </Button>
       </PageShell>
     );
   }
+
+  const qaLabel: Record<string, string> = {
+    internal: t("templates.qaOptions.internal"),
+    external: t("templates.qaOptions.external"),
+    internal_and_external: t("templates.qaOptions.internal_and_external"),
+    other: t("templates.qaOptions.other"),
+    not_specified: t("templates.qaOptions.not_specified"),
+  };
+  const supervisionLabel: Record<string, string> = {
+    unsupervised_no_id: t("templates.supervisionOptions.unsupervised_no_id"),
+    supervised_no_id: t("templates.supervisionOptions.supervised_no_id"),
+    supervised_online_with_id: t("templates.supervisionOptions.supervised_online_with_id"),
+    supervised_onsite_with_id: t("templates.supervisionOptions.supervised_onsite_with_id"),
+  };
+  const stackabilityLabel: Record<string, string> = {
+    stand_alone: t("templates.stackabilityOptions.stand_alone"),
+    independent_integrated: t("templates.stackabilityOptions.independent_integrated"),
+    stackable: t("templates.stackabilityOptions.stackable"),
+  };
 
   return (
     <PageShell
@@ -92,31 +93,36 @@ function Detail() {
       description={tpl.description}
       actions={
         <Button variant="outline" asChild>
-          <Link to="/issuer/microcredential-templates"><ArrowLeft className="mr-2 h-4 w-4" />All micro-credentials</Link>
+          <Link to="/issuer/microcredential-templates">
+            <ArrowLeft className="mr-2 h-4 w-4" />{t("templates.detail.allLink")}
+          </Link>
         </Button>
       }
-
     >
       <div className="mb-4 flex flex-wrap gap-2">
         <StatusBadge status={tpl.status} />
         <Badge variant="outline">v{tpl.version}</Badge>
-        <Badge variant="outline">{tpl.source === "formal" ? "Formal" : "Non-formal"}</Badge>
+        <Badge variant="outline">
+          {tpl.source === "formal"
+            ? t("templates.detail.fields.sourceFormal")
+            : t("templates.detail.fields.sourceNonFormal")}
+        </Badge>
         <Badge variant="outline">{tpl.level}</Badge>
         {tpl.ects != null && <Badge variant="outline">{tpl.ects} ECTS</Badge>}
         <Badge variant="outline">{tpl.participation}</Badge>
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle className="text-base">Specification</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("templates.detail.sections.specification")}</CardTitle></CardHeader>
           <CardContent className="grid gap-4 text-sm">
-            <Field label="Learning outcomes">
+            <Field label={t("templates.detail.fields.outcomes")}>
               <ul className="list-disc space-y-1 pl-5">{tpl.outcomes.map((o) => <li key={o}>{o}</li>)}</ul>
             </Field>
-            <Field label="Skills">{tpl.skills.join(", ")}</Field>
-            <Field label="Assessment">{tpl.assessment}</Field>
-            <Field label="Quality assurance">
+            <Field label={t("templates.detail.fields.skills")}>{tpl.skills.join(", ")}</Field>
+            <Field label={t("templates.detail.fields.assessment")}>{tpl.assessment}</Field>
+            <Field label={t("templates.detail.fields.qualityAssurance")}>
               <div className="space-y-2">
-                <div>{QA_LABEL[tpl.qaType] ?? tpl.qualityAssurance}</div>
+                <div>{qaLabel[tpl.qaType] ?? tpl.qualityAssurance}</div>
                 <QaDocumentsEditor
                   templateId={tpl.id}
                   issuerId={tpl.issuerId}
@@ -131,19 +137,19 @@ function Detail() {
                 />
               </div>
             </Field>
-            <Field label="Prerequisites">
-              {tpl.prerequisitesNone ? "No prerequisites" : (tpl.prerequisites || "—")}
+            <Field label={t("templates.detail.fields.prerequisites")}>
+              {tpl.prerequisitesNone ? t("templates.detail.fields.noPrerequisites") : (tpl.prerequisites || "—")}
             </Field>
-            <Field label="Supervision and identity verification">
-              {tpl.supervisionType ? SUPERVISION_LABEL[tpl.supervisionType] : "—"}
+            <Field label={t("templates.detail.fields.supervision")}>
+              {tpl.supervisionType ? supervisionLabel[tpl.supervisionType] : "—"}
             </Field>
-            <Field label="Integration / Stackability">
-              {tpl.stackabilityType ? STACKABILITY_LABEL[tpl.stackabilityType] : "—"}
+            <Field label={t("templates.detail.fields.stackability")}>
+              {tpl.stackabilityType ? stackabilityLabel[tpl.stackabilityType] : "—"}
             </Field>
-            <Field label="Expiry">
+            <Field label={t("templates.detail.fields.expiry")}>
               {tpl.expiryMode === "fixed_date" && tpl.expiryDate
-                ? `Expires on ${new Date(tpl.expiryDate).toLocaleDateString()}`
-                : "Does not expire"}
+                ? t("templates.detail.fields.expiresOn", { date: new Date(tpl.expiryDate).toLocaleDateString() })
+                : t("templates.detail.fields.doesNotExpire")}
             </Field>
           </CardContent>
         </Card>
@@ -169,6 +175,7 @@ function AssigneesCard({
   isStaff: boolean;
   orgId?: string;
 }) {
+  const { t } = useTranslation("issuer");
   const { users, templateAssignees, assignTemplateUsers } = useStore();
   const staffUsers = useMemo(
     () =>
@@ -193,10 +200,14 @@ function AssigneesCard({
     const names = staffUsers.filter((u) => currentIds.includes(u.id)).map((u) => u.name);
     return (
       <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4" />Assigned staff</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="h-4 w-4" />{t("templates.detail.sections.assignedStaff")}
+          </CardTitle>
+        </CardHeader>
         <CardContent className="text-sm">
           {names.length === 0 ? (
-            <p className="text-muted-foreground">No staff currently assigned.</p>
+            <p className="text-muted-foreground">{t("templates.detail.assignees.noStaffAssigned")}</p>
           ) : (
             <ul className="space-y-1">{names.map((n) => <li key={n}>{n}</li>)}</ul>
           )}
@@ -209,9 +220,9 @@ function AssigneesCard({
     setBusy(true);
     try {
       await assignTemplateUsers(templateId, selected);
-      toast.success("Assignments updated");
+      toast.success(t("templates.detail.assignees.saveSuccess"));
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to save");
+      toast.error(e?.message ?? t("templates.detail.assignees.saveFail"));
     } finally {
       setBusy(false);
     }
@@ -219,11 +230,16 @@ function AssigneesCard({
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4" />Assigned staff</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Users className="h-4 w-4" />{t("templates.detail.sections.assignedStaff")}
+        </CardTitle>
+      </CardHeader>
       <CardContent className="space-y-3 text-sm">
         {staffUsers.length === 0 && (
           <p className="text-muted-foreground">
-            No staff yet. <Link to="/issuer/staff" className="text-primary underline">Add staff</Link>.
+            {t("templates.detail.assignees.noStaffYet")}{" "}
+            <Link to="/issuer/staff" className="text-primary underline">{t("templates.detail.assignees.addStaff")}</Link>.
           </p>
         )}
         {staffUsers.length > 0 && (
@@ -231,11 +247,13 @@ function AssigneesCard({
             staff={staffUsers}
             selected={selected}
             onChange={setSelected}
-            placeholder="Search staff by name or email"
+            placeholder={t("templates.detail.assignees.searchPlaceholder")}
           />
         )}
         {staffUsers.length > 0 && (
-          <Button size="sm" disabled={!dirty || busy} onClick={save}>Save assignments</Button>
+          <Button size="sm" disabled={!dirty || busy} onClick={save}>
+            {t("templates.detail.assignees.saveButton")}
+          </Button>
         )}
       </CardContent>
     </Card>
@@ -262,6 +280,7 @@ function QaDocumentsEditor({
   paths: string[];
   canEdit: boolean;
 }) {
+  const { t } = useTranslation("issuer");
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
@@ -288,9 +307,9 @@ function QaDocumentsEditor({
         newPaths.push(path);
       }
       await persist([...paths, ...newPaths]);
-      toast.success("QA documents updated");
+      toast.success(t("templates.detail.qaDocs.updateSuccess"));
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
+      toast.error(e instanceof Error ? e.message : t("templates.detail.qaDocs.uploadFail"));
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -310,9 +329,9 @@ function QaDocumentsEditor({
       }
       await persist(paths.filter((p) => p !== path));
       await refresh();
-      toast.success("Document removed");
+      toast.success(t("templates.detail.qaDocs.removeSuccess"));
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Failed to remove");
+      toast.error(e instanceof Error ? e.message : t("templates.detail.qaDocs.removeFail"));
     } finally {
       setBusy(false);
     }
@@ -321,11 +340,11 @@ function QaDocumentsEditor({
   return (
     <div className="space-y-2">
       {paths.length === 0 && (
-        <p className="text-xs text-muted-foreground">No documents uploaded.</p>
+        <p className="text-xs text-muted-foreground">{t("templates.detail.qaDocs.noDocs")}</p>
       )}
       {paths.map((p) => (
         <div key={p} className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => openQaDocument(p)}>
+          <Button size="sm" variant="outline" onClick={() => openQaDocument(p, t("templates.detail.qaDocs.openError"))}>
             <FileDown className="mr-2 h-4 w-4" />{p.split("/").pop()}
           </Button>
           {canEdit && (
@@ -334,7 +353,7 @@ function QaDocumentsEditor({
               variant="ghost"
               disabled={busy}
               onClick={() => onRemove(p)}
-              aria-label="Remove document"
+              aria-label={t("templates.detail.qaDocs.removeAriaLabel")}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -357,7 +376,7 @@ function QaDocumentsEditor({
             onClick={() => fileRef.current?.click()}
           >
             <Upload className="mr-2 h-4 w-4" />
-            {busy ? "Uploading…" : "Add documents"}
+            {busy ? t("templates.detail.qaDocs.uploading") : t("templates.detail.qaDocs.addDocs")}
           </Button>
         </div>
       )}

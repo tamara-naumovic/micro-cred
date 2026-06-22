@@ -1,0 +1,39 @@
+{
+  "staff": {
+    "headTitle": "Staff — MicroCred",
+    "title": "Staff",
+    "description": "Employees of your institution who can issue micro-credentials assigned to them.",
+    "noOrg": "Your account is not linked to an institution.",
+    "tabs": {
+      "existing": "Existing user",
+      "new": "Create new account",
+      "bulk": "Bulk add"
+    },
+    "existingForm": {
+      "label": "Email of existing user",
+      "placeholder": "employee@institution.org",
+      "hint": "The person must already have an account on the platform."
+    },
+    "addButton": "Add staff",
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "added": "Added",
+      "loading": "Loading…",
+      "empty": "No staff yet."
+    },
+    "pagination": {
+      "page": "Page {{page}} of {{pageCount}} · {{total}} total",
+      "prev": "Prev",
+      "next": "Next"
+    },
+    "toasts": {
+      "added": "Staff added",
+      "removed": "Staff removed",
+      "failedLoad": "Failed to load staff",
+      "failedAdd": "Failed to add staff",
+      "failedRemove": "Failed to remove staff",
+      "adminOnly": "Only institution admins can manage staff."
+    }
+  }
+}

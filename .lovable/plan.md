@@ -1,107 +1,67 @@
 ## Cilj
 
-Pojedinačna obaveštenja u sekciji `earner/notifications` (i `issuer/notifications`) trenutno se snimaju u bazu sa fiksnim engleskim tekstom (`title`, `body`). Zbog toga ostaju na engleskom čak i kada je interfejs prebačen na srpski. Plan je da se obaveštenja prevode na klijentu pomoću `react-i18next`, uz minimalnu izmenu šeme i bekfilom za postojeće zapise.
+Preneti kompletnu issuer sekciju (sve stavke iz menija + manual + tour) na isti i18n model kao earner — `react-i18next` namespace-ovi sa `en` i `sr` fajlovima, koristeći već postojeći `LanguageSwitcher` u headeru.
 
-## Pristup
+## Terminologija (sr)
 
-Umesto da pokušavamo da parsiramo engleski tekst, dodajemo strukturisana polja u tabelu `notifications`:
+- **Issuer** → „Izdavalac" (org), „izdavaočev" kao pridev
+- **Issuer admin** → „Administrator izdavaoca"
+- **Issuer staff** → „Zaposleni"
+- **Earner** → „Nosilac"
+- **Micro-credential** → „mikrokredencijal"
+- **Template** → „šablon (mikrokredencijala)"
+- **Anchoring queue** → „Red za upis na blockchain"
+- **Revocations** → „Opozivi"
+- **Requests** → „Zahtevi"
 
-- `title_key text` — i18n ključ (npr. `notifications.events.credentialIssued.title`)
-- `body_key text` — i18n ključ za telo
-- `params jsonb` — parametri za interpolaciju (npr. `{ "title": "Web razvoj", "reason": "..." }`)
+Sve poruke koje se već čuvaju u bazi sa engleskim tekstom (notifikacije, audit log) ostaju van obima — već postoji obrasci za to gde je potrebno.
 
-Postojeća polja `title` / `body` ostaju (kao fallback i za stara obaveštenja). Renderer u `NotificationsList` koristi `title_key`/`body_key` kada postoje, inače pada na `title`/`body`.
+## Struktura prevoda
 
-## Promene
+Dodajemo dva nova namespace fajla u `src/i18n/locales/{en,sr}/`:
 
-### 1. Migracija baze
-- `ALTER TABLE public.notifications ADD COLUMN title_key text, body_key text, params jsonb`.
-- Ažurirati sve PL/pgSQL trigger funkcije koje upisuju u `notifications` da popunjavaju nove kolone (uz zadržavanje `title`/`body` radi kompatibilnosti):
-  - `notify_on_application_insert` — „Nova prijava poslata"
-  - `notify_on_credential_revoked` — „Mikrokredencijal je opozvan"
-  - `notify_on_template_archived` — „Šablon mikrokredencijala je arhiviran"
-  - `notify_on_earner_institution_link` — „Povezani ste sa institucijom"
-  - `notify_on_template_assignee` — „Dodeljen vam je mikrokredencijal"
-  - `notify_on_credential_insert` — dve varijante (awaiting acceptance / issued)
-  - (i sve ostale postojeće okidače u ranijim migracijama koji upisuju u `notifications`)
+- `issuer.json` — sav UI tekst issuer ruta. Top-level grupe poklapaju se sa rutama: `overview`, `templates` (`.index`, `.new`, `.detail`), `issue` (`.single`, `.bulk`), `requests`, `credentials`, `revocations`, `earners`, `staff`, `anchoringQueue`, `settings`, `profile`, `notifications`. Svaka grupa ima `title`, `description`, podgrupe za sekcije, kartice, dugmiće, prazna stanja, toast poruke, dialoge.
+- `issuerManual.json` — sekcije sa stranice `/issuer/manual` (jedna grupa po sekciji: `title`, `linkLabel`, `body`).
 
-### 2. TypeScript inserti
-Ažurirati sve `from("notifications").insert(...)` pozive da prosleđuju i nove ključeve:
-- `src/lib/chain/anchor.functions.ts` (5 mesta): prihvatanje/odbijanje od strane earnera, ponovno slanje, produženje isteka, prihvatanje odbijanja.
-- `src/routes/api/public/hooks/expiry-reminders.ts`: podsetnik o isteku.
+Postojeći `tour.json` proširujemo `issuer.*` granom (analogno `earner.*` koja već postoji) i `src/lib/tour/issuerTour.ts` se rekonfiguriše da koristi `i18n.t("issuer.<step>.title/description")`. Engleski tekstovi ostaju 1:1 sa trenutnim u kodu.
 
-### 3. Klijent
-- `src/lib/store.tsx`: `mapNotification` čita `title_key`, `body_key`, `params` (mapirano u `AppNotification`).
-- `src/lib/types.ts`: proširiti `AppNotification` sa opcionim `titleKey`, `bodyKey`, `params`.
-- `src/components/NotificationsList.tsx`: ako postoji `titleKey`, koristi `t(titleKey)` i `t(bodyKey, params)`, inače fallback na `n.title` / `n.body`. Datumi se interpoliraju kao već formatirani string u `params` (lokalizacija datuma u trenutku slanja je već problematična pa zadržavamo zapis stringa, ali ćemo na klijentu reformatirati kada je u `params` `expiresAt` ISO string).
+`src/i18n/index.ts` dobija registraciju nova dva namespace-a (lazy import iste forme kao postojeći).
 
-### 4. Prevodi
-U `src/i18n/locales/{en,sr}/earner.json` i `common.json` dodati grupu `notifications.events.*`. Konzistentno koristiti „mikrokredencijal" u srpskoj verziji.
+## Rute koje se refaktorišu
 
-Primer (SR):
-```
-"events": {
-  "credentialIssued": {
-    "title": "Mikrokredencijal je izdat",
-    "body": "{{title}} je sada u vašem novčaniku."
-  },
-  "credentialAwaitingAcceptance": {
-    "title": "Mikrokredencijal čeka vaše prihvatanje",
-    "body": "{{title}} vam je izdat. Pregledajte i prihvatite ili odbijte."
-  },
-  "credentialRevoked": {
-    "title": "Mikrokredencijal je opozvan",
-    "body": "{{title}} je opozvan{{reasonSuffix}}"
-  },
-  "credentialExpiryExtended": {
-    "title": "Produžen je rok važenja",
-    "body": "Rok važenja za {{title}} je produžen do {{expiresAt}}."
-  },
-  "credentialExpiryReminder": {
-    "title": "Mikrokredencijal uskoro ističe",
-    "body": "„{{title}}" ističe {{expiresAt}}."
-  },
-  "templateArchived": {
-    "title": "Šablon mikrokredencijala je arhiviran",
-    "body": "Mikrokredencijal „{{title}}" je arhiviran od strane izdavaoca."
-  },
-  "linkedToInstitution": {
-    "title": "Povezani ste sa novom institucijom",
-    "body": "Povezani ste sa {{org}}."
-  },
-  "applicationSubmitted": {
-    "title": "Nova prijava je poslata",
-    "body": "Nova prijava za {{template}}."
-  },
-  "earnerAccepted": {
-    "title": "Earner je prihvatio mikrokredencijal",
-    "body": "{{title}} je prihvaćen."
-  },
-  "earnerRejected": {
-    "title": "Earner je odbio mikrokredencijal",
-    "body": "{{title}} je odbijen. Razlog: {{reason}}"
-  },
-  "rejectionAccepted": {
-    "title": "Izdavalac je prihvatio odbijanje",
-    "body": "Vaše odbijanje „{{title}}" je prihvaćeno. Mikrokredencijal je odbačen."
-  },
-  "credentialResent": {
-    "title": "Mikrokredencijal je ponovo poslat",
-    "body": "{{title}} je ažuriran i ponovo poslat. Pregledajte i prihvatite ili odbijte."
-  },
-  "assignedToTemplate": {
-    "title": "Dodeljen vam je mikrokredencijal",
-    "body": "Dodeljeni ste da izdate „{{template}}"."
-  }
-}
-```
-Engleski prevodi paralelno u `en/`.
+| Fajl | i18n grupa |
+| --- | --- |
+| `src/routes/issuer.index.tsx` | `overview` |
+| `src/routes/issuer.microcredential-templates.index.tsx` | `templates.index` |
+| `src/routes/issuer.microcredential-templates.new.tsx` | `templates.new` |
+| `src/routes/issuer.microcredential-templates.$id.tsx` | `templates.detail` |
+| `src/routes/issuer.issue.index.tsx` | `issue.single` |
+| `src/routes/issuer.issue.bulk.tsx` | `issue.bulk` |
+| `src/routes/issuer.requests.tsx` | `requests` |
+| `src/routes/issuer.credentials.tsx` | `credentials` |
+| `src/routes/issuer.revocations.tsx` | `revocations` |
+| `src/routes/issuer.earners.tsx` | `earners` |
+| `src/routes/issuer.staff.tsx` | `staff` |
+| `src/routes/issuer.anchoring-queue.tsx` | `anchoringQueue` |
+| `src/routes/issuer.settings.tsx` | `settings` |
+| `src/routes/issuer.profile.tsx` | `profile` |
+| `src/routes/issuer.notifications.tsx` | `notifications` (samo header — sama lista već koristi `earner` namespace + nove `events` ključeve) |
+| `src/routes/issuer.manual.tsx` | `issuerManual` (statični SECTIONS niz se gradi iz `t(...)`) |
 
-### 5. Stara obaveštenja
-Postojeća obaveštenja u bazi nemaju nove ključeve. NotificationsList renderuje njihov `title`/`body` kao i do sada (engleski). Novi zapisi (od trenutka primene migracije) biće prevedeni. Bez backfill skripte (rizično za stare neaktivne).
+Sidebar i navigacija (`src/components/layouts/AppSidebarLayout.tsx`): već dohvaća labele preko `common` namespace-a za earner — dodajemo paralelne `common.nav.issuer.*` ključeve i koristimo ih za issuer stavke menija.
 
-## Van obima
-- Push notifikacije / email šabloni (samo in-app lista).
-- Prevod „lifecycle" događaja u `platform_events`/`audit_log` (interni admin).
+## Šta se ne menja
 
-Posle implementacije ćemo proveriti vizuelno na `/earner/notifications` kako u SR, tako i u EN.
+- Engleski tekst svih stranica ostaje identičan trenutnom — samo se izmešta iz JSX-a u `en/issuer.json` 1:1.
+- Backend, RLS, šeme, server fn-ovi — bez promene. Notifikacije su već lokalizovane.
+- Dinamički sadržaj iz baze (naslovi šablona, imena institucija, ishodi učenja) ostaje na jeziku unosa.
+- Validacione poruke iz Zod schema-e ostaju engleske (van obima ovog plana).
+
+## Verifikacija
+
+Nakon implementacije, vizuelno proveriti:
+- `/issuer` u SR i EN
+- `/issuer/microcredential-templates`, `/issuer/issue`, `/issuer/requests`, `/issuer/credentials`, `/issuer/manual`
+- jednom otvoriti tour kao novi issuer i potvrditi da koraci čitaju iz `tour.json`
+
+Promena jezika preko `LanguageSwitcher` u headeru već prosleđuje izbor kroz `react-i18next`, pa ne treba dodatno ožičavanje.

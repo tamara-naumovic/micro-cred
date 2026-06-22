@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/issuer/earners")({
 });
 
 function EarnersPage() {
+  const { t } = useTranslation("issuer");
   const { activeUser, earnerInstitutions, users, refresh } = useStore();
   const router = useRouter();
   const create = useServerFn(orgCreateEarner);
@@ -70,8 +72,8 @@ function EarnersPage() {
   if (activeUser.subRole !== "admin") return <Navigate to="/issuer" />;
   if (!orgId) {
     return (
-      <PageShell title="Earners">
-        <Card><CardContent className="p-8 text-sm text-muted-foreground">Your account is not linked to an institution.</CardContent></Card>
+      <PageShell title={t("earners.title")}>
+        <Card><CardContent className="p-8 text-sm text-muted-foreground">{t("earners.noOrg")}</CardContent></Card>
       </PageShell>
     );
   }
@@ -88,7 +90,7 @@ function EarnersPage() {
         if (user.role !== "earner") throw new Error("That user is not an earner");
         await assign({ data: { earnerId: user.id, organizationId: orgId } });
         setExistingEmail("");
-        toast.success("Earner linked");
+        toast.success(t("earners.toasts.linked"));
       } else {
         await create({
           data: {
@@ -101,12 +103,12 @@ function EarnersPage() {
           },
         });
         reset();
-        toast.success(form.mode === "invite" ? "Invitation sent" : "Earner added");
+        toast.success(form.mode === "invite" ? t("earners.toasts.invited") : t("earners.toasts.added"));
       }
       await refresh();
       router.invalidate();
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed");
+      toast.error(e?.message ?? t("earners.toasts.failed"));
     } finally {
       setBusy(false);
     }
@@ -116,11 +118,11 @@ function EarnersPage() {
     setBusy(true);
     try {
       await unlink({ data: { earnerId, organizationId: orgId } });
-      toast.success("Unlinked");
+      toast.success(t("earners.toasts.unlinked"));
       await refresh();
       router.invalidate();
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed");
+      toast.error(e?.message ?? t("earners.toasts.failed"));
     } finally {
       setBusy(false);
     }
@@ -128,35 +130,35 @@ function EarnersPage() {
 
   return (
     <PageShell
-      title="Earners"
-      description="Students linked to your institution."
+      title={t("earners.title")}
+      description={t("earners.description")}
     >
       <Card className="mb-6">
         <CardContent className="p-5">
           <Tabs value={tab} onValueChange={(v) => setTab(v as "existing" | "new" | "bulk")}>
             <TabsList className="grid w-full grid-cols-3 sm:w-auto">
-              <TabsTrigger value="existing">Existing user</TabsTrigger>
-              <TabsTrigger value="new">Create new account</TabsTrigger>
-              <TabsTrigger value="bulk">Bulk add</TabsTrigger>
+              <TabsTrigger value="existing">{t("earners.tabs.existing")}</TabsTrigger>
+              <TabsTrigger value="new">{t("earners.tabs.new")}</TabsTrigger>
+              <TabsTrigger value="bulk">{t("earners.tabs.bulk")}</TabsTrigger>
             </TabsList>
             <TabsContent value="existing" className="mt-4">
               <form onSubmit={onAdd} className="space-y-4">
                 <div>
-                  <Label htmlFor="earner-email">Email of existing user</Label>
+                  <Label htmlFor="earner-email">{t("earners.existingForm.label")}</Label>
                   <Input
                     id="earner-email"
                     type="email"
-                    placeholder="student@example.com"
+                    placeholder={t("earners.existingForm.placeholder")}
                     value={existingEmail}
                     onChange={(e) => setExistingEmail(e.target.value)}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    The person must already have an earner account on the platform.
+                    {t("earners.existingForm.hint")}
                   </p>
                 </div>
                 <div className="flex justify-end">
                   <SubmitButton busy={busy}>
-                    <UserPlus className="mr-2 h-4 w-4" />Add earner
+                    <UserPlus className="mr-2 h-4 w-4" />{t("earners.addButton")}
                   </SubmitButton>
                 </div>
               </form>
@@ -166,7 +168,7 @@ function EarnersPage() {
                 <ProvisionFields value={form} onChange={setForm} disabled={busy} />
                 <div className="flex justify-end">
                   <SubmitButton busy={busy}>
-                    <UserPlus className="mr-2 h-4 w-4" />Add earner
+                    <UserPlus className="mr-2 h-4 w-4" />{t("earners.addButton")}
                   </SubmitButton>
                 </div>
               </form>
@@ -191,8 +193,8 @@ function EarnersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>{t("earners.table.name")}</TableHead>
+                <TableHead>{t("earners.table.email")}</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
@@ -200,7 +202,7 @@ function EarnersPage() {
               {rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="p-8 text-center text-sm text-muted-foreground">
-                    No earners linked yet.
+                    {t("earners.table.empty")}
                   </TableCell>
                 </TableRow>
               )}
@@ -220,14 +222,14 @@ function EarnersPage() {
           {rows.length > PAGE_SIZE && (
             <div className="flex items-center justify-between border-t p-3 text-sm">
               <div className="text-muted-foreground">
-                Page {page} of {pageCount} · {rows.length} total
+                {t("earners.pagination.page", { page, pageCount, total: rows.length })}
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                  <ChevronLeft className="h-4 w-4" /> Prev
+                  <ChevronLeft className="h-4 w-4" /> {t("earners.pagination.prev")}
                 </Button>
                 <Button size="sm" variant="outline" disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>
-                  Next <ChevronRight className="h-4 w-4" />
+                  {t("earners.pagination.next")} <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

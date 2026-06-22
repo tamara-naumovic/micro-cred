@@ -1,0 +1,64 @@
+{
+  "anchoringQueue": {
+    "headTitle": "Red za blockchain — MicroCred",
+    "title": "Red za blockchain",
+    "description": "Nezavisno od izdavanja akreditiva. Šabloni i akreditivi su u potpunosti važeći kada se objave ili izdaju — sidrenje samo dodaje eksterni dokaz integriteta na Bloxbergu.",
+    "actions": {
+      "processQueue": "Obradi red sada",
+      "processing": "Obrada…",
+      "retry": "Ponovi",
+      "repair": "Popravi",
+      "repairTitle": "Preračunaj nedostajuća polja lanca i ponovo postavi u red",
+      "cancel": "Otkaži",
+      "viewTransaction": "Pregledaj transakciju"
+    },
+    "stats": {
+      "queued": "U redu",
+      "running": "U toku",
+      "failed": "Neuspešno",
+      "confirmed": "Potvrđeno"
+    },
+    "card": {
+      "title": "Poslovi",
+      "description": "Ponavljanje po poslu poštuje ograničenje od {{max}} pokušaja i ne duplira potvrđena sidrenja."
+    },
+    "filters": {
+      "all": "Sve",
+      "templates": "Šabloni",
+      "credentials": "Akreditivi",
+      "allStates": "Sva stanja",
+      "queued": "U redu",
+      "failed": "Neuspešno",
+      "done": "Završeno"
+    },
+    "table": {
+      "type": "Vrsta",
+      "title": "Naziv",
+      "versionLearner": "Verzija / Polaznik",
+      "internalStatus": "Interni status",
+      "blockchain": "Blockchain",
+      "attempts": "Pokušaji",
+      "lastAttempt": "Poslednji pokušaj",
+      "actions": "Akcije"
+    },
+    "types": {
+      "template": "Šablon",
+      "credential": "Akreditiv"
+    },
+    "empty": {
+      "loading": "Učitavanje poslova…",
+      "error": "Učitavanje poslova nije uspelo.",
+      "noMatch": "Nijedan posao ne odgovara trenutnim filterima."
+    },
+    "toasts": {
+      "retrySubmitted": "Zahtev za ponovni pokušaj sidrenja je podnet",
+      "retryFailed": "Ponovni pokušaj nije uspeo",
+      "cancelled": "Posao je otkazan",
+      "repaired": "Akreditiv je popravljen i sidren",
+      "repairedFields": "Polja akreditiva su popravljena. Sidrenje će se uskoro ponoviti.",
+      "repairFailed": "Popravka nije uspela",
+      "processed": "Obrađen {{count}} posao",
+      "processed_plural": "Obrađeno {{count}} poslova"
+    }
+  }
+}

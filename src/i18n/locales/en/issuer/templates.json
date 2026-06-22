@@ -1,0 +1,148 @@
+{
+  "templates": {
+    "qaOptions": {
+      "internal": "Internal",
+      "external": "External",
+      "internal_and_external": "Internal and external",
+      "other": "Other",
+      "not_specified": "Not specified"
+    },
+    "supervisionOptions": {
+      "unsupervised_no_id": "Unsupervised with no identity verification",
+      "supervised_no_id": "Supervised with no identity verification",
+      "supervised_online_with_id": "Supervised online with identity verification",
+      "supervised_onsite_with_id": "Supervised onsite with identity verification"
+    },
+    "stackabilityOptions": {
+      "stand_alone": "Stand-alone",
+      "independent_integrated": "Independent micro-credential / integrated",
+      "stackable": "Stackable towards another credential"
+    },
+    "index": {
+      "headTitle": "Micro-credentials — MicroCred",
+      "title": "Micro-credentials",
+      "titleStaff": "My Micro-credentials",
+      "description": "Define what credentials your institution can issue and assign them to staff.",
+      "descriptionStaff": "Micro-credentials assigned to you for issuance.",
+      "createButton": "Create micro-credential",
+      "emptyAdmin": "No micro-credentials yet for your institution.",
+      "emptyStaff": "No micro-credentials are assigned to you yet.",
+      "card": {
+        "sourceFormal": "Formal",
+        "sourceNonFormal": "Non-formal",
+        "openButton": "Open",
+        "archiveButton": "Archive"
+      }
+    },
+    "new": {
+      "headTitle": "Create Micro-credential — MicroCred",
+      "title": "Create Micro-credential",
+      "description": "Define a new micro-credential offered by your organisation.",
+      "noPermission": "You don't have permission to create micro-credentials.",
+      "fields": {
+        "title": "Title *",
+        "titlePlaceholder": "e.g. Data Visualization Essentials",
+        "description": "Description *",
+        "source": "Source *",
+        "sourceFormal": "Formal",
+        "sourceNonFormal": "Non-formal",
+        "level": "Level *",
+        "participation": "Participation *",
+        "ectsRequired": "ECTS *",
+        "ectsOptional": "ECTS (optional)",
+        "ectsNotApplicable": "Does not apply",
+        "ectsPlaceholder": "Does not apply",
+        "skills": "Skills * (comma-separated)",
+        "skillsPlaceholder": "Data analysis, Tableau, Storytelling",
+        "outcomes": "Learning outcomes * (one per line)",
+        "assessment": "Assessment *",
+        "assessmentPlaceholder": "Final project + oral defence",
+        "qaType": "Type of Quality Assurance *",
+        "qaTypePlaceholder": "Select QA type",
+        "qaDocs": "QA confirmation documents *",
+        "qaDropHint": "Drag & drop files here, or",
+        "qaBrowse": "browse",
+        "qaFileHint": "PDF or images. Multiple files allowed.",
+        "prerequisites": "Prerequisites (optional)",
+        "prereqNone": "No prerequisites",
+        "prereqPlaceholder": "Describe the prerequisites",
+        "supervision": "Supervision and identity verification (optional)",
+        "stackability": "Integration / Stackability (optional)",
+        "selectPlaceholder": "Select an option",
+        "expiration": "Expiration *",
+        "expiryNever": "Does not expire",
+        "expiryFixed": "Expires on",
+        "expiryPickDate": "Pick a date",
+        "assignStaff": "Assign staff (optional)",
+        "noStaff": "No staff yet for your institution.",
+        "blockchain": "Blockchain registration",
+        "blockchainDesc": "Choose when to anchor the template's cryptographic proof on Bloxberg. Publishing happens immediately either way.",
+        "anchorNow": "Publish and anchor now",
+        "anchorNowDesc": "Submit the proof transaction to Bloxberg immediately.",
+        "anchorLater": "Publish now, anchor later",
+        "anchorLaterDesc": "The template is published immediately and queued for anchoring.",
+        "chainUnavailable": "Bloxberg integration is not currently available. The template will still publish and can be anchored later."
+      },
+      "buttons": {
+        "saveDraft": "Save as draft",
+        "publish": "Publish micro-credential"
+      },
+      "toasts": {
+        "noOrg": "Your account is not linked to an issuer organisation",
+        "required": "Required: {{fields}}",
+        "uploadFail": "Failed to upload {{name}}: {{message}}",
+        "assignFail": "Failed to assign staff",
+        "publishedAnchored": "Published and anchored on Bloxberg",
+        "publishedQueued": "Published · Blockchain anchoring queued",
+        "anchorFail": "Published, but anchoring failed: {{message}}",
+        "savedDraft": "Micro-credential saved as draft"
+      }
+    },
+    "detail": {
+      "headTitle": "Micro-credential — MicroCred",
+      "notFoundTitle": "Micro-credential not found",
+      "backButton": "Back",
+      "allLink": "All micro-credentials",
+      "notAssigned": "This micro-credential is not assigned to you.",
+      "sections": {
+        "specification": "Specification",
+        "assignedStaff": "Assigned staff"
+      },
+      "fields": {
+        "outcomes": "Learning outcomes",
+        "skills": "Skills",
+        "assessment": "Assessment",
+        "qualityAssurance": "Quality assurance",
+        "prerequisites": "Prerequisites",
+        "noPrerequisites": "No prerequisites",
+        "supervision": "Supervision and identity verification",
+        "stackability": "Integration / Stackability",
+        "expiry": "Expiry",
+        "expiresOn": "Expires on {{date}}",
+        "doesNotExpire": "Does not expire",
+        "sourceFormal": "Formal",
+        "sourceNonFormal": "Non-formal"
+      },
+      "assignees": {
+        "noStaffAssigned": "No staff currently assigned.",
+        "noStaffYet": "No staff yet.",
+        "addStaff": "Add staff",
+        "searchPlaceholder": "Search staff by name or email",
+        "saveButton": "Save assignments",
+        "saveSuccess": "Assignments updated",
+        "saveFail": "Failed to save"
+      },
+      "qaDocs": {
+        "noDocs": "No documents uploaded.",
+        "uploading": "Uploading…",
+        "addDocs": "Add documents",
+        "removeAriaLabel": "Remove document",
+        "updateSuccess": "QA documents updated",
+        "removeSuccess": "Document removed",
+        "uploadFail": "Upload failed",
+        "removeFail": "Failed to remove",
+        "openError": "Could not open document"
+      }
+    }
+  }
+}

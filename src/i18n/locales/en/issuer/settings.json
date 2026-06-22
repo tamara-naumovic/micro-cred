@@ -1,0 +1,37 @@
+{
+  "settings": {
+    "headTitle": "Settings — MicroCred",
+    "title": "Settings",
+    "description": "Manage your account preferences and institution profile.",
+    "sections": {
+      "institutionProfile": "Institution public profile"
+    },
+    "fields": {
+      "name": "Name",
+      "country": "Country",
+      "website": "Website",
+      "websitePlaceholder": "https://example.org",
+      "about": "About",
+      "aboutPlaceholder": "Describe your institution. This appears on the public profile.",
+      "accreditationDocument": "Accreditation document"
+    },
+    "buttons": {
+      "save": "Save changes",
+      "saving": "Saving…",
+      "upload": "Upload",
+      "replace": "Replace",
+      "uploading": "Uploading…"
+    },
+    "toasts": {
+      "profileUpdated": "Institution profile updated",
+      "saveFailed": "Failed to save",
+      "docUploaded": "Accreditation document uploaded",
+      "uploadFailed": "Upload failed",
+      "docRemoved": "Accreditation document removed",
+      "removeFailed": "Failed to remove",
+      "docOpenFailed": "Could not open document"
+    },
+    "noDocument": "No document uploaded.",
+    "adminOnly": "Only issuer admins can edit the institution profile."
+  }
+}

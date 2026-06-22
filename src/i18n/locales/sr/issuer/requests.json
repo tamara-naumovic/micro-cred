@@ -1,0 +1,47 @@
+{
+  "requests": {
+    "headTitle": "Zahtevi za izdavanje — MicroCred",
+    "title": "Zahtevi za izdavanje",
+    "description": "Vodite svaki zahtev kroz životni ciklus. Poslednji korak izdaje i potpisuje kredencijal.",
+    "filters": {
+      "earnerLabel": "Ime nosioca",
+      "earnerPlaceholder": "Pretraži nosioca…",
+      "templateLabel": "Mikrokredencijal",
+      "allTemplates": "Svi šabloni",
+      "statusLabel": "Status",
+      "allStatuses": "Svi statusi",
+      "clearFilters": "Ukloni filtere",
+      "showing": "Prikazano {{count}} od {{total}} zahteva"
+    },
+    "empty": {
+      "noMatch": "Nijedan zahtev ne odgovara trenutnim filterima.",
+      "noActive": "Nema aktivnih zahteva."
+    },
+    "card": {
+      "earner": "Nosilac:",
+      "viewProfile": "Pogledaj javni profil nosioca"
+    },
+    "actions": {
+      "advanceTo": "Napreduj na {{next}}",
+      "issueSign": "Izdaj i potpiši",
+      "reject": "Odbij"
+    },
+    "dialogs": {
+      "issue": {
+        "title": "Izdaj i potpiši kredencijal",
+        "description": "Finalizujte <title>{{templateTitle}}</title> za <earner>{{earnerName}}</earner>.",
+        "gradeLabel": "Ocena (opciono)",
+        "gradePlaceholder": "npr. A, Položio, 9/10",
+        "expiryLabel": "Datum isteka (opciono)",
+        "templateDefault": "Podrazumevano iz šablona: {{date}}",
+        "cancel": "Otkaži",
+        "confirm": "Izdaj i potpiši"
+      }
+    },
+    "toasts": {
+      "sentToEarner": "Poslato nosiocu na prihvatanje",
+      "movedTo": "Prebačeno na {{next}}",
+      "rejected": "Zahtev odbijen"
+    }
+  }
+}

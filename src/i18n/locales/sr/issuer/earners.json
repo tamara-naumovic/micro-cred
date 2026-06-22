@@ -1,0 +1,36 @@
+{
+  "earners": {
+    "headTitle": "Nosioci — MicroCred",
+    "title": "Nosioci",
+    "description": "Studenti povezani sa vašom institucijom.",
+    "noOrg": "Vaš nalog nije povezan sa institucijom.",
+    "tabs": {
+      "existing": "Postojeći korisnik",
+      "new": "Kreiraj novi nalog",
+      "bulk": "Grupno dodavanje"
+    },
+    "existingForm": {
+      "label": "E-adresa postojećeg korisnika",
+      "placeholder": "student@primer.rs",
+      "hint": "Osoba mora već imati nalog nosioca na platformi."
+    },
+    "addButton": "Dodaj nosioca",
+    "table": {
+      "name": "Ime",
+      "email": "E-adresa",
+      "empty": "Još uvek nema povezanih nosioca."
+    },
+    "pagination": {
+      "page": "Strana {{page}} od {{pageCount}} · ukupno {{total}}",
+      "prev": "Prethodna",
+      "next": "Sledeća"
+    },
+    "toasts": {
+      "linked": "Nosilac je povezan",
+      "invited": "Pozivnica je poslata",
+      "added": "Nosilac je dodat",
+      "unlinked": "Veza je uklonjena",
+      "failed": "Neuspešno"
+    }
+  }
+}

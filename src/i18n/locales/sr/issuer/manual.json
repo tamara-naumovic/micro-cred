@@ -1,0 +1,86 @@
+{
+  "manual": {
+    "headTitle": "Uputstvo — MicroCred",
+    "title": "Uputstvo",
+    "description": "Vodič kroz platformu — šta svaki deo radi i kako ga koristiti.",
+    "restartTour": "Ponovo pokrenite obilazak",
+    "gettingStarted": {
+      "title": "Početak rada",
+      "p1": "MicroCred omogućava vašoj instituciji da osmišlja, izdaje i upravlja verljivim mikrokredencijalima. Svaki izdati kredencijal je usidren na blokčejnu kako bi ga svako mogao nezavisno da verifikuje.",
+      "p2": "U nastavku ćete pronaći više detalja o svakom delu platforme. Koristite linkove „Otvori …“ da biste direktno prešli na odgovarajuću stranicu.",
+      "staffNote": " Kao zaposleni, vidite odeljke relevantne za mikrokredencijale kojima ste dodeljeni."
+    },
+    "sections": {
+      "overview": {
+        "title": "Pregled",
+        "linkLabel": "Otvori Pregled",
+        "body": "Kontrolna tabla institucije sa ključnim metrikama (objavljeni mikrokredencijali, izdati kredencijali, aktivni nosioci i zaposleni), životni ciklus kredencijala, čekajuće akcije, status blokčejna i nedavna aktivnost."
+      },
+      "templates": {
+        "title": "Mikrokredencijali",
+        "linkLabel": "Otvori Mikrokredencijale",
+        "body": "Katalog šablona mikrokredencijala za vašu instituciju. Administratori vide sve šablone; zaposleni vide samo šablone kojima su dodeljeni. Otvorite šablon da vidite zahteve, dokaze, supervizore i dokumente o obezbeđivanju kvaliteta."
+      },
+      "templateNew": {
+        "title": "Kreirajte mikrokredencijal",
+        "linkLabel": "Otvori Kreiranje mikrokredencijala",
+        "body": "Definišite novi šablon: naslov, opis, nivo, ishode učenja, preduslove, zahteve za dokaze, supervizore, slaganje i dokumente o obezbeđivanju kvaliteta. Objavite kada budete spremni kako bi nosioci mogli da apliciraju."
+      },
+      "staff": {
+        "title": "Zaposleni",
+        "linkLabel": "Otvori Zaposlene",
+        "body": "Upravljajte zaposlenima u vašoj instituciji i dodelite ih određenim mikrokredencijalima. Dodeljeni zaposleni mogu da pregledaju prijave i izdaju kredencijale samo za svoje šablone."
+      },
+      "earners": {
+        "title": "Nosioci",
+        "linkLabel": "Otvori Nosioce",
+        "body": "Direktorijum polaznika koji su aplicirali za ili primili kredencijale od vaše institucije. Pregledajte njihovu istoriju i izdate kredencijale."
+      },
+      "requests": {
+        "title": "Zahtevi za izdavanje",
+        "linkLabel": "Otvori Zahteve za izdavanje",
+        "body": "Dolazne prijave. Pregledajte podnete dokaze, zatražite izmene, označite kao „Dokazi prikupljeni“ i „Verifikovano“, zatim izdajte kredencijal. Možete i odbiti uz razlog — nosilac može da uredi i ponovo pošalje."
+      },
+      "issue": {
+        "title": "Direktno izdavanje",
+        "linkLabel": "Otvori Direktno izdavanje",
+        "body": "Izdajte kredencijal direktno jednom nosiocu bez prijave — korisno za pozvane primaoce ili unapred verifikovana dostignuća."
+      },
+      "bulk": {
+        "title": "Grupno izdavanje",
+        "linkLabel": "Otvori Grupno izdavanje",
+        "body": "Otpremite CSV da biste izdali isti mikrokredencijal velikom broju nosioca odjednom. Validirajte fajl, pregledajte pregled, a zatim pošaljite grupu."
+      },
+      "credentials": {
+        "title": "Izdati kredencijali",
+        "linkLabel": "Otvori Izdate kredencijale",
+        "body": "Svi kredencijali koje je vaša institucija izdala. Koristite pretragu (po nosiocu, naslovu ili ID-u) i filtere (šablon, status životnog ciklusa) za sužavanje liste — polje za pretragu ima „x“ za resetovanje. Kada prvi put otvorite ovu stranicu, kratki vođeni obilazak će vas provesti kroz dostupne akcije. Akcije po redu zavise od životnog ciklusa: „Uredi i ponovo pošalji“ za odbijene kredencijale; „Prihvati odbijanje“ za trajno brisanje; „Obnovi istek“ za izdate ili istekle kredencijale sa datumom isteka."
+      },
+      "revocations": {
+        "title": "Opozivi",
+        "linkLabel": "Otvori Opozive",
+        "body": "Opozovite prethodno izdate kredencijale uz razlog. Opozivi su usidreni na blokčejnu tako da verifikatori uvek vide trenutni status."
+      },
+      "anchoring": {
+        "title": "Red blokčejna",
+        "linkLabel": "Otvori Red blokčejna",
+        "body": "Status usidravanja izdatih kredencijala: na čekanju, poslato, potvrđeno ili neuspelo. Ponovo pokušajte neuspela usidravanja i pregledajte detalje transakcija."
+      },
+      "profile": {
+        "title": "Javni profil",
+        "linkLabel": "Otvori Javni profil",
+        "body": "Javna stranica vaše institucije koju nosioci i poslodavci mogu da posete. Navodi vaše objavljene mikrokredencijale i omogućava posetiocima da verifikuju bilo koji kredencijal koji ste izdali."
+      },
+      "notifications": {
+        "title": "Obaveštenja",
+        "linkLabel": "Otvori Obaveštenja",
+        "body": "Ažuriranja o novim prijavama, podnošenju dokaza, greškama pri usidravanju, opozivima i drugim relevantnim događajima."
+      },
+      "settings": {
+        "title": "Podešavanja",
+        "linkLabel": "Otvori Podešavanja",
+        "body": "Podešavanja naloga, bezbednost, konfiguracija blokčejna i preference obaveštenja."
+      }
+    }
+  }
+}

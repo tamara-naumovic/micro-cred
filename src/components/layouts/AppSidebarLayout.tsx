@@ -85,66 +85,70 @@ function buildEarnerNav(t: (k: string) => string): NavGroups {
   ];
 }
 
-const ISSUER_ADMIN_NAV: NavGroups = [
-  { group: "Overview", items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard, dataTour: "nav-issuer-overview" }] },
-  {
-    group: "Micro-credentials",
-    items: [
-      { to: "/issuer/microcredential-templates", label: "Micro-credentials", icon: BookOpen, dataTour: "nav-issuer-templates" },
-      { to: "/issuer/microcredential-templates/new", label: "Create Micro-credential", icon: FilePlus2, dataTour: "nav-issuer-template-new" },
-      { to: "/issuer/staff", label: "Staff", icon: Users, dataTour: "nav-issuer-staff" },
-      { to: "/issuer/earners", label: "Earners", icon: GraduationCap, dataTour: "nav-issuer-earners" },
-    ],
-  },
-  {
-    group: "Issuance",
-    items: [
-      { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox, dataTour: "nav-issuer-requests" },
-      { to: "/issuer/issue", label: "Direct Issuance", icon: Send, dataTour: "nav-issuer-issue" },
-      { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud, dataTour: "nav-issuer-bulk" },
-      { to: "/issuer/credentials", label: "Issued Credentials", icon: Award, dataTour: "nav-issuer-credentials" },
-      { to: "/issuer/revocations", label: "Revocations", icon: XOctagon, dataTour: "nav-issuer-revocations" },
-      { to: "/issuer/anchoring-queue", label: "Blockchain Queue", icon: Link2, dataTour: "nav-issuer-anchoring" },
-    ],
-  },
-  {
-    group: "Account and settings",
-    items: [
-      { to: "/issuer/profile", label: "Public Profile", icon: BadgeCheck, dataTour: "nav-issuer-profile" },
-      { to: "/issuer/notifications", label: "Notifications", icon: Bell, dataTour: "nav-issuer-notifications" },
-      { to: "/issuer/manual", label: "Manual", icon: BookOpen, dataTour: "nav-issuer-manual" },
-      { to: "/issuer/settings", label: "Settings", icon: Settings },
-    ],
-  },
-];
+function buildIssuerAdminNav(t: (k: string) => string): NavGroups {
+  return [
+    { group: t("sidebar.groups.overview"), items: [{ to: "/issuer", label: t("sidebar.issuer.overview"), icon: LayoutDashboard, dataTour: "nav-issuer-overview" }] },
+    {
+      group: t("sidebar.groups.microcredentials"),
+      items: [
+        { to: "/issuer/microcredential-templates", label: t("sidebar.issuer.templates"), icon: BookOpen, dataTour: "nav-issuer-templates" },
+        { to: "/issuer/microcredential-templates/new", label: t("sidebar.issuer.templateNew"), icon: FilePlus2, dataTour: "nav-issuer-template-new" },
+        { to: "/issuer/staff", label: t("sidebar.issuer.staff"), icon: Users, dataTour: "nav-issuer-staff" },
+        { to: "/issuer/earners", label: t("sidebar.issuer.earners"), icon: GraduationCap, dataTour: "nav-issuer-earners" },
+      ],
+    },
+    {
+      group: t("sidebar.groups.issuance"),
+      items: [
+        { to: "/issuer/requests", label: t("sidebar.issuer.requests"), icon: Inbox, dataTour: "nav-issuer-requests" },
+        { to: "/issuer/issue", label: t("sidebar.issuer.issue"), icon: Send, dataTour: "nav-issuer-issue" },
+        { to: "/issuer/issue/bulk", label: t("sidebar.issuer.bulk"), icon: UploadCloud, dataTour: "nav-issuer-bulk" },
+        { to: "/issuer/credentials", label: t("sidebar.issuer.credentials"), icon: Award, dataTour: "nav-issuer-credentials" },
+        { to: "/issuer/revocations", label: t("sidebar.issuer.revocations"), icon: XOctagon, dataTour: "nav-issuer-revocations" },
+        { to: "/issuer/anchoring-queue", label: t("sidebar.issuer.anchoring"), icon: Link2, dataTour: "nav-issuer-anchoring" },
+      ],
+    },
+    {
+      group: t("sidebar.groups.account"),
+      items: [
+        { to: "/issuer/profile", label: t("sidebar.issuer.profile"), icon: BadgeCheck, dataTour: "nav-issuer-profile" },
+        { to: "/issuer/notifications", label: t("sidebar.issuer.notifications"), icon: Bell, dataTour: "nav-issuer-notifications" },
+        { to: "/issuer/manual", label: t("sidebar.issuer.manual"), icon: BookOpen, dataTour: "nav-issuer-manual" },
+        { to: "/issuer/settings", label: t("sidebar.issuer.settings"), icon: Settings },
+      ],
+    },
+  ];
+}
 
-const ISSUER_STAFF_NAV: NavGroups = [
-  { group: "Overview", items: [{ to: "/issuer", label: "Overview", icon: LayoutDashboard, dataTour: "nav-issuer-overview" }] },
-  {
-    group: "Micro-credentials",
-    items: [
-      { to: "/issuer/microcredential-templates", label: "My Micro-credentials", icon: BookOpen, dataTour: "nav-issuer-templates" },
-    ],
-  },
-  {
-    group: "Issuance",
-    items: [
-      { to: "/issuer/requests", label: "Issuance Requests", icon: Inbox, dataTour: "nav-issuer-requests" },
-      { to: "/issuer/issue", label: "Direct Issuance", icon: Send, dataTour: "nav-issuer-issue" },
-      { to: "/issuer/issue/bulk", label: "Bulk Issuance", icon: UploadCloud, dataTour: "nav-issuer-bulk" },
-      { to: "/issuer/credentials", label: "Issued Credentials", icon: Award, dataTour: "nav-issuer-credentials" },
-      { to: "/issuer/anchoring-queue", label: "Blockchain Queue", icon: Link2, dataTour: "nav-issuer-anchoring" },
-    ],
-  },
-  {
-    group: "Account",
-    items: [
-      { to: "/issuer/notifications", label: "Notifications", icon: Bell, dataTour: "nav-issuer-notifications" },
-      { to: "/issuer/manual", label: "Manual", icon: BookOpen, dataTour: "nav-issuer-manual" },
-      { to: "/issuer/settings", label: "Settings", icon: Settings },
-    ],
-  },
-];
+function buildIssuerStaffNav(t: (k: string) => string): NavGroups {
+  return [
+    { group: t("sidebar.groups.overview"), items: [{ to: "/issuer", label: t("sidebar.issuer.overview"), icon: LayoutDashboard, dataTour: "nav-issuer-overview" }] },
+    {
+      group: t("sidebar.groups.microcredentials"),
+      items: [
+        { to: "/issuer/microcredential-templates", label: t("sidebar.issuer.templatesStaff"), icon: BookOpen, dataTour: "nav-issuer-templates" },
+      ],
+    },
+    {
+      group: t("sidebar.groups.issuance"),
+      items: [
+        { to: "/issuer/requests", label: t("sidebar.issuer.requests"), icon: Inbox, dataTour: "nav-issuer-requests" },
+        { to: "/issuer/issue", label: t("sidebar.issuer.issue"), icon: Send, dataTour: "nav-issuer-issue" },
+        { to: "/issuer/issue/bulk", label: t("sidebar.issuer.bulk"), icon: UploadCloud, dataTour: "nav-issuer-bulk" },
+        { to: "/issuer/credentials", label: t("sidebar.issuer.credentials"), icon: Award, dataTour: "nav-issuer-credentials" },
+        { to: "/issuer/anchoring-queue", label: t("sidebar.issuer.anchoring"), icon: Link2, dataTour: "nav-issuer-anchoring" },
+      ],
+    },
+    {
+      group: t("sidebar.groups.accountShort"),
+      items: [
+        { to: "/issuer/notifications", label: t("sidebar.issuer.notifications"), icon: Bell, dataTour: "nav-issuer-notifications" },
+        { to: "/issuer/manual", label: t("sidebar.issuer.manual"), icon: BookOpen, dataTour: "nav-issuer-manual" },
+        { to: "/issuer/settings", label: t("sidebar.issuer.settings"), icon: Settings },
+      ],
+    },
+  ];
+}
 
 const ADMIN_NAV: NavGroups = [
   { group: "Overview", items: [{ to: "/admin", label: "Overview", icon: LayoutDashboard }] },
@@ -167,10 +171,10 @@ const ADMIN_NAV: NavGroups = [
   },
 ];
 
-function getNav(user: MockUser, tEarner: (k: string) => string): NavGroups {
-  if (user.role === "earner") return buildEarnerNav(tEarner);
+function getNav(user: MockUser, t: (k: string) => string): NavGroups {
+  if (user.role === "earner") return buildEarnerNav(t);
   if (user.role === "admin") return ADMIN_NAV;
-  if (user.role === "issuer") return user.subRole === "staff" ? ISSUER_STAFF_NAV : ISSUER_ADMIN_NAV;
+  if (user.role === "issuer") return user.subRole === "staff" ? buildIssuerStaffNav(t) : buildIssuerAdminNav(t);
   return [];
 }
 
@@ -198,8 +202,7 @@ export function AppSidebarLayout() {
 
   const groups = getNav(activeUser, t);
   const RoleIcon = ROLE_ICON[activeUser.role];
-  const roleLabel =
-    activeUser.role === "earner" ? t("role.earner") : ROLE_LABEL[activeUser.role];
+  const roleLabel = t(`role.${activeUser.role}`, { defaultValue: ROLE_LABEL[activeUser.role] });
   const unread = notifications.filter(
     (n) => !n.read && n.forRole === activeUser.role && (!n.forUserId || n.forUserId === activeUser.id),
   ).length;

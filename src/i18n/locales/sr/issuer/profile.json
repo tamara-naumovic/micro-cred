@@ -1,0 +1,13 @@
+{
+  "profile": {
+    "headTitle": "Javni profil — MicroCred",
+    "title": "Javni profil izdavaoca",
+    "description": "Ono što poslodavci i javnost vide kada pretražuju vašu organizaciju.",
+    "shareBtn": "Pogledaj javnu stranicu",
+    "noOrg": "Nema povezane organizacije",
+    "stats": {
+      "templates": "Šabloni",
+      "credentialsIssued": "Izdati kredencijali"
+    }
+  }
+}

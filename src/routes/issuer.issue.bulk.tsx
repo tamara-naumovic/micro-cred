@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { UploadCloud, Loader2, FileUp, X } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,6 +47,7 @@ function parseCsv(input: string): BulkRow[] {
 }
 
 function Bulk() {
+  const { t } = useTranslation("issuer");
   const { activeUser, templates, users, userRolesById, templateAssignees, credentials } = useStore();
   const issueBatch = useServerFn(issueCredentialsBatch);
   const isStaff = activeUser?.subRole === "staff";
@@ -55,9 +57,9 @@ function Bulk() {
   );
   const myTemplates = useMemo(
     () => templates.filter(
-      (t) => t.issuerId === activeUser?.organizationId
-        && t.status === "active"
-        && (!isStaff || assignedIds.has(t.id)),
+      (tmpl) => tmpl.issuerId === activeUser?.organizationId
+        && tmpl.status === "active"
+        && (!isStaff || assignedIds.has(tmpl.id)),
     ),
     [templates, activeUser, isStaff, assignedIds],
   );
@@ -75,16 +77,16 @@ function Bulk() {
     e.target.value = "";
     if (!file) return;
     const isCsv = file.name.toLowerCase().endsWith(".csv") || file.type === "text/csv" || file.type === "application/vnd.ms-excel";
-    if (!isCsv) return toast.error("Please upload a .csv file");
-    if (file.size > 1_000_000) return toast.error("File too large (max 1 MB)");
+    if (!isCsv) return toast.error(t("issue.bulk.toasts.invalidFile"));
+    if (file.size > 1_000_000) return toast.error(t("issue.bulk.toasts.fileTooLarge"));
     try {
       let text = await file.text();
       if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
       setCsv(text);
       setFileName(file.name);
-      toast.success(`Loaded ${file.name}`);
+      toast.success(t("issue.bulk.toasts.fileLoaded", { name: file.name }));
     } catch {
-      toast.error("Failed to read file");
+      toast.error(t("issue.bulk.toasts.fileLoadFailed"));
     }
   };
 
@@ -119,8 +121,8 @@ function Bulk() {
   const staffConflicts = resolved.filter((r) => r.user && r.isStaffOrAdmin).length;
 
   const submit = async () => {
-    if (!templateId) return toast.error("Pick a micro-credential");
-    if (rows.length === 0) return toast.error("CSV is empty or malformed");
+    if (!templateId) return toast.error(t("issue.bulk.toasts.noTemplate"));
+    if (rows.length === 0) return toast.error(t("issue.bulk.toasts.emptyCSV"));
     const recipients = resolved
       .filter((r) => r.user && !r.alreadyHas && !r.isStaffOrAdmin)
       .map((r) => ({
@@ -129,7 +131,7 @@ function Bulk() {
         grade: r.row.grade ?? null,
         expiresAt: r.row.expiryDate ? new Date(r.row.expiryDate).toISOString() : null,
       }));
-    if (recipients.length === 0) return toast.error("No CSV rows are eligible for issuance");
+    if (recipients.length === 0) return toast.error(t("issue.bulk.toasts.noEligible"));
     setSubmitting(true);
     try {
       const res: any = await issueBatch({
@@ -153,7 +155,7 @@ function Bulk() {
             recipientName: r.row.email,
             credentialStatus: "not_issued",
             blockchainStatus: "not_requested",
-            error: "No earner account found for this email",
+            error: t("issue.bulk.errors.noAccount"),
           });
         });
       // Include duplicates as not-issued
@@ -165,7 +167,7 @@ function Bulk() {
             recipientName: r.user!.name,
             credentialStatus: "not_issued",
             blockchainStatus: "not_requested",
-            error: "Earner already has an active (non-revoked) credential for this micro-credential",
+            error: t("issue.bulk.errors.alreadyActive"),
           });
         });
       // Include staff/admin conflicts as not-issued
@@ -177,12 +179,12 @@ function Bulk() {
             recipientName: r.user!.name,
             credentialStatus: "not_issued",
             blockchainStatus: "not_requested",
-            error: "This account belongs to issuer staff or admin and cannot receive credentials",
+            error: t("issue.bulk.errors.staffConflict"),
           });
         });
       setResults(rowsOut);
     } catch (e: any) {
-      toast.error(e?.message ?? "Issuance failed");
+      toast.error(e?.message ?? t("issue.bulk.toasts.issuanceFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -190,25 +192,25 @@ function Bulk() {
 
   return (
     <PageShell
-      title="Bulk Issuance"
-      description="Paste a CSV or upload a .csv file to issue many credentials at once."
+      title={t("issue.bulk.title")}
+      description={t("issue.bulk.description")}
     >
       <Card>
         <CardContent className="space-y-5 p-6">
           <div>
-            <Label>Micro-credential</Label>
+            <Label>{t("issue.bulk.fields.microCredential")}</Label>
             <Select value={templateId} onValueChange={setTemplateId}>
-              <SelectTrigger><SelectValue placeholder="Select a micro-credential" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("issue.bulk.fields.microCredentialPlaceholder")} /></SelectTrigger>
               <SelectContent>
-                {myTemplates.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
+                {myTemplates.map((tmpl) => (
+                  <SelectItem key={tmpl.id} value={tmpl.id}>{tmpl.title}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
             <div className="mb-2 flex items-center justify-between gap-2">
-              <Label className="mb-0">CSV input</Label>
+              <Label className="mb-0">{t("issue.bulk.fields.csvInput")}</Label>
               <div className="flex items-center gap-2">
                 <input
                   ref={fileInputRef}
@@ -224,18 +226,18 @@ function Bulk() {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <FileUp className="mr-2 h-4 w-4" />
-                  Upload CSV
+                  {t("issue.bulk.buttons.upload")}
                 </Button>
               </div>
             </div>
             <Textarea value={csv} onChange={(e) => { setCsv(e.target.value); setFileName(null); }} rows={10} className="font-mono text-xs" />
             <div className="mt-1 flex items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
-                Headers: email, grade, expiryDate. Paste CSV or upload a .csv file (UTF-8).
+                {t("issue.bulk.fields.csvHint")}
               </p>
               {fileName && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span>Loaded: <span className="font-medium text-foreground">{fileName}</span></span>
+                  <span>{t("issue.bulk.fields.loaded")} <span className="font-medium text-foreground">{fileName}</span></span>
                   <Button type="button" variant="ghost" size="sm" className="h-6 px-2" onClick={clearFile}>
                     <X className="h-3 w-3" />
                   </Button>
@@ -244,20 +246,20 @@ function Bulk() {
             </div>
           </div>
           <div className="rounded-md border border-border p-3 text-sm space-y-1">
-            <div><span className="font-medium">{rows.length}</span> recipient(s) parsed</div>
+            <div><span className="font-medium">{rows.length}</span> {t("issue.bulk.preview.parsed", { count: rows.length }).replace(/^\d+ /, "")}</div>
             {unmatched > 0 && (
               <div className="text-xs text-warning-foreground">
-                {unmatched} email(s) do not match an existing earner account and will be skipped.
+                {t("issue.bulk.preview.unmatched", { count: unmatched })}
               </div>
             )}
             {duplicates > 0 && (
               <div className="text-xs text-warning-foreground">
-                {duplicates} earner(s) already have an active (non-revoked) credential for this micro-credential and will be skipped.
+                {t("issue.bulk.preview.duplicates", { count: duplicates })}
               </div>
             )}
             {staffConflicts > 0 && (
               <div className="text-xs text-warning-foreground">
-                {staffConflicts} email(s) belong to issuer staff or admin accounts and will be skipped.
+                {t("issue.bulk.preview.staffConflicts", { count: staffConflicts })}
               </div>
             )}
           </div>
@@ -267,7 +269,7 @@ function Bulk() {
           <div className="flex justify-end">
             <Button onClick={submit} disabled={submitting}>
               {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-              Process & issue
+              {submitting ? t("issue.bulk.buttons.processing") : t("issue.bulk.buttons.process")}
             </Button>
           </div>
         </CardContent>

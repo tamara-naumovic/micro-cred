@@ -1,0 +1,37 @@
+{
+  "settings": {
+    "headTitle": "Podešavanja — MicroCred",
+    "title": "Podešavanja",
+    "description": "Upravljajte podešavanjima naloga i profilom institucije.",
+    "sections": {
+      "institutionProfile": "Javni profil institucije"
+    },
+    "fields": {
+      "name": "Naziv",
+      "country": "Država",
+      "website": "Veb-sajt",
+      "websitePlaceholder": "https://primer.org",
+      "about": "O instituciji",
+      "aboutPlaceholder": "Opišite vašu instituciju. Prikazuje se na javnom profilu.",
+      "accreditationDocument": "Dokument o akreditaciji"
+    },
+    "buttons": {
+      "save": "Sačuvaj izmene",
+      "saving": "Čuvanje…",
+      "upload": "Otpremi",
+      "replace": "Zameni",
+      "uploading": "Otpremanje…"
+    },
+    "toasts": {
+      "profileUpdated": "Profil institucije je ažuriran",
+      "saveFailed": "Čuvanje nije uspelo",
+      "docUploaded": "Dokument o akreditaciji je otpremljen",
+      "uploadFailed": "Otpremanje nije uspelo",
+      "docRemoved": "Dokument o akreditaciji je uklonjen",
+      "removeFailed": "Uklanjanje nije uspelo",
+      "docOpenFailed": "Nije moguće otvoriti dokument"
+    },
+    "noDocument": "Nema otpremljenog dokumenta.",
+    "adminOnly": "Samo administratori izdavaoca mogu da uređuju profil institucije."
+  }
+}

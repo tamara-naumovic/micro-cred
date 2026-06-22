@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { startIssuerCredentialsTour } from "@/lib/tour/issuerTour";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, CalendarClock, Check, Pencil, Send, Trash2, X } from "lucide-react";
@@ -38,10 +39,10 @@ import { resendCredential, discardRejectedCredential, renewCredential } from "@/
 import type { IssuedCredential } from "@/lib/types";
 
 const RENEWAL_STEPS = [
-  { key: "in_review", label: "In review", nextLabel: "Advance to evidence collected" },
-  { key: "evidence_collected", label: "Evidence collected", nextLabel: "Advance to verified by provider" },
-  { key: "verified_by_provider", label: "Verified by provider", nextLabel: "Issue & sign" },
-  { key: "issued", label: "Issued (renewed)", nextLabel: null },
+  { key: "in_review", nextLabel: "Advance to evidence collected" },
+  { key: "evidence_collected", nextLabel: "Advance to verified by provider" },
+  { key: "verified_by_provider", nextLabel: "Issue & sign" },
+  { key: "issued", nextLabel: null },
 ] as const;
 
 export const Route = createFileRoute("/issuer/credentials")({
@@ -54,6 +55,7 @@ export const Route = createFileRoute("/issuer/credentials")({
 });
 
 function List() {
+  const { t } = useTranslation("issuer");
   const { activeUser, credentials, templateAssignees, templates, refresh } = useStore();
   const [q, setQ] = useState("");
   const [templateFilter, setTemplateFilter] = useState<string>("all");
@@ -72,8 +74,8 @@ function List() {
 
   useEffect(() => {
     if (!activeUser || activeUser.role !== "issuer") return;
-    const t = window.setTimeout(() => startIssuerCredentialsTour(activeUser.id), 400);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => startIssuerCredentialsTour(activeUser.id), 400);
+    return () => window.clearTimeout(timer);
   }, [activeUser]);
 
   if (!activeUser) return null;
@@ -82,8 +84,8 @@ function List() {
     templateAssignees.filter((a) => a.userId === activeUser.id).map((a) => a.templateId),
   );
   const availableTemplates = templates
-    .filter((t) => t.issuerId === activeUser.organizationId)
-    .filter((t) => (isStaff ? assignedIds.has(t.id) : true));
+    .filter((tmpl) => tmpl.issuerId === activeUser.organizationId)
+    .filter((tmpl) => (isStaff ? assignedIds.has(tmpl.id) : true));
   const mine = credentials
     .filter((c) => c.issuerId === activeUser.organizationId)
     .filter((c) => (isStaff ? (c.templateId ? assignedIds.has(c.templateId) : false) : true))
@@ -96,14 +98,14 @@ function List() {
       c.id.toLowerCase().includes(q.toLowerCase()),
     );
 
-  const LIFECYCLE_OPTIONS: { value: string; label: string }[] = [
-    { value: "issued", label: "Issued" },
-    { value: "pending_earner_acceptance", label: "Pending acceptance" },
-    { value: "rejected", label: "Rejected" },
-    { value: "revoked", label: "Revoked" },
-    { value: "expired", label: "Expired" },
-    { value: "superseded", label: "Superseded" },
-    { value: "draft", label: "Draft" },
+  const LIFECYCLE_OPTIONS: { value: string; labelKey: string }[] = [
+    { value: "issued", labelKey: "credentials.filters.lifecycle.issued" },
+    { value: "pending_earner_acceptance", labelKey: "credentials.filters.lifecycle.pending_earner_acceptance" },
+    { value: "rejected", labelKey: "credentials.filters.lifecycle.rejected" },
+    { value: "revoked", labelKey: "credentials.filters.lifecycle.revoked" },
+    { value: "expired", labelKey: "credentials.filters.lifecycle.expired" },
+    { value: "superseded", labelKey: "credentials.filters.lifecycle.superseded" },
+    { value: "draft", labelKey: "credentials.filters.lifecycle.draft" },
   ];
 
   const openEdit = (c: IssuedCredential) => {
@@ -135,11 +137,11 @@ function List() {
           expiryDate: expiry ? new Date(expiry).toISOString() : null,
         },
       });
-      toast.success("Credential resent to earner");
+      toast.success(t("credentials.toasts.credentialResent"));
       await refresh();
       setEditTarget(null);
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not resend");
+      toast.error(e?.message ?? t("credentials.toasts.couldNotResend"));
     } finally {
       setBusy(false);
     }
@@ -150,11 +152,11 @@ function List() {
     setBusy(true);
     try {
       await discard({ data: { credentialId: discardTarget.id } });
-      toast.success("Rejected credential deleted");
+      toast.success(t("credentials.toasts.rejectedDeleted"));
       await refresh();
       setDiscardTarget(null);
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not delete");
+      toast.error(e?.message ?? t("credentials.toasts.couldNotDelete"));
     } finally {
       setBusy(false);
     }
@@ -162,15 +164,15 @@ function List() {
 
   const advanceRenewal = async () => {
     if (!renewTarget) return;
-    // Steps 0, 1 are local UI only.
     if (renewStep < 2) {
       setRenewStep(renewStep + 1);
-      toast.success(`Moved to ${RENEWAL_STEPS[renewStep + 1].label}`);
+      const nextStepKey = RENEWAL_STEPS[renewStep + 1].key as string;
+      const labelKey = `credentials.dialogs.renew.steps.${nextStepKey}` as const;
+      toast.success(t("credentials.toasts.movedTo", { label: t(labelKey) }));
       return;
     }
-    // Step 2 → finalize: requires new expiry date
     if (!renewExpiry) {
-      toast.error("Pick a new expiry date");
+      toast.error(t("credentials.toasts.pickExpiryDate"));
       return;
     }
     setBusy(true);
@@ -181,11 +183,11 @@ function List() {
           newExpiryDate: new Date(renewExpiry).toISOString(),
         },
       });
-      toast.success("Credential expiry extended");
+      toast.success(t("credentials.toasts.expiryExtended"));
       await refresh();
       closeRenew();
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not renew");
+      toast.error(e?.message ?? t("credentials.toasts.couldNotRenew"));
     } finally {
       setBusy(false);
     }
@@ -193,13 +195,13 @@ function List() {
 
   return (
     <PageShell
-      title="Issued Credentials"
-      description="All micro-credentials your organisation has issued."
+      title={t("credentials.title")}
+      description={t("credentials.description")}
       actions={
         <div className="flex flex-wrap items-center gap-2" data-tour="cred-filters">
           <div className="relative">
             <Input
-              placeholder="Search…"
+              placeholder={t("credentials.filters.searchPlaceholder")}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="w-56 pr-8"
@@ -209,7 +211,7 @@ function List() {
                 type="button"
                 onClick={() => setQ("")}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label="Clear search"
+                aria-label={t("credentials.filters.clearSearch")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -217,26 +219,26 @@ function List() {
           </div>
           <Select value={templateFilter} onValueChange={setTemplateFilter}>
             <SelectTrigger className="w-56">
-              <SelectValue placeholder="All templates" />
+              <SelectValue placeholder={t("credentials.filters.allTemplates")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All templates</SelectItem>
-              {availableTemplates.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.title}
+              <SelectItem value="all">{t("credentials.filters.allTemplates")}</SelectItem>
+              {availableTemplates.map((tmpl) => (
+                <SelectItem key={tmpl.id} value={tmpl.id}>
+                  {tmpl.title}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={lifecycleFilter} onValueChange={setLifecycleFilter}>
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="All statuses" />
+              <SelectValue placeholder={t("credentials.filters.allLifecycle")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All lifecycle statuses</SelectItem>
+              <SelectItem value="all">{t("credentials.filters.allLifecycle")}</SelectItem>
               {LIFECYCLE_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
-                  {o.label}
+                  {t(o.labelKey)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -249,14 +251,14 @@ function List() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Earner</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Issued</TableHead>
-                <TableHead>Expires</TableHead>
-                <TableHead data-tour="cred-col-lifecycle">Lifecycle</TableHead>
-                <TableHead data-tour="cred-col-blockchain">Blockchain</TableHead>
-                <TableHead data-tour="cred-col-actions">Actions</TableHead>
+                <TableHead>{t("credentials.table.headers.id")}</TableHead>
+                <TableHead>{t("credentials.table.headers.earner")}</TableHead>
+                <TableHead>{t("credentials.table.headers.title")}</TableHead>
+                <TableHead>{t("credentials.table.headers.issued")}</TableHead>
+                <TableHead>{t("credentials.table.headers.expires")}</TableHead>
+                <TableHead data-tour="cred-col-lifecycle">{t("credentials.table.headers.lifecycle")}</TableHead>
+                <TableHead data-tour="cred-col-blockchain">{t("credentials.table.headers.blockchain")}</TableHead>
+                <TableHead data-tour="cred-col-actions">{t("credentials.table.headers.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -279,11 +281,11 @@ function List() {
                             {expiresDate.toLocaleDateString()}
                           </span>
                           {isExpired && (
-                            <span className="text-xs text-destructive">Expired</span>
+                            <span className="text-xs text-destructive">{t("credentials.table.expired")}</span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground italic">Does not expire</span>
+                        <span className="text-muted-foreground italic">{t("credentials.table.doesNotExpire")}</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -304,20 +306,20 @@ function List() {
                         {lc === "rejected" && (
                           <>
                             <Button size="sm" variant="outline" onClick={() => openEdit(c)}>
-                              <Pencil className="mr-1 h-3 w-3" /> Edit & resend
+                              <Pencil className="mr-1 h-3 w-3" /> {t("credentials.lifecycleActions.editResend")}
                             </Button>
                             <Button size="sm" variant="destructive" onClick={() => setDiscardTarget(c)}>
-                              <Trash2 className="mr-1 h-3 w-3" /> Accept rejection
+                              <Trash2 className="mr-1 h-3 w-3" /> {t("credentials.lifecycleActions.acceptRejection")}
                             </Button>
                           </>
                         )}
                         {canRenew && (
                           <Button size="sm" variant="outline" onClick={() => openRenew(c)}>
-                            <CalendarClock className="mr-1 h-3 w-3" /> Renew expiry
+                            <CalendarClock className="mr-1 h-3 w-3" /> {t("credentials.lifecycleActions.renewExpiry")}
                           </Button>
                         )}
                         {lc !== "rejected" && !canRenew && (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">{t("credentials.table.noAction")}</span>
                         )}
                       </div>
                     </TableCell>
@@ -325,68 +327,73 @@ function List() {
                 );
               })}
               {mine.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="p-8 text-center text-sm text-muted-foreground">No credentials match.</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={8} className="p-8 text-center text-sm text-muted-foreground">
+                    {t("credentials.table.empty")}
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
+      {/* Edit & resend dialog */}
       <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit & resend credential</DialogTitle>
+            <DialogTitle>{t("credentials.dialogs.edit.title")}</DialogTitle>
             <DialogDescription>
-              Update grade and/or expiry date and resend to{" "}
-              {editTarget && <span className="font-medium text-foreground">{editTarget.earnerName}</span>}{" "}
-              for acceptance.
+              {t("credentials.dialogs.edit.description", { earnerName: "" })}
+              {editTarget && <span className="font-medium text-foreground">{editTarget.earnerName}</span>}
+              {" "}{t("credentials.dialogs.edit.description", { earnerName: "." }).slice(-1) === "." ? "" : ""}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="grade">Grade</Label>
-              <Input id="grade" value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="e.g. A, Pass" />
+              <Label htmlFor="grade">{t("credentials.dialogs.edit.gradeLabel")}</Label>
+              <Input id="grade" value={grade} onChange={(e) => setGrade(e.target.value)} placeholder={t("credentials.dialogs.edit.gradePlaceholder")} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="expiry">Expiry date</Label>
+              <Label htmlFor="expiry">{t("credentials.dialogs.edit.expiryLabel")}</Label>
               <Input id="expiry" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
-            <Button onClick={confirmResend} disabled={busy}>Resend to earner</Button>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>{t("credentials.dialogs.edit.cancel")}</Button>
+            <Button onClick={confirmResend} disabled={busy}>{t("credentials.dialogs.edit.confirm")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Discard dialog */}
       <Dialog open={!!discardTarget} onOpenChange={(o) => !o && setDiscardTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Accept rejection and delete credential</DialogTitle>
+            <DialogTitle>{t("credentials.dialogs.discard.title")}</DialogTitle>
             <DialogDescription>
-              This permanently deletes the credential for{" "}
-              {discardTarget && <span className="font-medium text-foreground">{discardTarget.earnerName}</span>}.
-              This action cannot be undone.
+              {t("credentials.dialogs.discard.description", { earnerName: discardTarget?.earnerName ?? "" })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDiscardTarget(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={confirmDiscard} disabled={busy}>Delete credential</Button>
+            <Button variant="outline" onClick={() => setDiscardTarget(null)}>{t("credentials.dialogs.discard.cancel")}</Button>
+            <Button variant="destructive" onClick={confirmDiscard} disabled={busy}>{t("credentials.dialogs.discard.confirm")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Renew dialog */}
       <Dialog open={!!renewTarget} onOpenChange={(o) => !o && closeRenew()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Renew credential expiry</DialogTitle>
+            <DialogTitle>{t("credentials.dialogs.renew.title")}</DialogTitle>
             <DialogDescription>
               {renewTarget && (
                 <>
-                  Extend expiry of{" "}
-                  <span className="font-medium text-foreground">{renewTarget.title}</span> for{" "}
-                  <span className="font-medium text-foreground">{renewTarget.earnerName}</span>.
-                  No earner acceptance is required — the credential is already issued and anchored.
+                  {t("credentials.dialogs.renew.description", {
+                    title: renewTarget.title,
+                    earnerName: renewTarget.earnerName,
+                  })}
                 </>
               )}
             </DialogDescription>
@@ -396,6 +403,7 @@ function List() {
             {RENEWAL_STEPS.map((s, i) => {
               const done = i < renewStep;
               const current = i === renewStep;
+              const stepLabelKey = `credentials.dialogs.renew.steps.${s.key}` as const;
               return (
                 <li
                   key={s.key}
@@ -415,7 +423,7 @@ function List() {
                     {done ? <Check className="h-3 w-3" /> : i + 1}
                   </span>
                   <span className={current ? "font-medium" : done ? "text-muted-foreground line-through" : "text-muted-foreground"}>
-                    {s.label}
+                    {t(stepLabelKey)}
                   </span>
                 </li>
               );
@@ -424,7 +432,7 @@ function List() {
 
           {renewStep === 2 && (
             <div className="grid gap-2 pt-2">
-              <Label htmlFor="renew-expiry">New expiry date</Label>
+              <Label htmlFor="renew-expiry">{t("credentials.dialogs.renew.newExpiryLabel")}</Label>
               <Input
                 id="renew-expiry"
                 type="date"
@@ -433,19 +441,26 @@ function List() {
               />
               {renewTarget?.expiresAt && (
                 <p className="text-xs text-muted-foreground">
-                  Current expiry: {new Date(renewTarget.expiresAt).toLocaleDateString()}
+                  {t("credentials.dialogs.renew.currentExpiry", {
+                    date: new Date(renewTarget.expiresAt).toLocaleDateString(),
+                  })}
                 </p>
               )}
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={closeRenew} disabled={busy}>Cancel</Button>
+            <Button variant="outline" onClick={closeRenew} disabled={busy}>{t("credentials.dialogs.renew.cancel")}</Button>
             <Button onClick={advanceRenewal} disabled={busy}>
               {renewStep === 2 ? (
-                <><Send className="mr-2 h-4 w-4" />Issue & sign</>
+                <><Send className="mr-2 h-4 w-4" />{t("credentials.dialogs.renew.issueSign")}</>
               ) : (
-                <><ArrowRight className="mr-2 h-4 w-4" />{RENEWAL_STEPS[renewStep].nextLabel}</>
+                <>
+                  <ArrowRight className="mr-2 h-4 w-4" />
+                  {renewStep === 0
+                    ? t("credentials.dialogs.renew.steps.nextAdvanceToEvidence")
+                    : t("credentials.dialogs.renew.steps.nextAdvanceToVerified")}
+                </>
               )}
             </Button>
           </DialogFooter>

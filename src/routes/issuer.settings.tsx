@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { FileDown, Upload, Trash2 } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -17,17 +18,25 @@ export const Route = createFileRoute("/issuer/settings")({
   head: () => ({ meta: [{ title: "Settings — MicroCred" }] }),
   component: () => (
     <RoleGuard role="issuer">
-      <PageShell title="Settings" description="Manage your account preferences and institution profile.">
-        <div className="grid gap-6">
-          <InstitutionProfileCard />
-          <ChangePasswordForm />
-        </div>
-      </PageShell>
+      <SettingsPage />
     </RoleGuard>
   ),
 });
 
+function SettingsPage() {
+  const { t } = useTranslation("issuer");
+  return (
+    <PageShell title={t("settings.title")} description={t("settings.description")}>
+      <div className="grid gap-6">
+        <InstitutionProfileCard />
+        <ChangePasswordForm />
+      </div>
+    </PageShell>
+  );
+}
+
 function InstitutionProfileCard() {
+  const { t } = useTranslation("issuer");
   const { activeUser, organizations } = useStore();
   const isAdmin = activeUser?.subRole === "admin";
   const org = useMemo(
@@ -56,9 +65,9 @@ function InstitutionProfileCard() {
         .update({ about: about.trim() || null, website: website.trim() || null })
         .eq("id", org.id);
       if (error) throw new Error(error.message);
-      toast.success("Institution profile updated");
+      toast.success(t("settings.toasts.profileUpdated"));
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Failed to save");
+      toast.error(e instanceof Error ? e.message : t("settings.toasts.saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -73,7 +82,6 @@ function InstitutionProfileCard() {
         .from("accreditation-docs")
         .upload(path, file, { contentType: file.type || undefined, upsert: false });
       if (upErr) throw new Error(upErr.message);
-      // Best-effort remove previous doc
       if (org.accreditationDocumentUrl) {
         await supabase.storage.from("accreditation-docs").remove([org.accreditationDocumentUrl]);
       }
@@ -82,9 +90,9 @@ function InstitutionProfileCard() {
         .update({ accreditation_document_url: path })
         .eq("id", org.id);
       if (error) throw new Error(error.message);
-      toast.success("Accreditation document uploaded");
+      toast.success(t("settings.toasts.docUploaded"));
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
+      toast.error(e instanceof Error ? e.message : t("settings.toasts.uploadFailed"));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -101,9 +109,9 @@ function InstitutionProfileCard() {
         .update({ accreditation_document_url: null })
         .eq("id", org.id);
       if (error) throw new Error(error.message);
-      toast.success("Accreditation document removed");
+      toast.success(t("settings.toasts.docRemoved"));
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Failed to remove");
+      toast.error(e instanceof Error ? e.message : t("settings.toasts.removeFailed"));
     } finally {
       setUploading(false);
     }
@@ -115,7 +123,7 @@ function InstitutionProfileCard() {
       .from("accreditation-docs")
       .createSignedUrl(org.accreditationDocumentUrl, 3600);
     if (error || !data?.signedUrl) {
-      toast.error(error?.message ?? "Could not open document");
+      toast.error(error?.message ?? t("settings.toasts.docOpenFailed"));
       return;
     }
     window.open(data.signedUrl, "_blank");
@@ -124,35 +132,39 @@ function InstitutionProfileCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Institution public profile</CardTitle>
+        <CardTitle className="text-base">{t("settings.sections.institutionProfile")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Name</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              {t("settings.fields.name")}
+            </Label>
             <Input value={org.name} disabled />
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Country</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              {t("settings.fields.country")}
+            </Label>
             <Input value={org.country ?? ""} disabled />
           </div>
         </div>
         <div>
-          <Label htmlFor="org-website">Website</Label>
+          <Label htmlFor="org-website">{t("settings.fields.website")}</Label>
           <Input
             id="org-website"
-            placeholder="https://example.org"
+            placeholder={t("settings.fields.websitePlaceholder")}
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
             disabled={!isAdmin}
           />
         </div>
         <div>
-          <Label htmlFor="org-about">About</Label>
+          <Label htmlFor="org-about">{t("settings.fields.about")}</Label>
           <Textarea
             id="org-about"
             rows={5}
-            placeholder="Describe your institution. This appears on the public profile."
+            placeholder={t("settings.fields.aboutPlaceholder")}
             value={about}
             onChange={(e) => setAbout(e.target.value)}
             disabled={!isAdmin}
@@ -160,7 +172,7 @@ function InstitutionProfileCard() {
         </div>
         <div>
           <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-            Accreditation document
+            {t("settings.fields.accreditationDocument")}
           </Label>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {org.accreditationDocumentUrl ? (
@@ -176,7 +188,7 @@ function InstitutionProfileCard() {
                 )}
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">No document uploaded.</p>
+              <p className="text-sm text-muted-foreground">{t("settings.noDocument")}</p>
             )}
             {isAdmin && (
               <>
@@ -196,7 +208,11 @@ function InstitutionProfileCard() {
                   onClick={() => fileRef.current?.click()}
                 >
                   <Upload className="mr-2 h-4 w-4" />
-                  {uploading ? "Uploading…" : org.accreditationDocumentUrl ? "Replace" : "Upload"}
+                  {uploading
+                    ? t("settings.buttons.uploading")
+                    : org.accreditationDocumentUrl
+                      ? t("settings.buttons.replace")
+                      : t("settings.buttons.upload")}
                 </Button>
               </>
             )}
@@ -205,13 +221,11 @@ function InstitutionProfileCard() {
         {isAdmin ? (
           <div className="flex justify-end">
             <Button onClick={save} disabled={busy}>
-              {busy ? "Saving…" : "Save changes"}
+              {busy ? t("settings.buttons.saving") : t("settings.buttons.save")}
             </Button>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground">
-            Only issuer admins can edit the institution profile.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("settings.adminOnly")}</p>
         )}
       </CardContent>
     </Card>

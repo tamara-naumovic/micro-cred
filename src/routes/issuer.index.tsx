@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { startIssuerTour } from "@/lib/tour/issuerTour";
 import { useServerFn } from "@tanstack/react-start";
 import { getChainAvailabilityFn } from "@/lib/chain/anchor.functions";
@@ -83,7 +84,7 @@ export const Route = createFileRoute("/issuer/")({
 
 
 function maskAddress(addr?: string) {
-  if (!addr) return "Not configured";
+  if (!addr) return "—";
   if (addr.length < 12) return addr;
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
@@ -109,6 +110,7 @@ function pct(n: number, d: number) {
 // ============ Main component ============
 
 function Overview() {
+  const { t } = useTranslation("issuer");
   const {
     activeUser,
     templates,
@@ -125,8 +127,8 @@ function Overview() {
   useEffect(() => {
     if (!activeUser || activeUser.role !== "issuer") return;
     const sub = activeUser.subRole ?? "admin";
-    const t = window.setTimeout(() => startIssuerTour(activeUser.id, sub), 400);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => startIssuerTour(activeUser.id, sub), 400);
+    return () => window.clearTimeout(timer);
   }, [activeUser]);
 
   if (!activeUser) return null;
@@ -148,7 +150,7 @@ function Overview() {
 
   // Institution-scoped data
   const orgTemplates = useMemo(
-    () => templates.filter((t) => t.issuerId === orgId && tVisible(t.id)),
+    () => templates.filter((tmpl) => tmpl.issuerId === orgId && tVisible(tmpl.id)),
     [templates, orgId, assignedIds, isStaff],
   );
   const orgCredsAll = useMemo(
@@ -178,7 +180,7 @@ function Overview() {
   );
 
   // KPIs
-  const publishedTemplates = orgTemplates.filter((t) => t.status === "active");
+  const publishedTemplates = orgTemplates.filter((tmpl) => tmpl.status === "active");
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
@@ -186,8 +188,8 @@ function Overview() {
     (c) => new Date(c.issuedAt) >= startOfMonth,
   ).length;
   const publishedThisMonth = orgTemplates.filter(
-    (t) => t.status === "active",
-  ).length; // placeholder if no createdAt
+    (tmpl) => tmpl.status === "active",
+  ).length;
 
   const activeCredsForLearners = orgCredsAll.filter(
     (c) => c.lifecycle === "issued" || c.status === "active",
@@ -247,7 +249,7 @@ function Overview() {
   }, [orgCredsAll]);
 
   // Recent activity (org-scoped)
-  const orgTemplateIds = new Set(orgTemplates.map((t) => t.id));
+  const orgTemplateIds = new Set(orgTemplates.map((tmpl) => tmpl.id));
   const orgCredentialIds = new Set(orgCredsAll.map((c) => c.id));
   const orgCredentialTitles = new Set(
     orgCredsAll.map((c) => c.title.toLowerCase()),
@@ -263,8 +265,8 @@ function Overview() {
     for (const e of events) {
       if (
         e.description &&
-        Array.from(orgCredentialTitles).some((t) =>
-          e.description.toLowerCase().includes(t),
+        Array.from(orgCredentialTitles).some((ttl) =>
+          e.description.toLowerCase().includes(ttl),
         )
       ) {
         out.push({
@@ -292,7 +294,7 @@ function Overview() {
 
   if (loading) {
     return (
-      <PageShell title="Institution Dashboard">
+      <PageShell title={t("overview.title")}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-24" />
@@ -305,8 +307,12 @@ function Overview() {
 
   return (
     <PageShell
-      title="Institution Dashboard"
-      description={`${orgName} — ${isStaff ? "your assigned micro-credentials and issuance activity." : "operations, governance and blockchain status for your institution."}`}
+      title={t("overview.title")}
+      description={
+        isStaff
+          ? t("overview.descriptionStaff", { orgName })
+          : t("overview.descriptionAdmin", { orgName })
+      }
       actions={
         <>
           <DashboardFilters
@@ -317,7 +323,7 @@ function Overview() {
           <Button asChild>
             <Link to="/issuer/issue">
               <Send className="mr-2 h-4 w-4" />
-              Direct issue
+              {t("overview.buttons.directIssue")}
             </Link>
           </Button>
         </>
@@ -326,32 +332,34 @@ function Overview() {
       {/* Row 1 — KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-tour="dash-issuer-metrics">
         <MetricCard
-          label="Published MC templates"
+          label={t("overview.metrics.publishedTemplates")}
           value={publishedTemplates.length}
           hint={
-            publishedThisMonth > 0 ? `${publishedThisMonth} active` : undefined
+            publishedThisMonth > 0
+              ? t("overview.metrics.publishedTemplatesHint", { count: publishedThisMonth })
+              : undefined
           }
           icon={<BookOpen className="h-5 w-5" />}
           tone="primary"
         />
         <MetricCard
-          label="Total issued credentials"
+          label={t("overview.metrics.totalIssued")}
           value={orgCredsAll.length}
-          hint={`${issuedThisMonth} this month`}
+          hint={t("overview.metrics.totalIssuedHint", { count: issuedThisMonth })}
           icon={<Award className="h-5 w-5" />}
           tone="success"
         />
         <MetricCard
-          label="Active learners"
+          label={t("overview.metrics.activeLearners")}
           value={activeLearners}
-          hint="With at least one active credential"
+          hint={t("overview.metrics.activeLearnersHint")}
           icon={<Users className="h-5 w-5" />}
           tone="info"
         />
         <MetricCard
-          label="Active issuers"
+          label={t("overview.metrics.activeIssuers")}
           value={activeIssuers}
-          hint="Admin and staff with access"
+          hint={t("overview.metrics.activeIssuersHint")}
           icon={<ShieldCheck className="h-5 w-5" />}
           tone="purple"
         />
@@ -366,15 +374,15 @@ function Overview() {
           className="block"
         >
           <MetricCard
-            label="Pending actions"
+            label={t("overview.metrics.pendingActions")}
             value={pendingActionsCount}
-            hint="Click to review"
+            hint={t("overview.metrics.pendingActionsHint")}
             icon={<Inbox className="h-5 w-5" />}
             tone="warning"
           />
         </a>
         <MetricCard
-          label="Blockchain confirmed"
+          label={t("overview.metrics.blockchainConfirmed")}
           value={`${pct(confirmedAnchors.length, anchorableTotal)}%`}
           hint={`${confirmedAnchors.length} / ${anchorableTotal}`}
           icon={<CheckCircle2 className="h-5 w-5" />}
@@ -386,8 +394,8 @@ function Overview() {
       <div className="mt-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Credential lifecycle</CardTitle>
-            <CardDescription>Click a status to filter</CardDescription>
+            <CardTitle className="text-base">{t("overview.lifecycle.title")}</CardTitle>
+            <CardDescription>{t("overview.lifecycle.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <LifecycleChart counts={lifecycleCounts} />
@@ -460,6 +468,7 @@ function DashboardFilters({
   onTemplate: (id: string) => void;
   templates: MicroCredentialTemplate[];
 }) {
+  const { t } = useTranslation("issuer");
   return (
     <div className="flex flex-wrap gap-2">
       <Select value={templateFilter} onValueChange={onTemplate}>
@@ -467,10 +476,10 @@ function DashboardFilters({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All micro-credentials</SelectItem>
-          {templates.map((t) => (
-            <SelectItem key={t.id} value={t.id}>
-              {t.title}
+          <SelectItem value="all">{t("overview.filters.allMicroCredentials")}</SelectItem>
+          {templates.map((tmpl) => (
+            <SelectItem key={tmpl.id} value={tmpl.id}>
+              {tmpl.title}
             </SelectItem>
           ))}
         </SelectContent>
@@ -491,28 +500,17 @@ function LifecycleChart({
     superseded: number;
   };
 }) {
+  const { t } = useTranslation("issuer");
   const data = [
-    { name: "Active", value: counts.active, color: "var(--primary)" },
-    {
-      name: "Pending acceptance",
-      value: counts.pending,
-      color: "var(--info)",
-    },
-    { name: "Expired", value: counts.expired, color: "var(--muted-foreground)" },
-    {
-      name: "Revoked",
-      value: counts.revoked,
-      color: "var(--destructive)",
-    },
-    {
-      name: "Superseded",
-      value: counts.superseded,
-      color: "var(--chart-2)",
-    },
+    { name: t("overview.lifecycle.active"), value: counts.active, color: "var(--primary)" },
+    { name: t("overview.lifecycle.pendingAcceptance"), value: counts.pending, color: "var(--info)" },
+    { name: t("overview.lifecycle.expired"), value: counts.expired, color: "var(--muted-foreground)" },
+    { name: t("overview.lifecycle.revoked"), value: counts.revoked, color: "var(--destructive)" },
+    { name: t("overview.lifecycle.superseded"), value: counts.superseded, color: "var(--chart-2)" },
   ];
   const total = data.reduce((s, d) => s + d.value, 0);
   if (total === 0)
-    return <EmptyBlock label="No credentials to display yet." />;
+    return <EmptyBlock label={t("overview.lifecycle.empty")} />;
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -567,58 +565,59 @@ function ActionsCard({
   queued: number;
   failed: number;
 }) {
+  const { t } = useTranslation("issuer");
   const rows = [
     {
       key: "sig",
       icon: <FileSignature className="h-4 w-4" />,
-      label: "Credentials awaiting signature",
+      label: t("overview.pendingActions.items.sig"),
       count: awaitingSig,
       to: "/issuer/requests",
-      cta: "Review",
+      cta: t("overview.buttons.review"),
     },
     {
       key: "req",
       icon: <ClipboardList className="h-4 w-4" />,
-      label: "Open learner requests",
+      label: t("overview.pendingActions.items.req"),
       count: openRequests,
       to: "/issuer/requests",
-      cta: "Review requests",
+      cta: t("overview.buttons.reviewRequests"),
     },
     {
       key: "acc",
       icon: <Inbox className="h-4 w-4" />,
-      label: "Pending learner acceptance",
+      label: t("overview.pendingActions.items.acc"),
       count: pendingAcceptance,
       to: "/issuer/credentials",
-      cta: "View",
+      cta: t("overview.buttons.view"),
     },
     {
       key: "q",
       icon: <Activity className="h-4 w-4" />,
-      label: "Blockchain operations queued",
+      label: t("overview.pendingActions.items.q"),
       count: queued,
       to: "/issuer/anchoring-queue",
-      cta: "Open queue",
+      cta: t("overview.buttons.openQueue"),
     },
     {
       key: "f",
       icon: <AlertTriangle className="h-4 w-4 text-destructive" />,
-      label: "Blockchain operations failed",
+      label: t("overview.pendingActions.items.f"),
       count: failed,
       to: "/issuer/anchoring-queue",
-      cta: "Retry",
+      cta: t("overview.buttons.retry"),
     },
   ].filter((r) => r.count > 0);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Actions requiring attention</CardTitle>
+        <CardTitle className="text-base">{t("overview.pendingActions.title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {rows.length === 0 && (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            No actions require your attention.
+            {t("overview.pendingActions.empty")}
           </p>
         )}
         {rows.map((r) => (
@@ -633,7 +632,7 @@ function ActionsCard({
               <div className="min-w-0">
                 <div className="truncate font-medium">{r.label}</div>
                 <div className="text-xs text-muted-foreground">
-                  {r.count} item{r.count === 1 ? "" : "s"}
+                  {t("overview.pendingActions.itemCount", { count: r.count })}
                 </div>
               </div>
             </div>
@@ -684,6 +683,7 @@ function BloxbergCard({
   issuerAddress?: string;
   contractAddress?: string;
 }) {
+  const { t } = useTranslation("issuer");
   const checkAvail = useServerFn(getChainAvailabilityFn);
   const [avail, setAvail] = useState<ChainAvail>({ status: "loading" });
 
@@ -702,49 +702,51 @@ function BloxbergCard({
 
   const rpcBadge = (() => {
     switch (avail.status) {
-      case "ok": return <Badge variant="default">Operational</Badge>;
-      case "loading": return <Badge variant="secondary">Checking…</Badge>;
-      case "missing_config": return <Badge variant="destructive">Not configured</Badge>;
-      case "rpc_unavailable": return <Badge variant="destructive">RPC unreachable</Badge>;
-      case "insufficient_balance": return <Badge variant="destructive">No balance</Badge>;
-      case "missing_role": return <Badge variant="destructive">Missing role</Badge>;
+      case "ok": return <Badge variant="default">{t("overview.blockchainStatus.badgeOperational")}</Badge>;
+      case "loading": return <Badge variant="secondary">{t("overview.blockchainStatus.badgeChecking")}</Badge>;
+      case "missing_config": return <Badge variant="destructive">{t("overview.blockchainStatus.badgeNotConfigured")}</Badge>;
+      case "rpc_unavailable": return <Badge variant="destructive">{t("overview.blockchainStatus.badgeRpcUnreachable")}</Badge>;
+      case "insufficient_balance": return <Badge variant="destructive">{t("overview.blockchainStatus.badgeNoBalance")}</Badge>;
+      case "missing_role": return <Badge variant="destructive">{t("overview.blockchainStatus.badgeMissingRole")}</Badge>;
     }
   })();
 
+  const notConfiguredLabel = t("overview.blockchainStatus.badgeNotConfigured");
+  const unknownLabel = t("overview.blockchainStatus.badgeUnknown");
   const credBadge = isOk
-    ? <Badge variant="default">Connected</Badge>
+    ? <Badge variant="default">{t("overview.blockchainStatus.badgeConnected")}</Badge>
     : avail.status === "missing_role" && avail.missingOn.includes("credential")
-      ? <Badge variant="destructive">No ISSUER_ROLE</Badge>
-      : <Badge variant="secondary">{avail.status === "missing_config" ? "Not configured" : "Unknown"}</Badge>;
+      ? <Badge variant="destructive">{t("overview.blockchainStatus.badgeNoIssuerRole")}</Badge>
+      : <Badge variant="secondary">{avail.status === "missing_config" ? notConfiguredLabel : unknownLabel}</Badge>;
   const tplBadge = isOk
-    ? <Badge variant="default">Connected</Badge>
+    ? <Badge variant="default">{t("overview.blockchainStatus.badgeConnected")}</Badge>
     : avail.status === "missing_role" && avail.missingOn.includes("template")
-      ? <Badge variant="destructive">No ISSUER_ROLE</Badge>
-      : <Badge variant="secondary">{avail.status === "missing_config" ? "Not configured" : "Unknown"}</Badge>;
+      ? <Badge variant="destructive">{t("overview.blockchainStatus.badgeNoIssuerRole")}</Badge>
+      : <Badge variant="secondary">{avail.status === "missing_config" ? notConfiguredLabel : unknownLabel}</Badge>;
 
   const warnings: { label: string; tone: "warn" | "err" }[] = [];
   if (avail.status === "missing_config") warnings.push({ label: avail.reason, tone: "err" });
   if (avail.status === "rpc_unavailable") warnings.push({ label: `RPC unreachable: ${avail.reason}`, tone: "err" });
-  if (avail.status === "insufficient_balance") warnings.push({ label: "Issuer wallet balance is 0 — fund it on Bloxberg faucet", tone: "err" });
+  if (avail.status === "insufficient_balance") warnings.push({ label: t("overview.blockchainStatus.warnInsufficientBalance"), tone: "err" });
   if (avail.status === "missing_role") warnings.push({ label: avail.reason, tone: "err" });
-  if (failed > 0) warnings.push({ label: "Failed operations require retry", tone: "err" });
+  if (failed > 0) warnings.push({ label: t("overview.blockchainStatus.warnFailedOps"), tone: "err" });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Bloxberg status</CardTitle>
-        <CardDescription>Blockchain integration scoped to your institution</CardDescription>
+        <CardTitle className="text-base">{t("overview.blockchainStatus.title")}</CardTitle>
+        <CardDescription>{t("overview.blockchainStatus.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="grid grid-cols-2 gap-2">
-          <StatRow label="Network" value="Bloxberg" />
-          <StatRow label="Chain ID" value={isOk ? String(avail.chainId) : "8995"} />
-          <StatRow label="RPC connection" value={rpcBadge} />
-          <StatRow label="Wallet balance" value={isOk ? formatBalance(avail.balanceWei) : "—"} />
-          <StatRow label="TemplateRegistry" value={tplBadge} />
-          <StatRow label="CredentialRegistry" value={credBadge} />
+          <StatRow label={t("overview.blockchainStatus.network")} value="Bloxberg" />
+          <StatRow label={t("overview.blockchainStatus.chainId")} value={isOk ? String(avail.chainId) : "8995"} />
+          <StatRow label={t("overview.blockchainStatus.rpcConnection")} value={rpcBadge} />
+          <StatRow label={t("overview.blockchainStatus.walletBalance")} value={isOk ? formatBalance(avail.balanceWei) : "—"} />
+          <StatRow label={t("overview.blockchainStatus.templateRegistry")} value={tplBadge} />
+          <StatRow label={t("overview.blockchainStatus.credentialRegistry")} value={credBadge} />
           <StatRow
-            label="Issuer wallet"
+            label={t("overview.blockchainStatus.issuerWallet")}
             value={
               issuerAddr ? (
                 <a href={explorerTxUrl(issuerAddr)} target="_blank" rel="noreferrer" className="font-mono text-xs hover:underline">
@@ -753,20 +755,20 @@ function BloxbergCard({
               ) : <span className="text-muted-foreground">—</span>
             }
           />
-          <StatRow label="Last confirmed" value={lastConfirmedAt ? timeAgo(lastConfirmedAt) : "—"} />
+          <StatRow label={t("overview.blockchainStatus.lastConfirmed")} value={lastConfirmedAt ? timeAgo(lastConfirmedAt) : "—"} />
         </div>
 
         {(credAddr || tplAddr) && (
           <div className="space-y-1 pt-1 text-xs">
             {tplAddr && (
               <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground">Template contract</span>
+                <span className="text-muted-foreground">{t("overview.blockchainStatus.templateContract")}</span>
                 <a href={explorerTxUrl(tplAddr)} target="_blank" rel="noreferrer" className="font-mono hover:underline">{maskAddress(tplAddr)}</a>
               </div>
             )}
             {credAddr && (
               <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground">Credential contract</span>
+                <span className="text-muted-foreground">{t("overview.blockchainStatus.credentialContract")}</span>
                 <a href={explorerTxUrl(credAddr)} target="_blank" rel="noreferrer" className="font-mono hover:underline">{maskAddress(credAddr)}</a>
               </div>
             )}
@@ -774,9 +776,9 @@ function BloxbergCard({
         )}
 
         <div className="flex gap-2 pt-2">
-          <Badge variant="outline">Queued: {queued}</Badge>
-          <Badge variant={failed > 0 ? "destructive" : "outline"}>Failed: {failed}</Badge>
-          <Badge variant="outline">Confirmed: {confirmed}</Badge>
+          <Badge variant="outline">{t("overview.blockchainStatus.queued", { count: queued })}</Badge>
+          <Badge variant={failed > 0 ? "destructive" : "outline"}>{t("overview.blockchainStatus.failed", { count: failed })}</Badge>
+          <Badge variant="outline">{t("overview.blockchainStatus.confirmed", { count: confirmed })}</Badge>
         </div>
 
         {warnings.length > 0 && (
@@ -800,7 +802,7 @@ function BloxbergCard({
         <Button asChild variant="outline" size="sm" className="mt-2">
           <Link to="/issuer/anchoring-queue">
             <Wallet className="mr-2 h-4 w-4" />
-            Open blockchain queue
+            {t("overview.blockchainStatus.openQueue")}
           </Link>
         </Button>
       </CardContent>
@@ -831,10 +833,11 @@ function TopTemplatesTable({
   templates: MicroCredentialTemplate[];
   credentials: IssuedCredential[];
 }) {
+  const { t } = useTranslation("issuer");
   const rows = templates
-    .map((t) => {
-      const creds = credentials.filter((c) => c.templateId === t.id);
-      const confirmed = creds.filter(
+    .map((tmpl) => {
+      const creds = credentials.filter((c) => c.templateId === tmpl.id);
+      const confirmedCount = creds.filter(
         (c) => c.blockchain.chainStatus === "confirmed",
       ).length;
       const anchorable = creds.filter(
@@ -848,9 +851,9 @@ function TopTemplatesTable({
         .sort()
         .slice(-1)[0];
       return {
-        t,
+        t: tmpl,
         issued: creds.length,
-        confirmed,
+        confirmed: confirmedCount,
         anchorable,
         learners,
         lastIssued,
@@ -863,23 +866,23 @@ function TopTemplatesTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Top micro-credentials</CardTitle>
-        <CardDescription>Most issued published templates</CardDescription>
+        <CardTitle className="text-base">{t("overview.topTemplates.title")}</CardTitle>
+        <CardDescription>{t("overview.topTemplates.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
-          <EmptyBlock label="No published templates are available." />
+          <EmptyBlock label={t("overview.topTemplates.empty")} />
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Micro-credential</TableHead>
-                  <TableHead className="text-right">Version</TableHead>
-                  <TableHead className="text-right">Issued</TableHead>
-                  <TableHead className="text-right">Learners</TableHead>
-                  <TableHead className="text-right">On-chain</TableHead>
-                  <TableHead className="text-right">Last issued</TableHead>
+                  <TableHead>{t("overview.topTemplates.colTemplate")}</TableHead>
+                  <TableHead className="text-right">{t("overview.topTemplates.colVersion")}</TableHead>
+                  <TableHead className="text-right">{t("overview.topTemplates.colIssued")}</TableHead>
+                  <TableHead className="text-right">{t("overview.topTemplates.colLearners")}</TableHead>
+                  <TableHead className="text-right">{t("overview.topTemplates.colOnChain")}</TableHead>
+                  <TableHead className="text-right">{t("overview.topTemplates.colLastIssued")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -929,6 +932,7 @@ function IssuerActivityTable({
   applications: CredentialApplication[];
   templateAssignees: { templateId: string; userId: string }[];
 }) {
+  const { t } = useTranslation("issuer");
   const rows = users.map((u) => {
     const tplIds = new Set(
       templateAssignees
@@ -951,7 +955,7 @@ function IssuerActivityTable({
       .slice(-1)[0];
     return {
       u,
-      managed: isAdmin ? "All" : String(tplIds.size),
+      managed: isAdmin ? t("overview.issuerActivity.managedAll") : String(tplIds.size),
       issuedCount,
       pending,
       lastAct,
@@ -961,25 +965,25 @@ function IssuerActivityTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Issuer activity</CardTitle>
+        <CardTitle className="text-base">{t("overview.issuerActivity.title")}</CardTitle>
         <CardDescription>
-          Authorised issuers and staff in your institution
+          {t("overview.issuerActivity.description")}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? (
-          <EmptyBlock label="No issuers or staff have been added yet." />
+          <EmptyBlock label={t("overview.issuerActivity.empty")} />
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Issuer</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Templates</TableHead>
-                  <TableHead className="text-right">Issued</TableHead>
-                  <TableHead className="text-right">Pending</TableHead>
-                  <TableHead className="text-right">Last activity</TableHead>
+                  <TableHead>{t("overview.issuerActivity.colIssuer")}</TableHead>
+                  <TableHead>{t("overview.issuerActivity.colRole")}</TableHead>
+                  <TableHead className="text-right">{t("overview.issuerActivity.colTemplates")}</TableHead>
+                  <TableHead className="text-right">{t("overview.issuerActivity.colIssued")}</TableHead>
+                  <TableHead className="text-right">{t("overview.issuerActivity.colPending")}</TableHead>
+                  <TableHead className="text-right">{t("overview.issuerActivity.colLastActivity")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -988,7 +992,9 @@ function IssuerActivityTable({
                     <TableCell className="font-medium">{r.u.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {r.u.subRole === "admin" ? "Admin" : "Staff"}
+                        {r.u.subRole === "admin"
+                          ? t("overview.issuerActivity.roleAdmin")
+                          : t("overview.issuerActivity.roleStaff")}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{r.managed}</TableCell>
@@ -1009,7 +1015,7 @@ function IssuerActivityTable({
           <Button asChild size="sm" variant="outline">
             <Link to="/issuer/staff">
               <Users className="mr-2 h-4 w-4" />
-              Manage staff
+              {t("overview.issuerActivity.manageStaff")}
             </Link>
           </Button>
         </div>
@@ -1025,6 +1031,7 @@ function LearnerOverview({
   credentials: IssuedCredential[];
   pendingAcceptance: number;
 }) {
+  const { t } = useTranslation("issuer");
   const byLearner = new Map<string, number>();
   for (const c of credentials) {
     if (c.lifecycle !== "issued" && c.status !== "active") continue;
@@ -1064,16 +1071,16 @@ function LearnerOverview({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Learner overview</CardTitle>
-        <CardDescription>Aggregate institutional view</CardDescription>
+        <CardTitle className="text-base">{t("overview.learnerOverview.title")}</CardTitle>
+        <CardDescription>{t("overview.learnerOverview.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-          <StatRow label="Unique learners" value={unique} />
-          <StatRow label="New this month" value={newThisMonth} />
-          <StatRow label="Avg / learner" value={avg} />
-          <StatRow label="Multi-credential" value={multi} />
-          <StatRow label="Awaiting acceptance" value={pendingAcceptance} />
+          <StatRow label={t("overview.learnerOverview.uniqueLearners")} value={unique} />
+          <StatRow label={t("overview.learnerOverview.newThisMonth")} value={newThisMonth} />
+          <StatRow label={t("overview.learnerOverview.avgPerLearner")} value={avg} />
+          <StatRow label={t("overview.learnerOverview.multiCredential")} value={multi} />
+          <StatRow label={t("overview.learnerOverview.awaitingAcceptance")} value={pendingAcceptance} />
         </div>
         {unique > 0 && (
           <div className="h-40 w-full">
@@ -1085,7 +1092,7 @@ function LearnerOverview({
                 />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }}>
                   <Label
-                    value="Credentials per learner"
+                    value={t("overview.learnerOverview.chartLabel")}
                     position="insideBottom"
                     offset={-2}
                     style={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
@@ -1120,15 +1127,12 @@ function TemplateStatusPanel({
   templates: MicroCredentialTemplate[];
   credentials: IssuedCredential[];
 }) {
+  const { t } = useTranslation("issuer");
   const lifecycle = {
-    draft: templates.filter((t) => t.status === "draft").length,
-    published: templates.filter((t) => t.status === "active").length,
-    archived: templates.filter((t) => t.status === "archived").length,
+    draft: templates.filter((tmpl) => tmpl.status === "draft").length,
+    published: templates.filter((tmpl) => tmpl.status === "active").length,
+    archived: templates.filter((tmpl) => tmpl.status === "archived").length,
   };
-  // Read each template's own on-chain status directly (templates.blockchain_status).
-  // Do NOT infer from credentials — a template can be anchored even when it has
-  // zero issued credentials, and a not-yet-anchored credential should not mark
-  // the template itself as "not anchored".
   const chain = {
     not_anchored: 0,
     pending: 0,
@@ -1137,8 +1141,8 @@ function TemplateStatusPanel({
     failed: 0,
     disabled: 0,
   };
-  for (const t of templates) {
-    const s = t.blockchainStatus ?? "not_requested";
+  for (const tmpl of templates) {
+    const s = tmpl.blockchainStatus ?? "not_requested";
     if (s === "confirmed") chain.confirmed++;
     else if (s === "failed") chain.failed++;
     else if (s === "disabled") chain.disabled++;
@@ -1151,33 +1155,33 @@ function TemplateStatusPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">MC template status</CardTitle>
+        <CardTitle className="text-base">{t("overview.templateStatus.title")}</CardTitle>
         <CardDescription>
-          Lifecycle and blockchain status
+          {t("overview.templateStatus.description")}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-md border border-border p-3">
           <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
-            Lifecycle
+            {t("overview.templateStatus.sectionLifecycle")}
           </div>
           <div className="space-y-1.5 text-sm">
-            <StatLine label="Draft" value={lifecycle.draft} />
-            <StatLine label="Published" value={lifecycle.published} />
-            <StatLine label="Archived" value={lifecycle.archived} />
+            <StatLine label={t("overview.templateStatus.draft")} value={lifecycle.draft} />
+            <StatLine label={t("overview.templateStatus.published")} value={lifecycle.published} />
+            <StatLine label={t("overview.templateStatus.archived")} value={lifecycle.archived} />
           </div>
         </div>
         <div className="rounded-md border border-border p-3">
           <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
-            Blockchain
+            {t("overview.templateStatus.sectionBlockchain")}
           </div>
           <div className="space-y-1.5 text-sm">
-            <StatLine label="Not anchored" value={chain.not_anchored} />
-            <StatLine label="Pending" value={chain.pending} />
-            <StatLine label="Submitted" value={chain.submitted} />
-            <StatLine label="Confirmed on Bloxberg" value={chain.confirmed} />
-            <StatLine label="Failed anchoring" value={chain.failed} />
-            <StatLine label="Anchoring disabled" value={chain.disabled} />
+            <StatLine label={t("overview.templateStatus.notAnchored")} value={chain.not_anchored} />
+            <StatLine label={t("overview.templateStatus.pending")} value={chain.pending} />
+            <StatLine label={t("overview.templateStatus.submitted")} value={chain.submitted} />
+            <StatLine label={t("overview.templateStatus.confirmedOnBloxberg")} value={chain.confirmed} />
+            <StatLine label={t("overview.templateStatus.failedAnchoring")} value={chain.failed} />
+            <StatLine label={t("overview.templateStatus.anchoringDisabled")} value={chain.disabled} />
           </div>
         </div>
       </CardContent>
@@ -1200,14 +1204,15 @@ function RecentActivity({
 }: {
   items: { id: string; at: string; title: string; kind: string }[];
 }) {
+  const { t } = useTranslation("issuer");
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Recent institutional activity</CardTitle>
+        <CardTitle className="text-base">{t("overview.recentActivity.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <EmptyBlock label="No recent activity for your institution." />
+          <EmptyBlock label={t("overview.recentActivity.empty")} />
         ) : (
           <div className="divide-y divide-border">
             {items.map((it) => (
@@ -1231,7 +1236,7 @@ function RecentActivity({
         <div className="mt-3">
           <Button asChild variant="ghost" size="sm">
             <Link to="/issuer/credentials">
-              View all activity
+              {t("overview.recentActivity.viewAll")}
               <ExternalLink className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
