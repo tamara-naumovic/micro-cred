@@ -1,1 +1,52 @@
-{}
+{
+  "revocations": {
+    "headTitle": "Opozivi — MicroCred",
+    "title": "Opozivi",
+    "description": "Označite akreditive kao opozvane kada se potvrde problemi integriteta.",
+    "history": {
+      "heading": "Istorija opoziva"
+    },
+    "revokeSection": {
+      "heading": "Opozovi akreditiv"
+    },
+    "filters": {
+      "searchPlaceholder": "Pretraži nosioca…",
+      "allTemplates": "Svi šabloni"
+    },
+    "table": {
+      "id": "ID",
+      "earner": "Nosilac",
+      "title": "Naziv",
+      "reason": "Razlog",
+      "status": "Status"
+    },
+    "empty": {
+      "noRevocations": "Nema zabeleženih opoziva.",
+      "noMatchingRevocations": "Nema odgovarajućih opoziva.",
+      "noActive": "Nema aktivnih akreditiva.",
+      "noMatchingActive": "Nema odgovarajućih akreditiva."
+    },
+    "pager": {
+      "rowsPerPage": "Redova po stranici",
+      "pageOf": "Stranica {{current}} od {{pages}} · {{total}} rezultat",
+      "pageOf_plural": "Stranica {{current}} od {{pages}} · {{total}} rezultata"
+    },
+    "dialogs": {
+      "revoke": {
+        "title": "Opozovi {{id}}",
+        "reasonPlaceholder": "Razlog za opoziv",
+        "cancel": "Otkaži",
+        "confirm": "Potvrdi opoziv",
+        "confirming": "Opozivanje…"
+      }
+    },
+    "actions": {
+      "revoke": "Opozovi"
+    },
+    "toasts": {
+      "provideReason": "Navedite razlog",
+      "revokedQueued": "Opoziv je u redu za blockchain sidrenje",
+      "revoked": "Akreditiv je opozvan"
+    }
+  }
+}

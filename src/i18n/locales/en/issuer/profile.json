@@ -1,1 +1,13 @@
-{}
+{
+  "profile": {
+    "headTitle": "Public Profile — MicroCred",
+    "title": "Public Issuer Profile",
+    "description": "What employers and the public see when they look up your organisation.",
+    "shareBtn": "View public page",
+    "noOrg": "No organisation linked",
+    "stats": {
+      "templates": "Templates",
+      "credentialsIssued": "Credentials issued"
+    }
+  }
+}

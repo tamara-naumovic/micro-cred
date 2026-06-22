@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/issuer/staff")({
 type Row = { userId: string; email: string; displayName: string; createdAt: string };
 
 function StaffPage() {
+  const { t } = useTranslation("issuer");
   const { activeUser } = useStore();
   const router = useRouter();
   const list = useServerFn(listIssuerStaff);
@@ -64,7 +66,7 @@ function StaffPage() {
       const r = await list({ data: { organizationId: orgId } });
       setRows(r);
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to load staff");
+      toast.error(e.message ?? t("staff.toasts.failedLoad"));
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,7 @@ function StaffPage() {
   const isStaffSub = activeUser?.subRole === "staff";
   useEffect(() => {
     if (isStaffSub) {
-      toast.error("Only institution admins can manage staff.");
+      toast.error(t("staff.toasts.adminOnly"));
     }
   }, [isStaffSub]);
 
@@ -83,8 +85,8 @@ function StaffPage() {
   if (activeUser.subRole !== "admin") return <Navigate to="/issuer" replace />;
   if (!orgId) {
     return (
-      <PageShell title="Staff">
-        <Card><CardContent className="p-8 text-sm text-muted-foreground">Your account is not linked to an institution.</CardContent></Card>
+      <PageShell title={t("staff.title")}>
+        <Card><CardContent className="p-8 text-sm text-muted-foreground">{t("staff.noOrg")}</CardContent></Card>
       </PageShell>
     );
   }
@@ -110,11 +112,11 @@ function StaffPage() {
         });
         reset();
       }
-      toast.success("Staff added");
+      toast.success(t("staff.toasts.added"));
       await refresh();
       router.invalidate();
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to add staff");
+      toast.error(e.message ?? t("staff.toasts.failedAdd"));
     } finally {
       setBusy(false);
     }
@@ -124,11 +126,11 @@ function StaffPage() {
     setBusy(true);
     try {
       await remove({ data: { userId, organizationId: orgId } });
-      toast.success("Staff removed");
+      toast.success(t("staff.toasts.removed"));
       await refresh();
       router.invalidate();
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to remove staff");
+      toast.error(e.message ?? t("staff.toasts.failedRemove"));
     } finally {
       setBusy(false);
     }
@@ -136,35 +138,35 @@ function StaffPage() {
 
   return (
     <PageShell
-      title="Staff"
-      description="Employees of your institution who can issue micro-credentials assigned to them."
+      title={t("staff.title")}
+      description={t("staff.description")}
     >
       <Card className="mb-6">
         <CardContent className="p-5">
           <Tabs value={tab} onValueChange={(v) => setTab(v as "existing" | "new" | "bulk")}>
             <TabsList className="grid w-full grid-cols-3 sm:w-auto">
-              <TabsTrigger value="existing">Existing user</TabsTrigger>
-              <TabsTrigger value="new">Create new account</TabsTrigger>
-              <TabsTrigger value="bulk">Bulk add</TabsTrigger>
+              <TabsTrigger value="existing">{t("staff.tabs.existing")}</TabsTrigger>
+              <TabsTrigger value="new">{t("staff.tabs.new")}</TabsTrigger>
+              <TabsTrigger value="bulk">{t("staff.tabs.bulk")}</TabsTrigger>
             </TabsList>
             <TabsContent value="existing" className="mt-4">
               <form onSubmit={onAdd} className="space-y-4">
                 <div>
-                  <Label htmlFor="staff-email">Email of existing user</Label>
+                  <Label htmlFor="staff-email">{t("staff.existingForm.label")}</Label>
                   <Input
                     id="staff-email"
                     type="email"
-                    placeholder="employee@institution.org"
+                    placeholder={t("staff.existingForm.placeholder")}
                     value={existingEmail}
                     onChange={(e) => setExistingEmail(e.target.value)}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    The person must already have an account on the platform.
+                    {t("staff.existingForm.hint")}
                   </p>
                 </div>
                 <div className="flex justify-end">
                   <SubmitButton busy={busy}>
-                    <UserPlus className="mr-2 h-4 w-4" />Add staff
+                    <UserPlus className="mr-2 h-4 w-4" />{t("staff.addButton")}
                   </SubmitButton>
                 </div>
               </form>
@@ -174,7 +176,7 @@ function StaffPage() {
                 <ProvisionFields value={form} onChange={setForm} disabled={busy} />
                 <div className="flex justify-end">
                   <SubmitButton busy={busy}>
-                    <UserPlus className="mr-2 h-4 w-4" />Add staff
+                    <UserPlus className="mr-2 h-4 w-4" />{t("staff.addButton")}
                   </SubmitButton>
                 </div>
               </form>
@@ -199,18 +201,18 @@ function StaffPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Added</TableHead>
+                <TableHead>{t("staff.table.name")}</TableHead>
+                <TableHead>{t("staff.table.email")}</TableHead>
+                <TableHead>{t("staff.table.added")}</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && (
-                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">Loading…</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{t("staff.table.loading")}</TableCell></TableRow>
               )}
               {!loading && rows.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">No staff yet.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{t("staff.table.empty")}</TableCell></TableRow>
               )}
               {pageRows.map((r) => (
                 <TableRow key={r.userId}>
@@ -231,14 +233,14 @@ function StaffPage() {
           {rows.length > PAGE_SIZE && (
             <div className="flex items-center justify-between border-t p-3 text-sm">
               <div className="text-muted-foreground">
-                Page {page} of {pageCount} · {rows.length} total
+                {t("staff.pagination.page", { page, pageCount, total: rows.length })}
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                  <ChevronLeft className="h-4 w-4" /> Prev
+                  <ChevronLeft className="h-4 w-4" /> {t("staff.pagination.prev")}
                 </Button>
                 <Button size="sm" variant="outline" disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>
-                  Next <ChevronRight className="h-4 w-4" />
+                  {t("staff.pagination.next")} <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

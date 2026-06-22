@@ -1,1 +1,39 @@
-{}
+{
+  "staff": {
+    "headTitle": "Zaposleni — MicroCred",
+    "title": "Zaposleni",
+    "description": "Zaposleni vaše institucije koji mogu izdavati mikrokredencijale koji su im dodeljeni.",
+    "noOrg": "Vaš nalog nije povezan sa institucijom.",
+    "tabs": {
+      "existing": "Postojeći korisnik",
+      "new": "Kreiraj novi nalog",
+      "bulk": "Grupno dodavanje"
+    },
+    "existingForm": {
+      "label": "E-adresa postojećeg korisnika",
+      "placeholder": "zaposleni@institucija.rs",
+      "hint": "Osoba mora već imati nalog na platformi."
+    },
+    "addButton": "Dodaj zaposlenog",
+    "table": {
+      "name": "Ime",
+      "email": "E-adresa",
+      "added": "Dodat",
+      "loading": "Učitavanje…",
+      "empty": "Još uvek nema zaposlenih."
+    },
+    "pagination": {
+      "page": "Strana {{page}} od {{pageCount}} · ukupno {{total}}",
+      "prev": "Prethodna",
+      "next": "Sledeća"
+    },
+    "toasts": {
+      "added": "Zaposleni je dodat",
+      "removed": "Zaposleni je uklonjen",
+      "failedLoad": "Učitavanje zaposlenih nije uspelo",
+      "failedAdd": "Dodavanje zaposlenog nije uspelo",
+      "failedRemove": "Uklanjanje zaposlenog nije uspelo",
+      "adminOnly": "Samo administratori institucije mogu upravljati zaposlenima."
+    }
+  }
+}

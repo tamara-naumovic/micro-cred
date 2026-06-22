@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Search, XOctagon } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -75,12 +76,13 @@ function FilterBar({
   onTemplateFilter: (v: string) => void;
   templates: string[];
 }) {
+  const { t } = useTranslation("issuer");
   return (
     <div className="flex flex-wrap gap-3">
       <div className="relative max-w-sm flex-1">
         <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search earner…"
+          placeholder={t("revocations.filters.searchPlaceholder")}
           className="pl-8"
           value={earnerQ}
           onChange={(e) => onEarnerQ(e.target.value)}
@@ -88,13 +90,13 @@ function FilterBar({
       </div>
       <Select value={templateFilter} onValueChange={onTemplateFilter}>
         <SelectTrigger className="w-[240px]">
-          <SelectValue placeholder="All templates" />
+          <SelectValue placeholder={t("revocations.filters.allTemplates")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All templates</SelectItem>
-          {templates.map((t) => (
-            <SelectItem key={t} value={t}>
-              {t}
+          <SelectItem value="all">{t("revocations.filters.allTemplates")}</SelectItem>
+          {templates.map((tmpl) => (
+            <SelectItem key={tmpl} value={tmpl}>
+              {tmpl}
             </SelectItem>
           ))}
         </SelectContent>
@@ -116,12 +118,13 @@ function Pager({
   onPage: (p: number) => void;
   onPageSize: (n: number) => void;
 }) {
+  const { t } = useTranslation("issuer");
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const current = Math.min(page, pages);
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t p-3 text-sm">
       <div className="flex items-center gap-2 text-muted-foreground">
-        <span>Rows per page</span>
+        <span>{t("revocations.pager.rowsPerPage")}</span>
         <Select
           value={String(pageSize)}
           onValueChange={(v) => {
@@ -143,7 +146,7 @@ function Pager({
       </div>
       <div className="flex items-center gap-3 text-muted-foreground">
         <span>
-          Page {current} of {pages} · {total} result{total === 1 ? "" : "s"}
+          {t("revocations.pager.pageOf", { current, pages, total, count: total })}
         </span>
         <div className="flex gap-1">
           <Button
@@ -169,6 +172,7 @@ function Pager({
 }
 
 function Revocations() {
+  const { t } = useTranslation("issuer");
   const { activeUser, credentials, revokeCredential } = useStore();
   const [target, setTarget] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -223,7 +227,7 @@ function Revocations() {
 
   async function handleRevoke(id: string) {
     if (!reason.trim()) {
-      toast.error("Provide a reason");
+      toast.error(t("revocations.toasts.provideReason"));
       return;
     }
     setPending(true);
@@ -232,14 +236,14 @@ function Revocations() {
         const { revokeCredentialOnChain } = await import("@/lib/chain/anchor.functions");
         const res = await revokeCredentialOnChain({ data: { credentialId: id, reason } });
         if (res.mode === "on_chain_revoke_queued") {
-          toast.success("Revocation queued for on-chain anchoring");
+          toast.success(t("revocations.toasts.revokedQueued"));
         } else {
-          toast.success("Credential revoked");
+          toast.success(t("revocations.toasts.revoked"));
         }
         revokeCredential(id, reason);
       } else {
         revokeCredential(id, reason);
-        toast.success("Credential revoked");
+        toast.success(t("revocations.toasts.revoked"));
       }
       setTarget(null);
       setReason("");
@@ -252,10 +256,10 @@ function Revocations() {
 
   return (
     <PageShell
-      title="Revocations"
-      description="Mark credentials as revoked when integrity issues are confirmed."
+      title={t("revocations.title")}
+      description={t("revocations.description")}
     >
-      <h2 className="mb-3 font-display text-lg font-semibold">Revocation history</h2>
+      <h2 className="mb-3 font-display text-lg font-semibold">{t("revocations.history.heading")}</h2>
       <Card className="mb-6">
         <CardContent className="space-y-3 p-4">
           <FilterBar
@@ -276,11 +280,11 @@ function Revocations() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Earner</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t("revocations.table.id")}</TableHead>
+                <TableHead>{t("revocations.table.earner")}</TableHead>
+                <TableHead>{t("revocations.table.title")}</TableHead>
+                <TableHead>{t("revocations.table.reason")}</TableHead>
+                <TableHead>{t("revocations.table.status")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -298,7 +302,9 @@ function Revocations() {
               {filteredRevoked.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="p-6 text-center text-sm text-muted-foreground">
-                    {historyEarnerQ || historyTemplate !== "all" ? "No matching revocations." : "No revocations on record."}
+                    {historyEarnerQ || historyTemplate !== "all"
+                      ? t("revocations.empty.noMatchingRevocations")
+                      : t("revocations.empty.noRevocations")}
                   </TableCell>
                 </TableRow>
               )}
@@ -316,7 +322,7 @@ function Revocations() {
         )}
       </Card>
 
-      <h2 className="mb-3 font-display text-lg font-semibold">Revoke a credential</h2>
+      <h2 className="mb-3 font-display text-lg font-semibold">{t("revocations.revokeSection.heading")}</h2>
       <Card>
         <CardContent className="space-y-3 p-4">
           <FilterBar
@@ -337,9 +343,9 @@ function Revocations() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Earner</TableHead>
-                <TableHead>Title</TableHead>
+                <TableHead>{t("revocations.table.id")}</TableHead>
+                <TableHead>{t("revocations.table.earner")}</TableHead>
+                <TableHead>{t("revocations.table.title")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -354,24 +360,26 @@ function Revocations() {
                       <DialogTrigger asChild>
                         <Button size="sm" variant="outline">
                           <XOctagon className="mr-2 h-4 w-4" />
-                          Revoke
+                          {t("revocations.actions.revoke")}
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Revoke {c.id}</DialogTitle>
+                          <DialogTitle>{t("revocations.dialogs.revoke.title", { id: c.id })}</DialogTitle>
                         </DialogHeader>
                         <Input
-                          placeholder="Reason for revocation"
+                          placeholder={t("revocations.dialogs.revoke.reasonPlaceholder")}
                           value={reason}
                           onChange={(e) => setReason(e.target.value)}
                         />
                         <DialogFooter>
                           <Button variant="outline" onClick={() => setTarget(null)} disabled={pending}>
-                            Cancel
+                            {t("revocations.dialogs.revoke.cancel")}
                           </Button>
                           <Button onClick={() => handleRevoke(c.id)} disabled={pending}>
-                            {pending ? "Revoking…" : "Confirm revocation"}
+                            {pending
+                              ? t("revocations.dialogs.revoke.confirming")
+                              : t("revocations.dialogs.revoke.confirm")}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
@@ -382,7 +390,9 @@ function Revocations() {
               {filteredActive.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="p-6 text-center text-sm text-muted-foreground">
-                    {activeEarnerQ || activeTemplate !== "all" ? "No matching credentials." : "No active credentials."}
+                    {activeEarnerQ || activeTemplate !== "all"
+                      ? t("revocations.empty.noMatchingActive")
+                      : t("revocations.empty.noActive")}
                   </TableCell>
                 </TableRow>
               )}

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowRight, Search, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -44,6 +45,7 @@ function nextLabel(status: RequestStatus): string | null {
 }
 
 function Queue() {
+  const { t } = useTranslation("issuer");
   const {
     activeUser,
     applications,
@@ -123,24 +125,26 @@ function Queue() {
       grade: grade.trim() || undefined,
       expiryDate: expiry ? new Date(expiry).toISOString() : undefined,
     });
-    if (u) toast.success("Sent to earner for acceptance");
+    if (u) toast.success(t("requests.toasts.sentToEarner"));
     setIssueDialog(null);
   };
 
   return (
     <PageShell
-      title="Issuance Requests"
-      description="Move each application through the lifecycle. The final step issues and signs the credential."
+      title={t("requests.title")}
+      description={t("requests.description")}
     >
       <Card>
         <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_220px_220px_auto] md:items-end">
           <div className="grid gap-1.5">
-            <Label htmlFor="earner-search" className="text-xs">Earner name</Label>
+            <Label htmlFor="earner-search" className="text-xs">
+              {t("requests.filters.earnerLabel")}
+            </Label>
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 id="earner-search"
-                placeholder="Search earner…"
+                placeholder={t("requests.filters.earnerPlaceholder")}
                 className="pl-8"
                 value={earnerQuery}
                 onChange={(e) => setEarnerQuery(e.target.value)}
@@ -148,11 +152,13 @@ function Queue() {
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label className="text-xs">Micro-credential</Label>
+            <Label className="text-xs">{t("requests.filters.templateLabel")}</Label>
             <Select value={templateFilter} onValueChange={setTemplateFilter}>
-              <SelectTrigger><SelectValue placeholder="All templates" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder={t("requests.filters.allTemplates")} />
+              </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All templates</SelectItem>
+                <SelectItem value="all">{t("requests.filters.allTemplates")}</SelectItem>
                 {templateOptions.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
                 ))}
@@ -160,11 +166,13 @@ function Queue() {
             </Select>
           </div>
           <div className="grid gap-1.5">
-            <Label className="text-xs">Status</Label>
+            <Label className="text-xs">{t("requests.filters.statusLabel")}</Label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder={t("requests.filters.allStatuses")} />
+              </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="all">{t("requests.filters.allStatuses")}</SelectItem>
                 {statusOptions.map((s) => (
                   <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>
                 ))}
@@ -172,21 +180,25 @@ function Queue() {
             </Select>
           </div>
           {filtersActive && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>Clear filters</Button>
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              {t("requests.filters.clearFilters")}
+            </Button>
           )}
         </CardContent>
       </Card>
 
       {filtersActive && (
         <p className="text-xs text-muted-foreground">
-          Showing {queue.length} of {baseQueue.length} requests
+          {t("requests.filters.showing", { count: queue.length, total: baseQueue.length })}
         </p>
       )}
 
       {queue.length === 0 && (
         <Card>
           <CardContent className="p-8 text-sm text-muted-foreground">
-            {filtersActive ? "No requests match the current filters." : "No active applications."}
+            {filtersActive
+              ? t("requests.empty.noMatch")
+              : t("requests.empty.noActive")}
           </CardContent>
         </Card>
       )}
@@ -205,13 +217,13 @@ function Queue() {
                     <StatusBadge status={a.status} />
                   </div>
                   <div className="mt-1 text-sm text-muted-foreground">
-                    Earner:{" "}
+                    {t("requests.card.earner")}{" "}
                     {earnerToken ? (
                       <Link
                         to="/profile/$token"
                         params={{ token: earnerToken }}
                         className="text-foreground underline-offset-4 hover:underline"
-                        title="View earner's public profile"
+                        title={t("requests.card.viewProfile")}
                       >
                         {a.earnerName}
                       </Link>
@@ -230,16 +242,16 @@ function Queue() {
                             return;
                           }
                           const u = advanceApplicationStatus(a.id);
-                          if (u) toast.success(`Moved to ${next}`);
+                          if (u) toast.success(t("requests.toasts.movedTo", { next }));
                         }}
                       >
                         {isFinal ? (
                           <>
-                            <Send className="mr-2 h-4 w-4" />Issue & sign
+                            <Send className="mr-2 h-4 w-4" />{t("requests.actions.issueSign")}
                           </>
                         ) : (
                           <>
-                            <ArrowRight className="mr-2 h-4 w-4" />Advance to {next}
+                            <ArrowRight className="mr-2 h-4 w-4" />{t("requests.actions.advanceTo", { next })}
                           </>
                         )}
                       </Button>
@@ -249,10 +261,10 @@ function Queue() {
                       variant="outline"
                       onClick={() => {
                         rejectApplication(a.id, "Rejected by issuer");
-                        toast.info("Application rejected");
+                        toast.info(t("requests.toasts.rejected"));
                       }}
                     >
-                      <XCircle className="mr-2 h-4 w-4" />Reject
+                      <XCircle className="mr-2 h-4 w-4" />{t("requests.actions.reject")}
                     </Button>
                   </div>
                 </div>
@@ -268,28 +280,35 @@ function Queue() {
       <Dialog open={!!issueDialog} onOpenChange={(o) => !o && setIssueDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Issue & sign credential</DialogTitle>
+            <DialogTitle>{t("requests.dialogs.issue.title")}</DialogTitle>
             <DialogDescription>
               {issueDialog ? (
                 <>
-                  Finalize <span className="font-medium text-foreground">{issueDialog.templateTitle}</span>{" "}
-                  for <span className="font-medium text-foreground">{issueDialog.earnerName}</span>.
+                  {t("requests.dialogs.issue.description", {
+                    templateTitle: "",
+                    earnerName: "",
+                  }).split("")[0]}
+                  {/* Render with embedded spans */}
+                  {"Finalize "}
+                  <span className="font-medium text-foreground">{issueDialog.templateTitle}</span>{" "}
+                  {"for "}
+                  <span className="font-medium text-foreground">{issueDialog.earnerName}</span>.
                 </>
               ) : null}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="grade">Grade (optional)</Label>
+              <Label htmlFor="grade">{t("requests.dialogs.issue.gradeLabel")}</Label>
               <Input
                 id="grade"
-                placeholder="e.g. A, Pass, 9/10"
+                placeholder={t("requests.dialogs.issue.gradePlaceholder")}
                 value={grade}
                 onChange={(e) => setGrade(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="expiry">Expiry date (optional)</Label>
+              <Label htmlFor="expiry">{t("requests.dialogs.issue.expiryLabel")}</Label>
               <Input
                 id="expiry"
                 type="date"
@@ -298,17 +317,17 @@ function Queue() {
               />
               {issueDialog?.defaultExpiry && (
                 <p className="text-xs text-muted-foreground">
-                  Template default: {issueDialog.defaultExpiry}
+                  {t("requests.dialogs.issue.templateDefault", { date: issueDialog.defaultExpiry })}
                 </p>
               )}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIssueDialog(null)}>
-              Cancel
+              {t("requests.dialogs.issue.cancel")}
             </Button>
             <Button onClick={confirmIssue}>
-              <Send className="mr-2 h-4 w-4" />Issue & sign
+              <Send className="mr-2 h-4 w-4" />{t("requests.dialogs.issue.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

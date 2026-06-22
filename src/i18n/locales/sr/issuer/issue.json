@@ -1,1 +1,78 @@
-{}
+{
+  "issue": {
+    "single": {
+      "headTitle": "Direktno izdavanje — MicroCred",
+      "title": "Direktno izdavanje",
+      "description": "Izdajte mikrokredencijale direktno jednom ili više nosilaca. Većina metapodataka dolazi iz šablona; polja po primaocu unose se ispod.",
+      "fields": {
+        "microCredential": "Mikrokredencijal",
+        "microCredentialPlaceholder": "Izaberite mikrokredencijal",
+        "issueDate": "Datum izdavanja",
+        "grade": "Ocena",
+        "gradeOptional": "(opcionalno)",
+        "gradePlaceholder": "npr. Položio",
+        "gradeHint": "Primenjuje se na sve primaoce osim ako nije zamenjen ispod.",
+        "recipients": "Primaoci ({{count}} izabrano)",
+        "searchPlaceholder": "Pretraži nosioce po imenu ili e-pošti",
+        "searchEmpty": "Nijedan nosilac nije pronađen",
+        "hiddenHint_one": "{{count}} nosilac već ima ovaj kredencijal (nije opozvan) i skriven je sa liste.",
+        "hiddenHint_other": "{{count}} nosioca već ima ovaj kredencijal (nije opozvan) i skriveni su sa liste.",
+        "perRecipient": "Detalji po primaocu",
+        "perRecipientHint": "Ocena i datum isteka su opcionalni i postavljaju se po polazniku.",
+        "colRecipient": "Primalac",
+        "colGrade": "Ocena",
+        "colExpiry": "Datum isteka"
+      },
+      "buttons": {
+        "issue": "Izdaj kredencijale",
+        "issuing": "Izdavanje…"
+      },
+      "toasts": {
+        "validationError": "Izaberite mikrokredencijal i bar jednog nosioca",
+        "issuanceFailed": "Izdavanje nije uspelo"
+      }
+    },
+    "bulk": {
+      "headTitle": "Grupno izdavanje — MicroCred",
+      "title": "Grupno izdavanje",
+      "description": "Nalepite CSV ili otpremite .csv datoteku za grupno izdavanje kredencijala.",
+      "fields": {
+        "microCredential": "Mikrokredencijal",
+        "microCredentialPlaceholder": "Izaberite mikrokredencijal",
+        "csvInput": "CSV unos",
+        "csvHint": "Zaglavlja: email, grade, expiryDate. Nalepite CSV ili otpremite .csv datoteku (UTF-8).",
+        "loaded": "Učitano:"
+      },
+      "buttons": {
+        "upload": "Otpremi CSV",
+        "process": "Obradi i izdaj",
+        "processing": "Obrada…"
+      },
+      "preview": {
+        "parsed_one": "{{count}} primalac je parsiran",
+        "parsed_other": "{{count}} primalac(a) je parsirano",
+        "unmatched_one": "{{count}} e-adresa ne odgovara postojećem nalogu nosioca i biće preskočena.",
+        "unmatched_other": "{{count}} e-adresa ne odgovara postojećim nalozima nosioca i biće preskočene.",
+        "duplicates_one": "{{count}} nosilac već ima aktivan (neopozvan) kredencijal za ovaj mikrokredencijal i biće preskočen.",
+        "duplicates_other": "{{count}} nosioca već ima aktivan (neopozvan) kredencijal za ovaj mikrokredencijal i biće preskočeni.",
+        "staffConflicts_one": "{{count}} e-adresa pripada nalogu zaposlenog ili administratora izdavaoca i biće preskočena.",
+        "staffConflicts_other": "{{count}} e-adresa pripada nalozima zaposlenih ili administratora izdavaoca i biće preskočene."
+      },
+      "toasts": {
+        "noTemplate": "Izaberite mikrokredencijal",
+        "emptyCSV": "CSV je prazan ili neispravan",
+        "noEligible": "Nijedan red CSV-a nije podoban za izdavanje",
+        "issuanceFailed": "Izdavanje nije uspelo",
+        "invalidFile": "Molimo otpremite .csv datoteku",
+        "fileTooLarge": "Datoteka je prevelika (maks. 1 MB)",
+        "fileLoadFailed": "Učitavanje datoteke nije uspelo",
+        "fileLoaded": "Učitano {{name}}"
+      },
+      "errors": {
+        "noAccount": "Nije pronađen nalog nosioca za ovu e-adresu",
+        "alreadyActive": "Nosilac već ima aktivan (neopozvan) kredencijal za ovaj mikrokredencijal",
+        "staffConflict": "Ovaj nalog pripada zaposlenom ili administratoru izdavaoca i ne može primiti kredencijale"
+      }
+    }
+  }
+}

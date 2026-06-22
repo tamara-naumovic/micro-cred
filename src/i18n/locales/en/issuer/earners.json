@@ -1,1 +1,36 @@
-{}
+{
+  "earners": {
+    "headTitle": "Earners — MicroCred",
+    "title": "Earners",
+    "description": "Students linked to your institution.",
+    "noOrg": "Your account is not linked to an institution.",
+    "tabs": {
+      "existing": "Existing user",
+      "new": "Create new account",
+      "bulk": "Bulk add"
+    },
+    "existingForm": {
+      "label": "Email of existing user",
+      "placeholder": "student@example.com",
+      "hint": "The person must already have an earner account on the platform."
+    },
+    "addButton": "Add earner",
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "empty": "No earners linked yet."
+    },
+    "pagination": {
+      "page": "Page {{page}} of {{pageCount}} · {{total}} total",
+      "prev": "Prev",
+      "next": "Next"
+    },
+    "toasts": {
+      "linked": "Earner linked",
+      "invited": "Invitation sent",
+      "added": "Earner added",
+      "unlinked": "Unlinked",
+      "failed": "Failed"
+    }
+  }
+}

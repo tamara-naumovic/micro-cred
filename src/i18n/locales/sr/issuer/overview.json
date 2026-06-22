@@ -1,1 +1,141 @@
-{}
+{
+  "overview": {
+    "headTitle": "Kontrolna tabla institucije — MicroCred",
+    "title": "Kontrolna tabla institucije",
+    "descriptionAdmin": "{{orgName}} — operacije, upravljanje i blockchain status vaše institucije.",
+    "descriptionStaff": "{{orgName}} — dodeljeni mikrokredencijali i aktivnost izdavanja.",
+    "metrics": {
+      "publishedTemplates": "Objavljeni šabloni MK",
+      "publishedTemplatesHint": "{{count}} aktivnih",
+      "totalIssued": "Ukupno izdatih kredencijala",
+      "totalIssuedHint": "{{count}} ovog meseca",
+      "activeLearners": "Aktivni nosioci",
+      "activeLearnersHint": "Sa bar jednim aktivnim kredencijalom",
+      "activeIssuers": "Aktivni izdavaoci",
+      "activeIssuersHint": "Administratori i zaposleni sa pristupom",
+      "pendingActions": "Akcije na čekanju",
+      "pendingActionsHint": "Kliknite da pregledate",
+      "blockchainConfirmed": "Potvrđeno na blockchain-u"
+    },
+    "lifecycle": {
+      "title": "Životni ciklus kredencijala",
+      "description": "Kliknite na status da filtrirate",
+      "empty": "Nema kredencijala za prikaz.",
+      "active": "Aktivni",
+      "pendingAcceptance": "Čeka prihvatanje",
+      "expired": "Istekli",
+      "revoked": "Opozvani",
+      "superseded": "Zamenjeni"
+    },
+    "pendingActions": {
+      "title": "Akcije koje zahtevaju pažnju",
+      "empty": "Nema akcija koje zahtevaju vašu pažnju.",
+      "items": {
+        "sig": "Kredencijali koji čekaju potpis",
+        "req": "Otvoreni zahtevi nosioca",
+        "acc": "Čeka prihvatanje od strane nosioca",
+        "q": "Blockchain operacije u redu čekanja",
+        "f": "Neuspele blockchain operacije"
+      },
+      "itemCount_one": "{{count}} stavka",
+      "itemCount_other": "{{count}} stavki"
+    },
+    "blockchainStatus": {
+      "title": "Bloxberg status",
+      "description": "Blockchain integracija za vašu instituciju",
+      "network": "Mreža",
+      "chainId": "Chain ID",
+      "rpcConnection": "RPC veza",
+      "walletBalance": "Stanje novčanika",
+      "templateRegistry": "Registar šablona",
+      "credentialRegistry": "Registar kredencijala",
+      "issuerWallet": "Novčanik izdavaoca",
+      "lastConfirmed": "Poslednja potvrda",
+      "templateContract": "Ugovor šablona",
+      "credentialContract": "Ugovor kredencijala",
+      "badgeOperational": "Operativno",
+      "badgeChecking": "Proveravam\u2026",
+      "badgeNotConfigured": "Nije konfigurisano",
+      "badgeRpcUnreachable": "RPC nedostupan",
+      "badgeNoBalance": "Nema sredstava",
+      "badgeMissingRole": "Nedostaje uloga",
+      "badgeConnected": "Povezano",
+      "badgeNoIssuerRole": "Nema ISSUER_ROLE",
+      "badgeUnknown": "Nepoznato",
+      "queued": "U redu: {{count}}",
+      "failed": "Neuspelo: {{count}}",
+      "confirmed": "Potvrđeno: {{count}}",
+      "warnInsufficientBalance": "Stanje novčanika izdavaoca je 0 — dopunite ga na Bloxberg faucet-u",
+      "warnFailedOps": "Neuspele operacije zahtevaju ponovni pokušaj",
+      "openQueue": "Otvori red za blockchain"
+    },
+    "topTemplates": {
+      "title": "Najkorišćeniji mikrokredencijali",
+      "description": "Najčešće izdavani objavljeni šabloni",
+      "empty": "Nema dostupnih objavljenih šablona.",
+      "colTemplate": "Mikrokredencijal",
+      "colVersion": "Verzija",
+      "colIssued": "Izdato",
+      "colLearners": "Nosioci",
+      "colOnChain": "Na lancu",
+      "colLastIssued": "Poslednje izdato"
+    },
+    "issuerActivity": {
+      "title": "Aktivnost izdavalaca",
+      "description": "Ovlašćeni izdavaoci i zaposleni u vašoj instituciji",
+      "empty": "Nije dodat nijedan izdavalac ni zaposleni.",
+      "colIssuer": "Izdavalac",
+      "colRole": "Uloga",
+      "colTemplates": "Šabloni",
+      "colIssued": "Izdato",
+      "colPending": "Na čekanju",
+      "colLastActivity": "Poslednja aktivnost",
+      "roleAdmin": "Administrator",
+      "roleStaff": "Zaposleni",
+      "manageStaff": "Upravljaj zaposlenima",
+      "managedAll": "Svi"
+    },
+    "learnerOverview": {
+      "title": "Pregled nosioca",
+      "description": "Zbirni institucionalni prikaz",
+      "uniqueLearners": "Jedinstveni nosioci",
+      "newThisMonth": "Novi ovog meseca",
+      "avgPerLearner": "Prosek / nosiocu",
+      "multiCredential": "Više kredencijala",
+      "awaitingAcceptance": "Čeka prihvatanje",
+      "chartLabel": "Kredencijali po nosiocu"
+    },
+    "templateStatus": {
+      "title": "Status šablona MK",
+      "description": "Status životnog ciklusa i blockchain-a",
+      "sectionLifecycle": "Životni ciklus",
+      "sectionBlockchain": "Blockchain",
+      "draft": "Nacrt",
+      "published": "Objavljeni",
+      "archived": "Arhivirani",
+      "notAnchored": "Nije usidren",
+      "pending": "Na čekanju",
+      "submitted": "Podnet",
+      "confirmedOnBloxberg": "Potvrđeno na Bloxberg-u",
+      "failedAnchoring": "Neuspelo usidravanje",
+      "anchoringDisabled": "Usidravanje onemogućeno"
+    },
+    "recentActivity": {
+      "title": "Nedavna institucionalna aktivnost",
+      "empty": "Nema nedavne aktivnosti za vašu instituciju.",
+      "viewAll": "Prikaži svu aktivnost"
+    },
+    "filters": {
+      "allMicroCredentials": "Svi mikrokredencijali"
+    },
+    "buttons": {
+      "directIssue": "Direktno izdavanje",
+      "review": "Pregled",
+      "reviewRequests": "Pregledaj zahteve",
+      "view": "Prikaži",
+      "openQueue": "Otvori red",
+      "retry": "Ponovi"
+    },
+    "notConfigured": "Nije konfigurisano"
+  }
+}

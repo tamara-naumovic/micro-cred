@@ -1,1 +1,64 @@
-{}
+{
+  "anchoringQueue": {
+    "headTitle": "Blockchain Anchoring Queue — MicroCred",
+    "title": "Blockchain Anchoring Queue",
+    "description": "Independent of credential issuance. Templates and credentials are fully valid once published or issued — anchoring only adds an external integrity proof on Bloxberg.",
+    "actions": {
+      "processQueue": "Process queue now",
+      "processing": "Processing…",
+      "retry": "Retry",
+      "repair": "Repair",
+      "repairTitle": "Recompute missing chain fields and re-queue",
+      "cancel": "Cancel",
+      "viewTransaction": "View transaction"
+    },
+    "stats": {
+      "queued": "Queued",
+      "running": "Running",
+      "failed": "Failed",
+      "confirmed": "Confirmed"
+    },
+    "card": {
+      "title": "Jobs",
+      "description": "Per-job retry honours the {{max}}-attempt cap and does not duplicate confirmed anchors."
+    },
+    "filters": {
+      "all": "All",
+      "templates": "Templates",
+      "credentials": "Credentials",
+      "allStates": "All states",
+      "queued": "Queued",
+      "failed": "Failed",
+      "done": "Done"
+    },
+    "table": {
+      "type": "Type",
+      "title": "Title",
+      "versionLearner": "Version / Learner",
+      "internalStatus": "Internal status",
+      "blockchain": "Blockchain",
+      "attempts": "Attempts",
+      "lastAttempt": "Last attempt",
+      "actions": "Actions"
+    },
+    "types": {
+      "template": "Template",
+      "credential": "Credential"
+    },
+    "empty": {
+      "loading": "Loading jobs…",
+      "error": "Failed to load jobs.",
+      "noMatch": "No jobs match the current filters."
+    },
+    "toasts": {
+      "retrySubmitted": "Anchor retry submitted",
+      "retryFailed": "Retry failed",
+      "cancelled": "Job cancelled",
+      "repaired": "Credential repaired and anchored",
+      "repairedFields": "Credential fields repaired. Anchor will retry shortly.",
+      "repairFailed": "Repair failed",
+      "processed": "Processed {{count}} job",
+      "processed_plural": "Processed {{count}} jobs"
+    }
+  }
+}
