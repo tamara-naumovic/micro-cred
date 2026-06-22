@@ -48,6 +48,7 @@ import { Route as IssuerMicrocredentialTemplatesIdRouteImport } from './routes/i
 import { Route as IssuerIssueBulkRouteImport } from './routes/issuer.issue.bulk'
 import { Route as EarnerMicrocredentialTemplatesIdRouteImport } from './routes/earner.microcredential-templates.$id'
 import { Route as EarnerCredentialsIdRouteImport } from './routes/earner.credentials.$id'
+import { Route as IssuersIdMicrocredentialTemplatesTemplateIdRouteImport } from './routes/issuers.$id.microcredential-templates.$templateId'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
 
 const SetPasswordRoute = SetPasswordRouteImport.update({
@@ -249,6 +250,12 @@ const EarnerCredentialsIdRoute = EarnerCredentialsIdRouteImport.update({
   path: '/earner/credentials/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IssuersIdMicrocredentialTemplatesTemplateIdRoute =
+  IssuersIdMicrocredentialTemplatesTemplateIdRouteImport.update({
+    id: '/microcredential-templates/$templateId',
+    path: '/microcredential-templates/$templateId',
+    getParentRoute: () => IssuersIdRoute,
+  } as any)
 const ApiPublicHooksExpiryRemindersRoute =
   ApiPublicHooksExpiryRemindersRouteImport.update({
     id: '/api/public/hooks/expiry-reminders',
@@ -281,7 +288,7 @@ export interface FileRoutesByFullPath {
   '/issuer/revocations': typeof IssuerRevocationsRoute
   '/issuer/settings': typeof IssuerSettingsRoute
   '/issuer/staff': typeof IssuerStaffRoute
-  '/issuers/$id': typeof IssuersIdRoute
+  '/issuers/$id': typeof IssuersIdRouteWithChildren
   '/profile/$token': typeof ProfileTokenRoute
   '/verify/$id': typeof VerifyIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -297,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/issuer/issue/': typeof IssuerIssueIndexRoute
   '/issuer/microcredential-templates/': typeof IssuerMicrocredentialTemplatesIndexRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
+  '/issuers/$id/microcredential-templates/$templateId': typeof IssuersIdMicrocredentialTemplatesTemplateIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -323,7 +331,7 @@ export interface FileRoutesByTo {
   '/issuer/revocations': typeof IssuerRevocationsRoute
   '/issuer/settings': typeof IssuerSettingsRoute
   '/issuer/staff': typeof IssuerStaffRoute
-  '/issuers/$id': typeof IssuersIdRoute
+  '/issuers/$id': typeof IssuersIdRouteWithChildren
   '/profile/$token': typeof ProfileTokenRoute
   '/verify/$id': typeof VerifyIdRoute
   '/admin': typeof AdminIndexRoute
@@ -339,6 +347,7 @@ export interface FileRoutesByTo {
   '/issuer/issue': typeof IssuerIssueIndexRoute
   '/issuer/microcredential-templates': typeof IssuerMicrocredentialTemplatesIndexRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
+  '/issuers/$id/microcredential-templates/$templateId': typeof IssuersIdMicrocredentialTemplatesTemplateIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -366,7 +375,7 @@ export interface FileRoutesById {
   '/issuer/revocations': typeof IssuerRevocationsRoute
   '/issuer/settings': typeof IssuerSettingsRoute
   '/issuer/staff': typeof IssuerStaffRoute
-  '/issuers/$id': typeof IssuersIdRoute
+  '/issuers/$id': typeof IssuersIdRouteWithChildren
   '/profile/$token': typeof ProfileTokenRoute
   '/verify/$id': typeof VerifyIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -382,6 +391,7 @@ export interface FileRoutesById {
   '/issuer/issue/': typeof IssuerIssueIndexRoute
   '/issuer/microcredential-templates/': typeof IssuerMicrocredentialTemplatesIndexRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
+  '/issuers/$id/microcredential-templates/$templateId': typeof IssuersIdMicrocredentialTemplatesTemplateIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -426,6 +436,7 @@ export interface FileRouteTypes {
     | '/issuer/issue/'
     | '/issuer/microcredential-templates/'
     | '/api/public/hooks/expiry-reminders'
+    | '/issuers/$id/microcredential-templates/$templateId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/issuer/issue'
     | '/issuer/microcredential-templates'
     | '/api/public/hooks/expiry-reminders'
+    | '/issuers/$id/microcredential-templates/$templateId'
   id:
     | '__root__'
     | '/'
@@ -510,6 +522,7 @@ export interface FileRouteTypes {
     | '/issuer/issue/'
     | '/issuer/microcredential-templates/'
     | '/api/public/hooks/expiry-reminders'
+    | '/issuers/$id/microcredential-templates/$templateId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -537,7 +550,7 @@ export interface RootRouteChildren {
   IssuerRevocationsRoute: typeof IssuerRevocationsRoute
   IssuerSettingsRoute: typeof IssuerSettingsRoute
   IssuerStaffRoute: typeof IssuerStaffRoute
-  IssuersIdRoute: typeof IssuersIdRoute
+  IssuersIdRoute: typeof IssuersIdRouteWithChildren
   ProfileTokenRoute: typeof ProfileTokenRoute
   VerifyIdRoute: typeof VerifyIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -830,6 +843,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EarnerCredentialsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/issuers/$id/microcredential-templates/$templateId': {
+      id: '/issuers/$id/microcredential-templates/$templateId'
+      path: '/microcredential-templates/$templateId'
+      fullPath: '/issuers/$id/microcredential-templates/$templateId'
+      preLoaderRoute: typeof IssuersIdMicrocredentialTemplatesTemplateIdRouteImport
+      parentRoute: typeof IssuersIdRoute
+    }
     '/api/public/hooks/expiry-reminders': {
       id: '/api/public/hooks/expiry-reminders'
       path: '/api/public/hooks/expiry-reminders'
@@ -839,6 +859,19 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface IssuersIdRouteChildren {
+  IssuersIdMicrocredentialTemplatesTemplateIdRoute: typeof IssuersIdMicrocredentialTemplatesTemplateIdRoute
+}
+
+const IssuersIdRouteChildren: IssuersIdRouteChildren = {
+  IssuersIdMicrocredentialTemplatesTemplateIdRoute:
+    IssuersIdMicrocredentialTemplatesTemplateIdRoute,
+}
+
+const IssuersIdRouteWithChildren = IssuersIdRoute._addFileChildren(
+  IssuersIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -865,7 +898,7 @@ const rootRouteChildren: RootRouteChildren = {
   IssuerRevocationsRoute: IssuerRevocationsRoute,
   IssuerSettingsRoute: IssuerSettingsRoute,
   IssuerStaffRoute: IssuerStaffRoute,
-  IssuersIdRoute: IssuersIdRoute,
+  IssuersIdRoute: IssuersIdRouteWithChildren,
   ProfileTokenRoute: ProfileTokenRoute,
   VerifyIdRoute: VerifyIdRoute,
   AdminIndexRoute: AdminIndexRoute,
