@@ -21,7 +21,7 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
-import { resetIssuerTour, startIssuerTour } from "@/lib/tour/issuerTour";
+import { resetIssuerTour, startIssuerTour, resetIssuerCredentialsTour } from "@/lib/tour/issuerTour";
 
 export const Route = createFileRoute("/issuer/manual")({
   head: () => ({ meta: [{ title: "Manual — MicroCred" }] }),
@@ -115,7 +115,7 @@ const SECTIONS: Section[] = [
     to: "/issuer/credentials",
     linkLabel: "Open Issued Credentials",
     body:
-      'All credentials your institution has issued. Use search and filters (status, template, date range, blockchain status) to narrow the list — the search box has an "x" to reset it. Open a credential to view evidence and blockchain anchoring details.',
+      'All credentials your institution has issued. Use search (by earner, title or ID) and filters (template, lifecycle status) to narrow the list — the search box has an "x" to reset it. The first time you open this page a short guided tour walks you through the available actions. Per-row actions depend on the lifecycle: "Edit & resend" for rejected credentials (update grade and/or expiry, then resend to the earner for acceptance); "Accept rejection" to permanently delete a rejected credential; "Renew expiry" for issued or expired credentials with an expiry date (walks through review → evidence collected → verified, then issues the new expiry on chain without requiring earner acceptance).',
   },
   {
     icon: XOctagon,
@@ -176,6 +176,7 @@ function Manual() {
           onClick={() => {
             const sub = activeUser.subRole ?? "admin";
             resetIssuerTour(activeUser.id);
+            resetIssuerCredentialsTour(activeUser.id);
             startIssuerTour(activeUser.id, sub, { force: true });
           }}
         >

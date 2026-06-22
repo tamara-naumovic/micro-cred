@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { startIssuerCredentialsTour } from "@/lib/tour/issuerTour";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, CalendarClock, Check, Pencil, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -68,6 +69,12 @@ function List() {
   const resend = useServerFn(resendCredential);
   const discard = useServerFn(discardRejectedCredential);
   const renew = useServerFn(renewCredential);
+
+  useEffect(() => {
+    if (!activeUser || activeUser.role !== "issuer") return;
+    const t = window.setTimeout(() => startIssuerCredentialsTour(activeUser.id), 400);
+    return () => window.clearTimeout(t);
+  }, [activeUser]);
 
   if (!activeUser) return null;
   const isStaff = activeUser.subRole === "staff";
@@ -189,7 +196,7 @@ function List() {
       title="Issued Credentials"
       description="All micro-credentials your organisation has issued."
       actions={
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2" data-tour="cred-filters">
           <div className="relative">
             <Input
               placeholder="Search…"
@@ -247,9 +254,9 @@ function List() {
                 <TableHead>Title</TableHead>
                 <TableHead>Issued</TableHead>
                 <TableHead>Expires</TableHead>
-                <TableHead>Lifecycle</TableHead>
-                <TableHead>Blockchain</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead data-tour="cred-col-lifecycle">Lifecycle</TableHead>
+                <TableHead data-tour="cred-col-blockchain">Blockchain</TableHead>
+                <TableHead data-tour="cred-col-actions">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
