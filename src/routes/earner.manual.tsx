@@ -57,7 +57,7 @@ const SECTIONS: Section[] = [
     to: "/earner/applications",
     linkLabel: "Open Applications",
     body:
-      "Pratite status aplikacija: Submitted → In review → Evidence collected → Verified → Issued. Ako je aplikacija odbijena (Rejected) možete je prihvatiti ili otvoriti „Edit & resend" da pošaljete ispravljenu verziju. Issuer može produžiti rok važenja postojećeg kredencijala.",
+      'Pratite status aplikacija: Submitted → In review → Evidence collected → Verified → Issued. Ako je aplikacija odbijena (Rejected) možete je prihvatiti ili otvoriti "Edit & resend" da pošaljete ispravljenu verziju. Issuer može produžiti rok važenja postojećeg kredencijala.',
   },
   {
     icon: FilePlus2,
