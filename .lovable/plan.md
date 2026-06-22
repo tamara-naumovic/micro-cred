@@ -1,29 +1,54 @@
-## Problem
+## Cilj
 
-Trenutni fajl `src/routes/issuers.$id.microcredential-templates.$templateId.tsx` TanStack Router registruje kao **dete route-a `/issuers/$id`**. Pošto `issuers.$id.tsx` nema `<Outlet />`, dete-route se matchuje ali ništa ne prikazuje — otud "prazna stranica" kada se klikne kartica template-a.
+Na `/issuer/credentials` prikazati datum isteka i omogućiti produženje (renewal) već izdatih kredencijala kroz iste statusne korake kao izdavanje, ali bez koraka prihvatanja od strane earner-a.
 
-Isti problem uzrokuje i flicker na `/issuers/$id`: parent sa decom se ponaša kao layout pa router pravi privremeni mismatch koji završi u 404.
+## 1. Kolona "Expires" u tabeli
 
-## Fix
+Dodati novu kolonu nakon "Issued":
+- ako `expiresAt` postoji → `new Date(c.expiresAt).toLocaleDateString()` + suptilan badge "Expired" ako je u prošlosti
+- ako ne postoji → `Does not expire` (text-muted-foreground)
 
-Iskoristiti TanStack-ovu konvenciju **trailing underscore on parent segment** da bi se child route "izvukao" iz parent layout-a — URL ostaje isti, ali ruta postaje samostalna (sibling, ne child).
+## 2. Akcija "Renew" u koloni Actions
 
-1. **Preimenovati fajl** (`mv`):
-   - iz: `src/routes/issuers.$id.microcredential-templates.$templateId.tsx`
-   - u:  `src/routes/issuers.$id_.microcredential-templates.$templateId.tsx`
+Za kredencijale sa `lifecycle === "issued"` i postojećim `expiresAt`, dodati dugme **Renew expiry** (ikona `CalendarClock`). Klik otvara `RenewDialog`.
 
-2. **Ažurirati `createFileRoute(...)`** u tom fajlu:
-   - iz: `createFileRoute("/issuers/$id/microcredential-templates/$templateId")`
-   - u:  `createFileRoute("/issuers/$id_/microcredential-templates/$templateId")`
+## 3. RenewDialog — workflow sa 4 statusa
 
-   URL koji korisnik vidi i dalje je `/issuers/<id>/microcredential-templates/<templateId>` — underscore se ne pojavljuje u URL-u, samo razdvaja route nesting.
+Dialog vodi izdavaoca kroz 4 koraka koji preslikavaju lifecycle iz `issuer.requests` (`LIFECYCLE_STAGES`), ali sa lokalnim state-om jer se renewal ne provlači kroz `applications`:
 
-3. **`src/routes/issuers.$id.tsx`** — `<Link to=...>` u `TemplateSection` ažurirati na novi route path:
-   - `to="/issuers/$id_/microcredential-templates/$templateId"` (params ostaju `{ id, templateId }`).
+```text
+1. in_review               [Advance to evidence collected]
+2. evidence_collected      [Advance to verified by provider]
+3. verified_by_provider    [Issue & sign  → otvara polje za novi expiry date]
+4. issued (renewed)        zatvara dialog
+```
 
-4. **`src/routeTree.gen.ts`** će biti automatski regenerisan; ne edituje se ručno.
+UI: `LifecycleTimeline`-style stepper na vrhu + glavno dugme za sledeći korak. Na poslednjem koraku prikazuje se `Input type="date"` (default = trenutni `expiresAt`) i dugme **Issue & sign**.
 
-## Out of scope
+Kredencijal ostaje u `lifecycle: "issued"` tokom celog procesa (status se ne menja u bazi do finalnog koraka) — koraci 1–3 su samo UI/timeline, bez writes u DB (osim opcionog audit eventa). Finalni korak poziva novu server funkciju.
 
-- Nema promena u logici prikaza template detalja, ni u `issuers.$id.tsx` izgledu.
-- Ne diramo earner/issuer route-ove.
+## 4. Server funkcija `renewCredential`
+
+Nova funkcija u `src/lib/chain/anchor.functions.ts`:
+- `createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])`
+- input: `{ credentialId, newExpiryDate }`
+- permission check: issuer_admin org-a, platform_admin, ili template assignee (isti pattern kao postojeći `resendCredential`)
+- update `credentials.expires_at = newExpiryDate`
+- ako je kredencijal bio `expired` → lifecycle nazad na `issued`
+- upiše audit_log event ("renewed credential expiry") i notifikaciju za earner-a ("Your credential expiry has been extended to …")
+- **bez** menjanja `credential_lifecycle` na `pending_earner_acceptance`, **bez** novog blockchain anchor poziva (kredencijal već postoji on-chain; produženje je off-chain metadata update)
+- vraća osvežen objekat
+
+Klijent zatim poziva `loadAll()` iz `useStore` da refresh-uje listu, plus `toast.success("Expiry extended")`.
+
+## 5. Tehnički detalji
+
+- Tipovi: `IssuedCredential.expiresAt` već postoji.
+- Filter za "Expired" lifecycle u dropdown-u ostaje nepromenjen.
+- Reuse `LIFECYCLE_STAGES` konstanti iz `@/lib/types` za stepper labele (samo `in_review`, `evidence_collected`, `verified_by_provider`, `issued`).
+- Dugme **Renew** se ne prikazuje ako `expiresAt` ne postoji (jer "does not expire" nema šta da produži). Ako želiš da se omogući i tada (da postavi prvi expiry), reci pa ću dodati.
+
+## Fajlovi
+
+- `src/routes/issuer.credentials.tsx` — kolona Expires, dugme Renew, nova `RenewDialog` komponenta
+- `src/lib/chain/anchor.functions.ts` — `renewCredential` server fn
