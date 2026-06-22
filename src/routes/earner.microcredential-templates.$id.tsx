@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -12,31 +13,12 @@ import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 
-const QA_LABEL: Record<string, string> = {
-  internal: "Internal",
-  external: "External",
-  internal_and_external: "Internal and external",
-  other: "Other",
-  not_specified: "Not specified",
-};
-const SUPERVISION_LABEL: Record<string, string> = {
-  unsupervised_no_id: "Unsupervised with no identity verification",
-  supervised_no_id: "Supervised with no identity verification",
-  supervised_online_with_id: "Supervised online with identity verification",
-  supervised_onsite_with_id: "Supervised onsite with identity verification",
-};
-const STACKABILITY_LABEL: Record<string, string> = {
-  stand_alone: "Stand-alone",
-  independent_integrated: "Independent micro-credential / integrated",
-  stackable: "Stackable towards another credential",
-};
-
-async function openQaDocument(path: string) {
+async function openQaDocument(path: string, failMsg: string) {
   const { data, error } = await supabase.storage
     .from("qa-documents")
     .createSignedUrl(path, 3600);
   if (error || !data?.signedUrl) {
-    toast.error(error?.message ?? "Could not open document");
+    toast.error(error?.message ?? failMsg);
     return;
   }
   window.open(data.signedUrl, "_blank");
@@ -54,8 +36,9 @@ export const Route = createFileRoute("/earner/microcredential-templates/$id")({
 function Detail() {
   const { id } = Route.useParams();
   const { activeUser, templates, earnerInstitutions } = useStore();
+  const { t } = useTranslation(["earner", "common"]);
   const navigate = useNavigate();
-  const tpl = templates.find((t) => t.id === id);
+  const tpl = templates.find((tt) => tt.id === id);
 
   const allowed = useMemo(() => {
     if (!activeUser || !tpl) return false;
@@ -70,9 +53,9 @@ function Detail() {
 
   if (!tpl) {
     return (
-      <PageShell title="Micro-credential not found">
+      <PageShell title={t("templateDetail.notFound")}>
         <Button variant="outline" onClick={() => navigate({ to: "/earner/apply" })}>
-          <ArrowLeft className="mr-2 h-4 w-4" />Back
+          <ArrowLeft className="mr-2 h-4 w-4" />{t("templateDetail.back")}
         </Button>
       </PageShell>
     );
@@ -93,36 +76,36 @@ function Detail() {
       description={tpl.description}
       actions={
         <Button variant="outline" asChild>
-          <Link to="/earner/apply"><ArrowLeft className="mr-2 h-4 w-4" />Back to apply</Link>
+          <Link to="/earner/apply"><ArrowLeft className="mr-2 h-4 w-4" />{t("templateDetail.backToApply")}</Link>
         </Button>
       }
     >
       <div className="mb-4 flex flex-wrap gap-2">
         <StatusBadge status={tpl.status} />
         <Badge variant="outline">v{tpl.version}</Badge>
-        <Badge variant="outline">{tpl.source === "formal" ? "Formal" : "Non-formal"}</Badge>
+        <Badge variant="outline">{tpl.source === "formal" ? t("source.formal", { ns: "common" }) : t("source.non_formal", { ns: "common" })}</Badge>
         <Badge variant="outline">{tpl.level}</Badge>
         {tpl.ects != null && <Badge variant="outline">{tpl.ects} ECTS</Badge>}
         <Badge variant="outline">{tpl.participation}</Badge>
       </div>
       <div className="grid gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-base">Specification</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("templateDetail.specification")}</CardTitle></CardHeader>
           <CardContent className="grid gap-4 text-sm">
-            <Field label="Learning outcomes">
+            <Field label={t("templateDetail.fields.outcomes")}>
               <ul className="list-disc space-y-1 pl-5">{tpl.outcomes.map((o) => <li key={o}>{o}</li>)}</ul>
             </Field>
-            <Field label="Skills">{tpl.skills.join(", ")}</Field>
-            <Field label="Assessment">{tpl.assessment}</Field>
-            <Field label="Quality assurance">
+            <Field label={t("templateDetail.fields.skills")}>{tpl.skills.join(", ")}</Field>
+            <Field label={t("templateDetail.fields.assessment")}>{tpl.assessment}</Field>
+            <Field label={t("templateDetail.fields.qualityAssurance")}>
               <div className="space-y-2">
-                <div>{QA_LABEL[tpl.qaType] ?? tpl.qualityAssurance}</div>
+                <div>{t(`templateDetail.qa.${tpl.qaType}`, { defaultValue: tpl.qualityAssurance })}</div>
                 {paths.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No documents uploaded.</p>
+                  <p className="text-xs text-muted-foreground">{t("templateDetail.noDocs")}</p>
                 ) : (
                   paths.map((p) => (
                     <div key={p}>
-                      <Button size="sm" variant="outline" onClick={() => openQaDocument(p)}>
+                      <Button size="sm" variant="outline" onClick={() => openQaDocument(p, t("templateDetail.couldNotOpen"))}>
                         <FileDown className="mr-2 h-4 w-4" />{p.split("/").pop()}
                       </Button>
                     </div>
@@ -130,19 +113,19 @@ function Detail() {
                 )}
               </div>
             </Field>
-            <Field label="Prerequisites">
-              {tpl.prerequisitesNone ? "No prerequisites" : (tpl.prerequisites || "—")}
+            <Field label={t("templateDetail.fields.prerequisites")}>
+              {tpl.prerequisitesNone ? t("templateDetail.noPrerequisites") : (tpl.prerequisites || "—")}
             </Field>
-            <Field label="Supervision and identity verification">
-              {tpl.supervisionType ? SUPERVISION_LABEL[tpl.supervisionType] : "—"}
+            <Field label={t("templateDetail.fields.supervision")}>
+              {tpl.supervisionType ? t(`templateDetail.supervisionLabel.${tpl.supervisionType}`, { defaultValue: "—" }) : "—"}
             </Field>
-            <Field label="Integration / Stackability">
-              {tpl.stackabilityType ? STACKABILITY_LABEL[tpl.stackabilityType] : "—"}
+            <Field label={t("templateDetail.fields.stackability")}>
+              {tpl.stackabilityType ? t(`templateDetail.stackabilityLabel.${tpl.stackabilityType}`, { defaultValue: "—" }) : "—"}
             </Field>
-            <Field label="Expiry">
+            <Field label={t("templateDetail.fields.expiry")}>
               {tpl.expiryMode === "fixed_date" && tpl.expiryDate
-                ? `Expires on ${new Date(tpl.expiryDate).toLocaleDateString()}`
-                : "Does not expire"}
+                ? t("templateDetail.expiresOn", { date: new Date(tpl.expiryDate).toLocaleDateString() })
+                : t("templateDetail.doesNotExpire")}
             </Field>
           </CardContent>
         </Card>

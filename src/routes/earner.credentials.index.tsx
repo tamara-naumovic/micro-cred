@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Check, X, Search } from "lucide-react";
@@ -43,14 +44,7 @@ export const Route = createFileRoute("/earner/credentials/")({
 
 type TabKey = "pending" | "all" | "active" | "rejected" | "expired" | "revoked";
 
-const TABS: { value: TabKey; label: string }[] = [
-  { value: "pending", label: "Pending acceptance" },
-  { value: "all", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "rejected", label: "Rejected" },
-  { value: "expired", label: "Expired" },
-  { value: "revoked", label: "Revoked" },
-];
+const TAB_KEYS: TabKey[] = ["pending", "all", "active", "rejected", "expired", "revoked"];
 
 function matches(c: IssuedCredential, tab: TabKey): boolean {
   const lc = c.lifecycle ?? "issued";
@@ -65,6 +59,7 @@ function matches(c: IssuedCredential, tab: TabKey): boolean {
 
 function List() {
   const { activeUser, credentials, refresh } = useStore();
+  const { t } = useTranslation(["earner", "common"]);
   const [src, setSrc] = useState<"all" | "formal" | "non_formal">("all");
   const [searchQ, setSearchQ] = useState("");
   const [issuerFilter, setIssuerFilter] = useState<string>("all");
@@ -97,15 +92,15 @@ function List() {
     try {
       const res = await accept({ data: { credentialId: c.id } });
       if ((res as any)?.chainPending) {
-        toast.success("Credential accepted", {
-          description: "Blockchain confirmation is pending — it will appear once anchored.",
+        toast.success(t("credentials.toasts.accepted"), {
+          description: t("credentials.toasts.acceptedPending"),
         });
       } else {
-        toast.success("Credential accepted");
+        toast.success(t("credentials.toasts.accepted"));
       }
       await refresh();
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not accept");
+      toast.error(e?.message ?? t("credentials.toasts.couldNotAccept"));
     } finally {
       setBusy(false);
     }
@@ -114,34 +109,34 @@ function List() {
   const onConfirmReject = async () => {
     if (!rejectTarget) return;
     if (!rejectReason.trim()) {
-      toast.error("Please provide a reason");
+      toast.error(t("credentials.rejectDialog.reasonRequired"));
       return;
     }
     setBusy(true);
     try {
       await reject({ data: { credentialId: rejectTarget.id, reason: rejectReason.trim() } });
-      toast.success("Credential rejected");
+      toast.success(t("credentials.toasts.rejected"));
       setRejectTarget(null);
       setRejectReason("");
       await refresh();
     } catch (e: any) {
-      toast.error(e?.message ?? "Could not reject");
+      toast.error(e?.message ?? t("credentials.toasts.couldNotReject"));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <PageShell title="My credentials" description="Review and accept new credentials, then manage your wallet.">
+    <PageShell title={t("credentials.title")} description={t("credentials.description")}>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-xs uppercase tracking-wider text-muted-foreground">Source:</span>
+        <span className="text-xs uppercase tracking-wider text-muted-foreground">{t("credentials.sourceLabel")}</span>
         {(["all", "formal", "non_formal"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setSrc(s)}
             className={`rounded-full border px-3 py-1 text-xs ${src === s ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
           >
-            {s === "all" ? "All" : s === "formal" ? "Formal" : "Non-formal"}
+            {t(`source.${s}`, { ns: "common" })}
           </button>
         ))}
       </div>
@@ -152,16 +147,16 @@ function List() {
           <Input
             value={searchQ}
             onChange={(e) => setSearchQ(e.target.value)}
-            placeholder="Search by credential name or skill"
+            placeholder={t("credentials.searchPlaceholder")}
             className="pl-8"
           />
         </div>
         <Select value={issuerFilter} onValueChange={setIssuerFilter}>
           <SelectTrigger className="w-56">
-            <SelectValue placeholder="All issuers" />
+            <SelectValue placeholder={t("credentials.allIssuers")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All issuers</SelectItem>
+            <SelectItem value="all">{t("credentials.allIssuers")}</SelectItem>
             {issuerOptions.map((name) => (
               <SelectItem key={name} value={name}>{name}</SelectItem>
             ))}
@@ -171,10 +166,10 @@ function List() {
 
       <Tabs defaultValue={pendingCount > 0 ? "pending" : "all"}>
         <TabsList>
-          {TABS.map((t) => (
-            <TabsTrigger key={t.value} value={t.value}>
-              {t.label}
-              {t.value === "pending" && pendingCount > 0 && (
+          {TAB_KEYS.map((tab) => (
+            <TabsTrigger key={tab} value={tab}>
+              {t(`credentials.tabs.${tab}`)}
+              {tab === "pending" && pendingCount > 0 && (
                 <Badge variant="outline" className="ml-2 bg-warning/20 text-warning-foreground border-warning/30">
                   {pendingCount}
                 </Badge>
@@ -182,14 +177,14 @@ function List() {
             </TabsTrigger>
           ))}
         </TabsList>
-        {TABS.map((t) => {
-          const items = mine.filter((c) => matches(c, t.value) && passesFilters(c));
+        {TAB_KEYS.map((tab) => {
+          const items = mine.filter((c) => matches(c, tab) && passesFilters(c));
 
           return (
-            <TabsContent key={t.value} value={t.value} className="mt-4">
-              {t.value === "pending" && items.length > 0 && (
+            <TabsContent key={tab} value={tab} className="mt-4">
+              {tab === "pending" && items.length > 0 && (
                 <div className="mb-4 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning-foreground">
-                  Review each credential below. Once you accept it, the credential becomes valid and is anchored on the blockchain. If something is wrong, you can reject it and provide a reason for the issuer.
+                  {t("credentials.pendingBanner")}
                 </div>
               )}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -217,7 +212,7 @@ function List() {
                   ),
                 )}
                 {items.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No credentials in this view.</p>
+                  <p className="text-sm text-muted-foreground">{t("credentials.empty")}</p>
                 )}
               </div>
             </TabsContent>
@@ -228,24 +223,30 @@ function List() {
       <Dialog open={!!rejectTarget} onOpenChange={(o) => !o && setRejectTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject credential</DialogTitle>
+            <DialogTitle>{t("credentials.rejectDialog.title")}</DialogTitle>
             <DialogDescription>
-              Let the issuer know why you are rejecting{" "}
-              {rejectTarget && <span className="font-medium text-foreground">{rejectTarget.title}</span>}. They can edit the issuance details and resend, or accept the rejection.
+              {rejectTarget && (
+                <Trans
+                  i18nKey="credentials.rejectDialog.description"
+                  ns="earner"
+                  values={{ title: rejectTarget.title }}
+                  components={{ strong: <span className="font-medium text-foreground" /> }}
+                />
+              )}
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="e.g. The grade is incorrect — should be 9/10."
+            placeholder={t("credentials.rejectDialog.placeholder")}
             rows={4}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setRejectTarget(null)}>
-              Cancel
+              {t("actions.cancel", { ns: "common" })}
             </Button>
             <Button variant="destructive" disabled={busy} onClick={onConfirmReject}>
-              Reject credential
+              {t("credentials.rejectDialog.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -265,50 +266,51 @@ function PendingCard({
   onReject: () => void;
   busy: boolean;
 }) {
+  const { t } = useTranslation("earner");
   return (
     <Card className="border-warning/40">
       <CardContent className="space-y-3 p-5">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <div className="text-xs uppercase tracking-wider text-warning-foreground">Awaiting your acceptance</div>
+            <div className="text-xs uppercase tracking-wider text-warning-foreground">{t("credentials.pendingCard.title")}</div>
             <div className="mt-1 font-display text-lg font-semibold">{credential.title}</div>
-            <div className="text-sm text-muted-foreground">Issued by {credential.issuerName}</div>
+            <div className="text-sm text-muted-foreground">{t("credentials.pendingCard.issuedBy", { name: credential.issuerName })}</div>
           </div>
         </div>
         <dl className="grid grid-cols-2 gap-2 text-xs">
           <div>
-            <dt className="text-muted-foreground">Issued</dt>
+            <dt className="text-muted-foreground">{t("credentials.pendingCard.issued")}</dt>
             <dd>{new Date(credential.issuedAt).toLocaleDateString()}</dd>
           </div>
           {credential.expiresAt && (
             <div>
-              <dt className="text-muted-foreground">Expires</dt>
+              <dt className="text-muted-foreground">{t("credentials.pendingCard.expires")}</dt>
               <dd>{new Date(credential.expiresAt).toLocaleDateString()}</dd>
             </div>
           )}
           {credential.grade && (
             <div>
-              <dt className="text-muted-foreground">Grade</dt>
+              <dt className="text-muted-foreground">{t("credentials.pendingCard.grade")}</dt>
               <dd>{credential.grade}</dd>
             </div>
           )}
           {credential.level !== "N/A" && (
             <div>
-              <dt className="text-muted-foreground">Level</dt>
+              <dt className="text-muted-foreground">{t("credentials.pendingCard.level")}</dt>
               <dd>{credential.level}</dd>
             </div>
           )}
         </dl>
         <div className="flex flex-wrap gap-2 pt-1">
           <Button size="sm" onClick={onAccept} disabled={busy}>
-            <Check className="mr-1 h-3.5 w-3.5" /> Accept
+            <Check className="mr-1 h-3.5 w-3.5" /> {t("credentials.pendingCard.accept")}
           </Button>
           <Button size="sm" variant="outline" onClick={onReject} disabled={busy}>
-            <X className="mr-1 h-3.5 w-3.5" /> Reject
+            <X className="mr-1 h-3.5 w-3.5" /> {t("credentials.pendingCard.reject")}
           </Button>
           <Button size="sm" variant="ghost" asChild>
             <Link to="/earner/credentials/$id" params={{ id: credential.id }}>
-              View details
+              {t("credentials.pendingCard.viewDetails")}
             </Link>
           </Button>
         </div>
@@ -318,19 +320,20 @@ function PendingCard({
 }
 
 function RejectedCard({ credential }: { credential: IssuedCredential }) {
+  const { t } = useTranslation("earner");
   return (
     <Card className="border-destructive/40">
       <CardContent className="space-y-2 p-5">
-        <div className="text-xs uppercase tracking-wider text-destructive">Rejected</div>
+        <div className="text-xs uppercase tracking-wider text-destructive">{t("credentials.rejectedCard.title")}</div>
         <div className="font-display text-lg font-semibold">{credential.title}</div>
-        <div className="text-sm text-muted-foreground">Issued by {credential.issuerName}</div>
+        <div className="text-sm text-muted-foreground">{t("credentials.rejectedCard.issuedBy", { name: credential.issuerName })}</div>
         {credential.rejectionReason && (
           <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs">
-            <span className="font-medium">Your reason:</span> {credential.rejectionReason}
+            <span className="font-medium">{t("credentials.rejectedCard.yourReason")}</span> {credential.rejectionReason}
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          Waiting for the issuer to update the credential and resend, or to accept the rejection.
+          {t("credentials.rejectedCard.waiting")}
         </p>
       </CardContent>
     </Card>
