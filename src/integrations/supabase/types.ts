@@ -720,6 +720,7 @@ export type Database = {
           display_name: string
           email: string
           id: string
+          language: string
           share_token: string | null
           student_id: string | null
           updated_at: string
@@ -732,6 +733,7 @@ export type Database = {
           display_name?: string
           email: string
           id: string
+          language?: string
           share_token?: string | null
           student_id?: string | null
           updated_at?: string
@@ -744,6 +746,7 @@ export type Database = {
           display_name?: string
           email?: string
           id?: string
+          language?: string
           share_token?: string | null
           student_id?: string | null
           updated_at?: string

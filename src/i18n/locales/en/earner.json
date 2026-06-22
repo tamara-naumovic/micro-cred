@@ -1,0 +1,36 @@
+{
+  "dashboard": {
+    "title": "Welcome, {{name}}",
+    "description": "Apply for new micro-credentials, track your applications and share your achievements.",
+    "actions": {
+      "apply": "Apply for credential",
+      "publicProfile": "Public profile"
+    },
+    "metrics": {
+      "active": "Active credentials",
+      "pending": "Pending applications",
+      "expiring": "Expiring soon",
+      "public": "Public credentials"
+    },
+    "recentCredentials": "Recent credentials",
+    "recentApplications": "Recent applications",
+    "emptyCredentials": "No credentials yet.",
+    "emptyApplications": "No applications yet."
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account preferences.",
+    "about": {
+      "title": "About you",
+      "description": "A short bio shown on your public profile, next to your shared credentials.",
+      "label": "About",
+      "placeholder": "Tell visitors a bit about yourself — your background, interests, what you're learning…",
+      "saved": "About updated",
+      "saveFailed": "Failed to save"
+    },
+    "language": {
+      "title": "Language preference",
+      "description": "Your selected language is remembered on your profile and applied on every device."
+    }
+  }
+}

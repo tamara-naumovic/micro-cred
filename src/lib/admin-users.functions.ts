@@ -238,12 +238,29 @@ export const updateMyProfile = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateMyLanguage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { language: "en" | "sr" }) => {
+    if (d.language !== "en" && d.language !== "sr") {
+      throw new Error("Unsupported language");
+    }
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("profiles")
+      .update({ language: data.language })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("profiles")
-      .select("about, display_name, email")
+      .select("about, display_name, email, language")
       .eq("id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -251,6 +268,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
       about: (data?.about as string | null) ?? "",
       displayName: (data?.display_name as string | null) ?? "",
       email: (data?.email as string | null) ?? "",
+      language: ((data?.language as string | null) ?? "en") as "en" | "sr",
     };
   });
 

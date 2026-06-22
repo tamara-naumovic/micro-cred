@@ -1,0 +1,69 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "loading": "Loading…",
+    "error": "Error"
+  },
+  "language": {
+    "label": "Language",
+    "description": "Choose the language used across the earner workspace, including the manual and the guided tour.",
+    "en": "English",
+    "sr": "Srpski",
+    "updated": "Language updated"
+  },
+  "role": {
+    "earner": "Earner",
+    "issuer": "Issuer",
+    "admin": "System Admin"
+  },
+  "header": {
+    "switchRole": "Switch role",
+    "signOut": "Sign out",
+    "notifications": "Notifications"
+  },
+  "sidebar": {
+    "groups": {
+      "workspace": "Workspace",
+      "sharing": "Account and settings"
+    },
+    "earner": {
+      "dashboard": "Dashboard",
+      "credentials": "My Credentials",
+      "applications": "Applications",
+      "apply": "Apply for Credential",
+      "profile": "Public Profile",
+      "notifications": "Notifications",
+      "manual": "Manual",
+      "settings": "Settings"
+    }
+  },
+  "credentialLifecycle": {
+    "draft": "Draft",
+    "pending_earner_acceptance": "Awaiting acceptance",
+    "rejected": "Rejected by earner",
+    "issued": "Issued",
+    "revoked": "Revoked",
+    "expired": "Expired",
+    "superseded": "Superseded"
+  },
+  "credentialStatus": {
+    "active": "Active",
+    "revoked": "Revoked",
+    "expired": "Expired",
+    "superseded": "Superseded",
+    "rejected": "Rejected",
+    "pending_acceptance": "Awaiting acceptance",
+    "issued": "Issued"
+  },
+  "blockchain": {
+    "not_requested": "Not requested",
+    "queued": "Queued",
+    "submitting": "Submitting",
+    "submitted": "Submitted",
+    "confirmed": "Confirmed",
+    "failed": "Failed",
+    "cancelled": "Cancelled"
+  }
+}

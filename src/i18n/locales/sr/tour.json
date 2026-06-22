@@ -1,0 +1,49 @@
+{
+  "buttons": {
+    "next": "Dalje",
+    "back": "Nazad",
+    "done": "Završi"
+  },
+  "earner": {
+    "welcome": {
+      "title": "Dobrodošli na MicroCred!",
+      "description": "Kratak vodič kroz ključne delove platforme. Možete ga preskočiti i ponovo pokrenuti kasnije sa stranice <b>Uputstvo</b>."
+    },
+    "dashboard": {
+      "title": "Početna",
+      "description": "Pregled vaših kredencijala, prijava i obaveštenja."
+    },
+    "metrics": {
+      "title": "Vaši ključni pokazatelji",
+      "description": "Aktivni kredencijali, prijave u toku i kredencijali koji uskoro ističu."
+    },
+    "myCredentials": {
+      "title": "Moji kredencijali",
+      "description": "Svi vaši izdati kredencijali — detalji, dokaz na blockchain-u i opcije deljenja."
+    },
+    "applications": {
+      "title": "Prijave",
+      "description": "Pratite status prijava (U pregledu, Dokazi prikupljeni, Verifikovano, Izdato, Odbijeno)."
+    },
+    "apply": {
+      "title": "Prijava za kredencijal",
+      "description": "Pregledajte dostupne mikro-kredencijale i podnesite prijavu."
+    },
+    "profile": {
+      "title": "Javni profil",
+      "description": "Vaš javni profil koji možete podeliti sa poslodavcima i institucijama."
+    },
+    "notifications": {
+      "title": "Obaveštenja",
+      "description": "Informacije o promenama statusa, isticanjima i novim kredencijalima."
+    },
+    "manual": {
+      "title": "Uputstvo",
+      "description": "Detaljno objašnjenje svakog dela platforme — uvek dostupno ovde."
+    },
+    "done": {
+      "title": "Spremni ste!",
+      "description": "Srećno sa prikupljanjem kredencijala. Ovaj vodič možete ponovo pokrenuti sa stranice Uputstvo."
+    }
+  }
+}
