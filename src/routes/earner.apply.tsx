@@ -33,6 +33,10 @@ function Apply() {
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2>(1);
   const [templateId, setTemplateId] = useState<string | null>(null);
+  const [issuerFilter, setIssuerFilter] = useState<string>("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "formal" | "non_formal">("all");
+  const [levelFilter, setLevelFilter] = useState<string>("all");
+
 
   const tpl = templates.find((t) => t.id === templateId);
   const myOrgIds = new Set(
@@ -41,6 +45,22 @@ function Apply() {
       : [],
   );
   const active = templates.filter((t) => t.status === "active" && myOrgIds.has(t.issuerId));
+  const issuerOptions = useMemo(
+    () => Array.from(new Set(active.map((t) => t.issuerName).filter(Boolean))).sort(),
+    [active],
+  );
+  const levelOptions = useMemo(
+    () => Array.from(new Set(active.map((t) => t.level).filter((l) => l && l !== "N/A"))).sort(),
+    [active],
+  );
+  const filtersActive = issuerFilter !== "all" || sourceFilter !== "all" || levelFilter !== "all";
+  const visible = active.filter((t) => {
+    if (issuerFilter !== "all" && t.issuerName !== issuerFilter) return false;
+    if (sourceFilter !== "all" && t.source !== sourceFilter) return false;
+    if (levelFilter !== "all" && t.level !== levelFilter) return false;
+    return true;
+  });
+
 
   const appliedTemplateIds = new Set(
     activeUser
