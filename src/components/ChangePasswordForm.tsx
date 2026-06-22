@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Loader2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function ChangePasswordForm() {
+  const { t } = useTranslation("common");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -19,11 +21,11 @@ export function ChangePasswordForm() {
     setError(null);
 
     if (newPassword.length < 8) {
-      setError("New password must be at least 8 characters.");
+      setError(t("password.tooShort"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("password.mismatch"));
       return;
     }
 
@@ -38,7 +40,7 @@ export function ChangePasswordForm() {
       return;
     }
 
-    toast.success("Password updated successfully.");
+    toast.success(t("password.updated"));
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -49,13 +51,13 @@ export function ChangePasswordForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <KeyRound className="h-4 w-4 text-primary" />
-          Change Password
+          {t("password.title")}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="cp-current">Current password</Label>
+            <Label htmlFor="cp-current">{t("password.current")}</Label>
             <Input
               id="cp-current"
               type="password"
@@ -66,7 +68,7 @@ export function ChangePasswordForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cp-new">New password</Label>
+            <Label htmlFor="cp-new">{t("password.new")}</Label>
             <Input
               id="cp-new"
               type="password"
@@ -78,7 +80,7 @@ export function ChangePasswordForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cp-confirm">Confirm new password</Label>
+            <Label htmlFor="cp-confirm">{t("password.confirm")}</Label>
             <Input
               id="cp-confirm"
               type="password"
@@ -96,10 +98,11 @@ export function ChangePasswordForm() {
           )}
           <Button type="submit" disabled={busy}>
             {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Update password
+            {t("password.submit")}
           </Button>
         </form>
       </CardContent>
     </Card>
   );
 }
+
