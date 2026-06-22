@@ -216,7 +216,7 @@ export function AppSidebarLayout() {
                 <div className="leading-tight">
                   <div className="text-sm font-semibold">MicroCred</div>
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    {ROLE_LABEL[activeUser.role]}
+                    {roleLabel}
                   </div>
                 </div>
               </Link>
@@ -255,7 +255,7 @@ export function AppSidebarLayout() {
             <div className="flex items-center gap-2">
               <SidebarTrigger />
               <Badge variant="outline" className="hidden gap-1 capitalize sm:inline-flex">
-                <RoleIcon className="h-3 w-3" /> {ROLE_LABEL[activeUser.role]}
+                <RoleIcon className="h-3 w-3" /> {roleLabel}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
@@ -271,7 +271,7 @@ export function AppSidebarLayout() {
                   };
                   navigate({ to: map[activeUser.role] });
                 }}
-                aria-label="Notifications"
+                aria-label={t("header.notifications")}
               >
                 <Bell className="h-4 w-4" />
                 {unread > 0 && (
@@ -297,7 +297,7 @@ export function AppSidebarLayout() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate({ to: "/login" })}>
-                    Switch role
+                    {t("header.switchRole")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={async () => {
@@ -307,7 +307,7 @@ export function AppSidebarLayout() {
                       navigate({ to: "/" });
                     }}
                   >
-                    <LogOut className="mr-2 h-4 w-4" /> Sign out
+                    <LogOut className="mr-2 h-4 w-4" /> {t("header.signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
