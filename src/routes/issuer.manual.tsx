@@ -176,6 +176,7 @@ function Manual() {
           onClick={() => {
             const sub = activeUser.subRole ?? "admin";
             resetIssuerTour(activeUser.id);
+            resetIssuerCredentialsTour(activeUser.id);
             startIssuerTour(activeUser.id, sub, { force: true });
           }}
         >
