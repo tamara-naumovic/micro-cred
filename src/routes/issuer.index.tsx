@@ -127,6 +127,13 @@ function Overview() {
   const orgName = activeUser.organization ?? "Your institution";
   const isStaff = activeUser.subRole === "staff";
 
+  useEffect(() => {
+    if (!activeUser || activeUser.role !== "issuer") return;
+    const sub = activeUser.subRole ?? "admin";
+    const t = window.setTimeout(() => startIssuerTour(activeUser.id, sub), 400);
+    return () => window.clearTimeout(t);
+  }, [activeUser]);
+
   const assignedIds = useMemo(
     () =>
       new Set(
