@@ -193,18 +193,15 @@ function Apply() {
         </Card>
       )}
 
-      <div className="mt-6 flex justify-between">
-        <Button variant="outline" disabled={step === 1} onClick={() => setStep(1)}>
-          Back
-        </Button>
-        {step === 1 ? (
-          <Button onClick={() => setStep(2)} disabled={!templateId}>
-            Continue
+      {step === 2 && (
+        <div className="mt-6 flex justify-between">
+          <Button variant="outline" onClick={() => setStep(1)}>
+            Back
           </Button>
-        ) : (
           <Button onClick={submit}>Apply</Button>
-        )}
-      </div>
+        </div>
+      )}
+
     </PageShell>
   );
 }
