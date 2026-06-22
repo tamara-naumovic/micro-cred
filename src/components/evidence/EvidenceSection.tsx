@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Download, FileText, FileJson, ShieldCheck, Package, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import {
 } from "@/lib/evidence/package.functions";
 import { triggerDownload } from "@/lib/evidence/use-download";
 import { PrivateProofDialog } from "./PrivateProofDialog";
+
 
 interface Props {
   credentialId: string;
