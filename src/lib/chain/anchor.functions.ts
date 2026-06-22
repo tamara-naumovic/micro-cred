@@ -1213,6 +1213,9 @@ export const acceptCredential = createServerFn({ method: "POST" })
       title: "Earner accepted credential",
       body: `${(cred as any).title} was accepted by the earner.`,
       link: "/issuer/credentials",
+      title_key: "events.earnerAccepted.title",
+      body_key: "events.earnerAccepted.body",
+      params: { title: (cred as any).title ?? "" },
     } as never);
 
     // Now best-effort anchor on Bloxberg. If this fails, the credential is
@@ -1299,6 +1302,9 @@ export const rejectCredential = createServerFn({ method: "POST" })
         title: "Earner rejected credential",
         body: `${(cred as any).title} was rejected. Reason: ${reason}`,
         link: "/issuer/credentials",
+        title_key: "events.earnerRejected.title",
+        body_key: "events.earnerRejected.body",
+        params: { title: (cred as any).title ?? "", reason },
       },
       {
         for_role: "issuer_staff",
@@ -1306,6 +1312,9 @@ export const rejectCredential = createServerFn({ method: "POST" })
         title: "Earner rejected credential",
         body: `${(cred as any).title} was rejected. Reason: ${reason}`,
         link: "/issuer/credentials",
+        title_key: "events.earnerRejected.title",
+        body_key: "events.earnerRejected.body",
+        params: { title: (cred as any).title ?? "", reason },
       },
     ] as never);
 
@@ -1405,6 +1414,9 @@ export const resendCredential = createServerFn({ method: "POST" })
       title: "Credential resent for your acceptance",
       body: `${c.title} was updated and resent. Please review and accept or reject it.`,
       link: `/earner/credentials/${c.id}`,
+      title_key: "events.credentialResent.title",
+      body_key: "events.credentialResent.body",
+      params: { title: c.title },
     } as never);
 
     return { ok: true };
@@ -1457,6 +1469,9 @@ export const renewCredential = createServerFn({ method: "POST" })
       title: "Credential expiry extended",
       body: `${c.title} expiry has been extended to ${new Date(newExpiry).toLocaleDateString()}.`,
       link: `/earner/credentials/${c.id}`,
+      title_key: "events.credentialExpiryExtended.title",
+      body_key: "events.credentialExpiryExtended.body",
+      params: { title: c.title, expiresAt: newExpiry },
     } as never);
     await supabaseAdmin.from("audit_log").insert({
       actor_id: userId,
@@ -1516,6 +1531,9 @@ export const discardRejectedCredential = createServerFn({ method: "POST" })
         title: "Rejection accepted by issuer",
         body: `Your rejection of "${(full as any).title}" was accepted. The credential has been discarded.`,
         link: "/earner/credentials",
+        title_key: "events.rejectionAccepted.title",
+        body_key: "events.rejectionAccepted.body",
+        params: { title: (full as any).title ?? "" },
       } as never);
     }
 

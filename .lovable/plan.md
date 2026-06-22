@@ -1,56 +1,107 @@
+## Cilj
 
-# Plan: Završetak earner i18n + dropdown za jezik u header-u
+Pojedinačna obaveštenja u sekciji `earner/notifications` (i `issuer/notifications`) trenutno se snimaju u bazu sa fiksnim engleskim tekstom (`title`, `body`). Zbog toga ostaju na engleskom čak i kada je interfejs prebačen na srpski. Plan je da se obaveštenja prevode na klijentu pomoću `react-i18next`, uz minimalnu izmenu šeme i bekfilom za postojeće zapise.
 
-## 1. Dropdown za promenu jezika u header-u
+## Pristup
 
-Pored ikonice za obaveštenja u `AppSidebarLayout` dodajem kompaktan dropdown (`Globe` ikonica + kratak indikator EN/SR) sa dve opcije: English / Srpski.
+Umesto da pokušavamo da parsiramo engleski tekst, dodajemo strukturisana polja u tabelu `notifications`:
 
-- Prikazuje se samo kada je korisnik earner (issuer i admin za sada nisu u obuhvatu).
-- On-change: poziva `updateMyLanguage` server fn i `setAppLanguage`, pokazuje toast.
-- Inicijalna vrednost: trenutni `i18n.language`.
+- `title_key text` — i18n ključ (npr. `notifications.events.credentialIssued.title`)
+- `body_key text` — i18n ključ za telo
+- `params jsonb` — parametri za interpolaciju (npr. `{ "title": "Web razvoj", "reason": "..." }`)
 
-## 2. Terminologija na srpskom
+Postojeća polja `title` / `body` ostaju (kao fallback i za stara obaveštenja). Renderer u `NotificationsList` koristi `title_key`/`body_key` kada postoje, inače pada na `title`/`body`.
 
-Ispravka u svim postojećim i novim srpskim prevodima: **mikrokredencijal** (jedna reč, bez crtice), padeži:
-- mikrokredencijal / mikrokredencijala / mikrokredencijale / mikrokredencijalima
-- "micro-credentials" → "mikrokredencijali"
-- "Micro-credential templates" → "Šabloni mikrokredencijala"
+## Promene
 
-Ažuriram postojeće `sr/common.json`, `sr/earner.json`, `sr/tour.json`, `sr/manual.json` gde se pojavljuje "mikro-kredencijal".
+### 1. Migracija baze
+- `ALTER TABLE public.notifications ADD COLUMN title_key text, body_key text, params jsonb`.
+- Ažurirati sve PL/pgSQL trigger funkcije koje upisuju u `notifications` da popunjavaju nove kolone (uz zadržavanje `title`/`body` radi kompatibilnosti):
+  - `notify_on_application_insert` — „Nova prijava poslata"
+  - `notify_on_credential_revoked` — „Mikrokredencijal je opozvan"
+  - `notify_on_template_archived` — „Šablon mikrokredencijala je arhiviran"
+  - `notify_on_earner_institution_link` — „Povezani ste sa institucijom"
+  - `notify_on_template_assignee` — „Dodeljen vam je mikrokredencijal"
+  - `notify_on_credential_insert` — dve varijante (awaiting acceptance / issued)
+  - (i sve ostale postojeće okidače u ranijim migracijama koji upisuju u `notifications`)
 
-## 3. Prevod preostalih earner ruta
+### 2. TypeScript inserti
+Ažurirati sve `from("notifications").insert(...)` pozive da prosleđuju i nove ključeve:
+- `src/lib/chain/anchor.functions.ts` (5 mesta): prihvatanje/odbijanje od strane earnera, ponovno slanje, produženje isteka, prihvatanje odbijanja.
+- `src/routes/api/public/hooks/expiry-reminders.ts`: podsetnik o isteku.
 
-Redosled (svaka ruta dobija novi namespace ključ u `earner.json` na oba jezika):
+### 3. Klijent
+- `src/lib/store.tsx`: `mapNotification` čita `title_key`, `body_key`, `params` (mapirano u `AppNotification`).
+- `src/lib/types.ts`: proširiti `AppNotification` sa opcionim `titleKey`, `bodyKey`, `params`.
+- `src/components/NotificationsList.tsx`: ako postoji `titleKey`, koristi `t(titleKey)` i `t(bodyKey, params)`, inače fallback na `n.title` / `n.body`. Datumi se interpoliraju kao već formatirani string u `params` (lokalizacija datuma u trenutku slanja je već problematična pa zadržavamo zapis stringa, ali ćemo na klijentu reformatirati kada je u `params` `expiresAt` ISO string).
 
-1. **`earner.credentials.index.tsx`** — naslovi, filteri, kolone tabele, prazna stanja, dugmad.
-2. **`earner.credentials.$id.tsx`** — naslovi sekcija (Details, Evidence, Blockchain proof, Sharing/privacy), dugmad (Accept/Reject, Copy link, Download), labele za sve toggle-ove privatnosti.
-3. **`earner.applications.tsx`** — naslov, filteri, status labele (kroz `common.credentialStatus` + nove `applicationStatus`), prazna stanja, akcije ("Edit & resend", "Accept rejection").
-4. **`earner.apply.tsx`** — naslov, filteri (po izdavaocu / oblasti / nivou), kartice šablona, dugme "Apply".
-5. **`earner.profile.tsx`** — naslov, sekcije, dugmad za deljenje.
-6. **`earner.notifications.tsx`** — naslov, "Mark all as read", prazno stanje.
-7. **`earner.microcredential-templates.$id.tsx`** — naslovi sekcija (Description, Outcomes, Skills, Prerequisites, Quality assurance), dugme za prijavu.
+### 4. Prevodi
+U `src/i18n/locales/{en,sr}/earner.json` i `common.json` dodati grupu `notifications.events.*`. Konzistentno koristiti „mikrokredencijal" u srpskoj verziji.
 
-Za svaku rutu:
-- `useTranslation("earner")` u komponenti.
-- Sve hardcoded UI tekstove zameniti `t(...)` pozivima.
-- Dinamički sadržaj iz baze (naslovi šablona, imena izdavaoca, opisi) ostaje na originalnom jeziku — ne prevodi se.
+Primer (SR):
+```
+"events": {
+  "credentialIssued": {
+    "title": "Mikrokredencijal je izdat",
+    "body": "{{title}} je sada u vašem novčaniku."
+  },
+  "credentialAwaitingAcceptance": {
+    "title": "Mikrokredencijal čeka vaše prihvatanje",
+    "body": "{{title}} vam je izdat. Pregledajte i prihvatite ili odbijte."
+  },
+  "credentialRevoked": {
+    "title": "Mikrokredencijal je opozvan",
+    "body": "{{title}} je opozvan{{reasonSuffix}}"
+  },
+  "credentialExpiryExtended": {
+    "title": "Produžen je rok važenja",
+    "body": "Rok važenja za {{title}} je produžen do {{expiresAt}}."
+  },
+  "credentialExpiryReminder": {
+    "title": "Mikrokredencijal uskoro ističe",
+    "body": "„{{title}}" ističe {{expiresAt}}."
+  },
+  "templateArchived": {
+    "title": "Šablon mikrokredencijala je arhiviran",
+    "body": "Mikrokredencijal „{{title}}" je arhiviran od strane izdavaoca."
+  },
+  "linkedToInstitution": {
+    "title": "Povezani ste sa novom institucijom",
+    "body": "Povezani ste sa {{org}}."
+  },
+  "applicationSubmitted": {
+    "title": "Nova prijava je poslata",
+    "body": "Nova prijava za {{template}}."
+  },
+  "earnerAccepted": {
+    "title": "Earner je prihvatio mikrokredencijal",
+    "body": "{{title}} je prihvaćen."
+  },
+  "earnerRejected": {
+    "title": "Earner je odbio mikrokredencijal",
+    "body": "{{title}} je odbijen. Razlog: {{reason}}"
+  },
+  "rejectionAccepted": {
+    "title": "Izdavalac je prihvatio odbijanje",
+    "body": "Vaše odbijanje „{{title}}" je prihvaćeno. Mikrokredencijal je odbačen."
+  },
+  "credentialResent": {
+    "title": "Mikrokredencijal je ponovo poslat",
+    "body": "{{title}} je ažuriran i ponovo poslat. Pregledajte i prihvatite ili odbijte."
+  },
+  "assignedToTemplate": {
+    "title": "Dodeljen vam je mikrokredencijal",
+    "body": "Dodeljeni ste da izdate „{{template}}"."
+  }
+}
+```
+Engleski prevodi paralelno u `en/`.
 
-## 4. Status labele
+### 5. Stara obaveštenja
+Postojeća obaveštenja u bazi nemaju nove ključeve. NotificationsList renderuje njihov `title`/`body` kao i do sada (engleski). Novi zapisi (od trenutka primene migracije) biće prevedeni. Bez backfill skripte (rizično za stare neaktivne).
 
-Refaktorisati `src/lib/status-labels.ts` i `src/lib/evidence/labels.ts`:
-- Dodati helper `useCredentialLifecycleLabel()` i `useBlockchainLabel()` koji koriste `i18n.t`.
-- Postojeće `CREDENTIAL_LIFECYCLE_LABEL` itd. mape ostaju (za server kontekst / fallback), ali komponente koje ih trenutno koriste u earner ruti prelaze na hook.
-- `StatusBadge` komponenta — prepraviti da pokušava prevod preko `i18n.t("credentialStatus.<key>", { ns: "common" })` sa fallback-om na original string (tako issuer/admin koji prosleđuje drugi enum ne pukne).
+## Van obima
+- Push notifikacije / email šabloni (samo in-app lista).
+- Prevod „lifecycle" događaja u `platform_events`/`audit_log` (interni admin).
 
-## 5. Tehnički detalji
-
-- Novi UI elementi (dropdown za jezik) koriste postojeću `DropdownMenu` shadcn komponentu i `Globe` ikonicu iz `lucide-react`.
-- Dropdown u header-u i Select u `earner/settings` slušaju isti i18n state — promena na jednom mestu odmah se odražava na drugom.
-- Default vrednost ostaje `en`; svi novi korisnici dobijaju engleski.
-
-## Van obuhvata (i dalje)
-
-- Issuer i admin rute, njihovi tour-i i manual.
-- Public stranice (login, verify, profile/$token, issuers/*).
-- Email notifikacije i sadržaj iz baze.
-- SEO meta tagovi, Zod validacione poruke.
+Posle implementacije ćemo proveriti vizuelno na `/earner/notifications` kako u SR, tako i u EN.

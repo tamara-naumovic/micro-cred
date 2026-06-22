@@ -26,9 +26,22 @@ function useTimeAgo() {
 
 export function NotificationsList({ role }: { role: Role }) {
   const { notifications, activeUser, markAllRead, markRead } = useStore();
-  const { t } = useTranslation("earner");
+  const { t, i18n } = useTranslation("earner");
   const navigate = useNavigate();
   const timeAgo = useTimeAgo();
+
+  const buildParams = (p?: Record<string, unknown>) => {
+    if (!p) return {};
+    const out: Record<string, unknown> = { ...p };
+    if (typeof p.expiresAt === "string") {
+      try {
+        out.expiresAt = new Date(p.expiresAt).toLocaleDateString(i18n.language);
+      } catch {
+        // keep raw value
+      }
+    }
+    return out;
+  };
 
   const items = useMemo(
     () =>
@@ -95,14 +108,22 @@ export function NotificationsList({ role }: { role: Role }) {
                           aria-label={t("notifications.unreadAria")}
                         />
                       )}
-                      <div className="font-medium">{n.title}</div>
+                      <div className="font-medium">
+                        {n.titleKey
+                          ? t(`notifications.${n.titleKey}`, { defaultValue: n.title, ...buildParams(n.params) })
+                          : n.title}
+                      </div>
                     </div>
                     <Badge variant="outline" className="shrink-0 text-[10px] font-normal">
                       {timeAgo(n.createdAt)}
                     </Badge>
                   </div>
-                  {n.body && (
-                    <div className="text-sm text-muted-foreground">{n.body}</div>
+                  {(n.bodyKey || n.body) && (
+                    <div className="text-sm text-muted-foreground">
+                      {n.bodyKey
+                        ? t(`notifications.${n.bodyKey}`, { defaultValue: n.body, ...buildParams(n.params) })
+                        : n.body}
+                    </div>
                   )}
                 </CardContent>
               </Card>

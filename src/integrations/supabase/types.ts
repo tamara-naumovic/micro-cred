@@ -610,36 +610,45 @@ export type Database = {
       notifications: {
         Row: {
           body: string
+          body_key: string | null
           created_at: string
           for_org_id: string | null
           for_role: Database["public"]["Enums"]["app_role"] | null
           for_user_id: string | null
           id: string
           link: string | null
+          params: Json | null
           read: boolean
           title: string
+          title_key: string | null
         }
         Insert: {
           body: string
+          body_key?: string | null
           created_at?: string
           for_org_id?: string | null
           for_role?: Database["public"]["Enums"]["app_role"] | null
           for_user_id?: string | null
           id?: string
           link?: string | null
+          params?: Json | null
           read?: boolean
           title: string
+          title_key?: string | null
         }
         Update: {
           body?: string
+          body_key?: string | null
           created_at?: string
           for_org_id?: string | null
           for_role?: Database["public"]["Enums"]["app_role"] | null
           for_user_id?: string | null
           id?: string
           link?: string | null
+          params?: Json | null
           read?: boolean
           title?: string
+          title_key?: string | null
         }
         Relationships: [
           {

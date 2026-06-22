@@ -215,7 +215,70 @@
       "hours": "{{n}}h ago",
       "days": "{{n}}d ago"
     },
-    "unreadAria": "Unread"
+    "unreadAria": "Unread",
+    "events": {
+      "credentialIssued": {
+        "title": "Credential issued",
+        "body": "{{title}} is now in your wallet."
+      },
+      "credentialAwaitingAcceptance": {
+        "title": "Credential awaiting your acceptance",
+        "body": "{{title}} was issued to you. Review and accept or reject it."
+      },
+      "credentialRevoked": {
+        "title": "Credential revoked",
+        "body": "{{title}} has been revoked.",
+        "bodyWithReason": "{{title}} has been revoked. Reason: {{reason}}"
+      },
+      "credentialExpiryExtended": {
+        "title": "Credential expiry extended",
+        "body": "{{title}} expiry has been extended to {{expiresAt}}."
+      },
+      "credentialExpiryReminder": {
+        "title": "Credential expiring soon",
+        "body": "\"{{title}}\" expires on {{expiresAt}}."
+      },
+      "templateArchived": {
+        "title": "Credential template archived",
+        "body": "The micro-credential \"{{title}}\" has been archived by the issuer."
+      },
+      "linkedToInstitution": {
+        "title": "Linked to a new institution",
+        "body": "You have been linked to {{org}}."
+      },
+      "applicationSubmitted": {
+        "title": "New application submitted",
+        "body": "New application for {{template}}."
+      },
+      "applicationRejected": {
+        "title": "Application rejected",
+        "body": "{{template}}"
+      },
+      "applicationStatus": {
+        "title": "Application status updated",
+        "body": "{{template}}: {{status}}"
+      },
+      "earnerAccepted": {
+        "title": "Earner accepted credential",
+        "body": "{{title}} was accepted by the earner."
+      },
+      "earnerRejected": {
+        "title": "Earner rejected credential",
+        "body": "{{title}} was rejected. Reason: {{reason}}"
+      },
+      "rejectionAccepted": {
+        "title": "Rejection accepted by issuer",
+        "body": "Your rejection of \"{{title}}\" was accepted. The credential has been discarded."
+      },
+      "credentialResent": {
+        "title": "Credential resent for your acceptance",
+        "body": "{{title}} was updated and resent. Please review and accept or reject it."
+      },
+      "assignedToTemplate": {
+        "title": "Assigned to a micro-credential",
+        "body": "You have been assigned to issue \"{{template}}\"."
+      }
+    }
   },
   "templateDetail": {
     "notFound": "Micro-credential not found",

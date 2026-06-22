@@ -248,6 +248,9 @@ function mapNotification(r: Row): AppNotification {
     createdAt: r.created_at as string,
     read: (r.read as boolean) ?? false,
     link: (r.link as string | null) ?? undefined,
+    titleKey: (r.title_key as string | null) ?? undefined,
+    bodyKey: (r.body_key as string | null) ?? undefined,
+    params: (r.params as Record<string, unknown> | null) ?? undefined,
   };
 }
 

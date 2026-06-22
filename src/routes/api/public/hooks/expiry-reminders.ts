@@ -63,6 +63,9 @@ export const Route = createFileRoute("/api/public/hooks/expiry-reminders")({
               title,
               body: `"${c.title}" expires on ${new Date(c.expires_at).toUTCString()}.`,
               link,
+              title_key: "events.credentialExpiryReminder.title",
+              body_key: "events.credentialExpiryReminder.body",
+              params: { window: w.label, title: c.title, expiresAt: c.expires_at },
             } as never);
             total += 1;
           }
