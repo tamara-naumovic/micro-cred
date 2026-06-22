@@ -1410,6 +1410,65 @@ export const resendCredential = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Issuer extends the expiry of an already-issued credential. No earner acceptance required. */
+export const renewCredential = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { credentialId: string; newExpiryDate: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: cred } = await supabase
+      .from("credentials")
+      .select("id, title, issuer_id, template_id, earner_id, credential_lifecycle, expires_at")
+      .eq("id", data.credentialId)
+      .maybeSingle();
+    if (!cred) throw new Error("Credential not found");
+    const c = cred as Record<string, any>;
+    const lc = c.credential_lifecycle as string;
+    if (lc !== "issued" && lc !== "expired") {
+      throw new Error("Only issued or expired credentials can be renewed");
+    }
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: userId });
+    const { data: isOrgAdmin } = await supabase.rpc("has_role_in_org", {
+      _user_id: userId,
+      _role: "issuer_admin",
+      _org_id: c.issuer_id,
+    });
+    const { data: isAssignee } = await supabase.rpc("is_template_assignee", {
+      _user_id: userId,
+      _template_id: c.template_id,
+    });
+    if (!isAdmin && !isOrgAdmin && !isAssignee) throw new Error("Forbidden");
+
+    const newExpiry = new Date(data.newExpiryDate).toISOString();
+    const nextLifecycle = lc === "expired" ? "issued" : lc;
+
+    const { error: updErr } = await supabase
+      .from("credentials")
+      .update({
+        expires_at: newExpiry,
+        credential_lifecycle: nextLifecycle,
+      } as never)
+      .eq("id", data.credentialId);
+    if (updErr) throw new Error(updErr.message);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("notifications").insert({
+      for_user_id: c.earner_id,
+      title: "Credential expiry extended",
+      body: `${c.title} expiry has been extended to ${new Date(newExpiry).toLocaleDateString()}.`,
+      link: `/earner/credentials/${c.id}`,
+    } as never);
+    await supabaseAdmin.from("audit_log").insert({
+      actor_id: userId,
+      action: "renewed credential expiry",
+      target: c.id,
+    } as never);
+
+    return { ok: true, expiresAt: newExpiry };
+  });
+
+
+
 /** Issuer accepts the rejection — deletes the credential entirely. */
 export const discardRejectedCredential = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
