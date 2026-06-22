@@ -7,7 +7,7 @@
     "gettingStarted": {
       "title": "Početak rada",
       "p1": "MicroCred omogućava vašoj instituciji da osmišlja, izdaje i upravlja verljivim mikrokredencijalima. Svaki izdati kredencijal je usidren na blokčejnu kako bi ga svako mogao nezavisno da verifikuje.",
-      "p2": "U nastavku ćete pronaći više detalja o svakom delu platforme. Koristite linkove „Otvori …" da biste direktno prešli na odgovarajuću stranicu.",
+      "p2": "U nastavku ćete pronaći više detalja o svakom delu platforme. Koristite linkove „Otvori …“ da biste direktno prešli na odgovarajuću stranicu.",
       "staffNote": " Kao zaposleni, vidite odeljke relevantne za mikrokredencijale kojima ste dodeljeni."
     },
     "sections": {
@@ -39,7 +39,7 @@
       "requests": {
         "title": "Zahtevi za izdavanje",
         "linkLabel": "Otvori Zahteve za izdavanje",
-        "body": "Dolazne prijave. Pregledajte podnete dokaze, zatražite izmene, označite kao „Dokazi prikupljeni" i „Verifikovano", zatim izdajte kredencijal. Možete i odbiti uz razlog — nosilac može da uredi i ponovo pošalje."
+        "body": "Dolazne prijave. Pregledajte podnete dokaze, zatražite izmene, označite kao „Dokazi prikupljeni“ i „Verifikovano“, zatim izdajte kredencijal. Možete i odbiti uz razlog — nosilac može da uredi i ponovo pošalje."
       },
       "issue": {
         "title": "Direktno izdavanje",
@@ -54,7 +54,7 @@
       "credentials": {
         "title": "Izdati kredencijali",
         "linkLabel": "Otvori Izdate kredencijale",
-        "body": "Svi kredencijali koje je vaša institucija izdala. Koristite pretragu (po nosiocu, naslovu ili ID-u) i filtere (šablon, status životnog ciklusa) za sužavanje liste — polje za pretragu ima „x" za resetovanje. Kada prvi put otvorite ovu stranicu, kratki vođeni obilazak će vas provesti kroz dostupne akcije. Akcije po redu zavise od životnog ciklusa: „Uredi i ponovo pošalji" za odbijene kredencijale; „Prihvati odbijanje" za trajno brisanje; „Obnovi istek" za izdate ili istekle kredencijale sa datumom isteka."
+        "body": "Svi kredencijali koje je vaša institucija izdala. Koristite pretragu (po nosiocu, naslovu ili ID-u) i filtere (šablon, status životnog ciklusa) za sužavanje liste — polje za pretragu ima „x“ za resetovanje. Kada prvi put otvorite ovu stranicu, kratki vođeni obilazak će vas provesti kroz dostupne akcije. Akcije po redu zavise od životnog ciklusa: „Uredi i ponovo pošalji“ za odbijene kredencijale; „Prihvati odbijanje“ za trajno brisanje; „Obnovi istek“ za izdate ili istekle kredencijale sa datumom isteka."
       },
       "revocations": {
         "title": "Opozivi",
