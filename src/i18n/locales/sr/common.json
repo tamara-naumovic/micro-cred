@@ -96,5 +96,25 @@
     "confirmed": "Potvrđeno",
     "failed": "Neuspešno",
     "cancelled": "Otkazano"
+  },
+  "credentialCard": {
+    "details": "Detalji",
+    "share": "Podeli",
+    "issued": "Izdato",
+    "expires": "ističe",
+    "blockchainPending": "Blockchain u obradi",
+    "blockchainRetrying": "Blockchain pokušava ponovo",
+    "shareSummary": "Proverljiv mikrokredencijal izdat od strane {{issuer}}."
+  },
+  "password": {
+    "title": "Promena lozinke",
+    "current": "Trenutna lozinka",
+    "new": "Nova lozinka",
+    "confirm": "Potvrdite novu lozinku",
+    "submit": "Ažuriraj lozinku",
+    "tooShort": "Nova lozinka mora imati najmanje 8 karaktera.",
+    "mismatch": "Lozinke se ne podudaraju.",
+    "updated": "Lozinka je uspešno ažurirana."
   }
 }
+
