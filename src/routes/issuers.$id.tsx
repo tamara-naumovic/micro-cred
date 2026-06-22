@@ -133,7 +133,7 @@ function TemplateSection({
         {items.map((t) => (
           <Link
             key={t.id}
-            to="/issuers/$id/microcredential-templates/$templateId"
+            to="/issuers/$id_/microcredential-templates/$templateId"
             params={{ id: issuerId, templateId: t.id }}
             className="block transition hover:-translate-y-0.5"
           >

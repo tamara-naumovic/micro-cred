@@ -39,7 +39,7 @@ async function openQaDocument(path: string) {
   window.open(data.signedUrl, "_blank");
 }
 
-export const Route = createFileRoute("/issuers/$id/microcredential-templates/$templateId")({
+export const Route = createFileRoute("/issuers/$id_/microcredential-templates/$templateId")({
   head: () => ({ meta: [{ title: "Micro-credential — MicroCred" }] }),
   component: PublicTemplateDetail,
 });
