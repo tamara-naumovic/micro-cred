@@ -1,7 +1,6 @@
 import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
