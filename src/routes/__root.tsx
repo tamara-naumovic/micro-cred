@@ -12,6 +12,7 @@ import {
 import appCss from "../styles.css?url";
 import { StoreProvider } from "@/lib/store";
 import { AuthProvider } from "@/lib/auth";
+import { LanguageProvider } from "@/i18n/LanguageProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { PublicLayout } from "@/components/layouts/PublicLayout";
 import { AppSidebarLayout } from "@/components/layouts/AppSidebarLayout";
@@ -119,8 +120,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
         <AuthProvider>
-          <LayoutSwitcher />
-          <Toaster richColors position="top-right" />
+          <LanguageProvider>
+            <LayoutSwitcher />
+            <Toaster richColors position="top-right" />
+          </LanguageProvider>
         </AuthProvider>
       </StoreProvider>
     </QueryClientProvider>
