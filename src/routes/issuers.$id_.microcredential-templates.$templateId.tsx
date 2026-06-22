@@ -45,7 +45,9 @@ export const Route = createFileRoute("/issuers/$id_/microcredential-templates/$t
 });
 
 function PublicTemplateDetail() {
-  const { id, templateId } = Route.useParams();
+  const params = Route.useParams() as { id?: string; id_?: string; templateId: string };
+  const id = params.id ?? params.id_;
+  const { templateId } = params;
   const { organizations, templates, loading } = useStore();
   const issuer = organizations.find((o) => o.id === id && o.type === "issuer");
   if (loading) {
