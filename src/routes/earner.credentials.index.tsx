@@ -1,14 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { Check, X, Search } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { CredentialCard } from "@/components/CredentialCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -22,6 +30,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useStore } from "@/lib/store";
 import { acceptCredential, rejectCredential } from "@/lib/chain/anchor.functions";
 import type { IssuedCredential } from "@/lib/types";
+
 
 export const Route = createFileRoute("/earner/credentials/")({
   head: () => ({ meta: [{ title: "My credentials — MicroCred" }] }),
@@ -57,6 +66,8 @@ function matches(c: IssuedCredential, tab: TabKey): boolean {
 function List() {
   const { activeUser, credentials, refresh } = useStore();
   const [src, setSrc] = useState<"all" | "formal" | "non_formal">("all");
+  const [searchQ, setSearchQ] = useState("");
+  const [issuerFilter, setIssuerFilter] = useState<string>("all");
   const [rejectTarget, setRejectTarget] = useState<IssuedCredential | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -66,6 +77,20 @@ function List() {
   if (!activeUser) return null;
   const mine = credentials.filter((c) => c.earnerId === activeUser.id);
   const pendingCount = mine.filter((c) => c.lifecycle === "pending_earner_acceptance").length;
+  const issuerOptions = useMemo(
+    () => Array.from(new Set(mine.map((c) => c.issuerName).filter(Boolean))).sort(),
+    [mine],
+  );
+  const q = searchQ.trim().toLowerCase();
+  const passesFilters = (c: IssuedCredential) => {
+    if (src !== "all" && c.source !== src) return false;
+    if (issuerFilter !== "all" && c.issuerName !== issuerFilter) return false;
+    if (!q) return true;
+    if (c.title?.toLowerCase().includes(q)) return true;
+    if ((c.skills ?? []).some((s) => s.toLowerCase().includes(q))) return true;
+    return false;
+  };
+
 
   const onAccept = async (c: IssuedCredential) => {
     setBusy(true);
@@ -121,6 +146,29 @@ function List() {
         ))}
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+            placeholder="Search by credential name or skill"
+            className="pl-8"
+          />
+        </div>
+        <Select value={issuerFilter} onValueChange={setIssuerFilter}>
+          <SelectTrigger className="w-56">
+            <SelectValue placeholder="All issuers" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All issuers</SelectItem>
+            {issuerOptions.map((name) => (
+              <SelectItem key={name} value={name}>{name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <Tabs defaultValue={pendingCount > 0 ? "pending" : "all"}>
         <TabsList>
           {TABS.map((t) => (
@@ -135,9 +183,8 @@ function List() {
           ))}
         </TabsList>
         {TABS.map((t) => {
-          const items = mine.filter(
-            (c) => matches(c, t.value) && (src === "all" || c.source === src),
-          );
+          const items = mine.filter((c) => matches(c, t.value) && passesFilters(c));
+
           return (
             <TabsContent key={t.value} value={t.value} className="mt-4">
               {t.value === "pending" && items.length > 0 && (
