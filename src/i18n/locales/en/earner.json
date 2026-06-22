@@ -255,5 +255,41 @@
       "independent_integrated": "Independent micro-credential / integrated",
       "stackable": "Stackable towards another credential"
     }
+  },
+  "evidence": {
+    "title": "Credential files and evidence",
+    "description": "Download your credential, machine-readable data and verification evidence. Private ownership proof must not be shared publicly.",
+    "preparing": "preparing…",
+    "downloadReady": "Download ready",
+    "downloadFailed": "Download failed",
+    "pdf": {
+      "label": "Download PDF",
+      "description": "Human-readable credential certificate."
+    },
+    "json": {
+      "label": "Download credential JSON",
+      "description": "Machine-readable credential record."
+    },
+    "receipt": {
+      "label": "Download verification receipt",
+      "description": "Blockchain and integrity evidence."
+    },
+    "package": {
+      "label": "Download complete package",
+      "description": "All public credential files in one ZIP.",
+      "loadingToast": "Preparing your credential package…",
+      "successToast": "Package ready"
+    },
+    "privateFiles": "Private files",
+    "privateUnavailable": "Private ownership proof is not available for this credential.",
+    "privateProof": {
+      "trigger": "Download private ownership proof",
+      "preparing": "Preparing…",
+      "title": "Download private ownership proof",
+      "description": "This file contains confidential recovery information associated with your credential. Keep it private. Do not send it to employers, verifiers or other third parties.",
+      "cancel": "Cancel",
+      "confirm": "Download private proof"
+    }
   }
 }
+
