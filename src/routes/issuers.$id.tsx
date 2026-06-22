@@ -106,8 +106,8 @@ function IssuerProfile() {
         </CardContent>
       </Card>
 
-      <TemplateSection title="Formal credentials" items={formal} />
-      <TemplateSection title="Non-formal credentials" items={nonFormal} />
+      <TemplateSection title="Formal credentials" items={formal} issuerId={id} />
+      <TemplateSection title="Non-formal credentials" items={nonFormal} issuerId={id} />
 
       {tpls.length === 0 && (
         <p className="mt-10 text-sm text-muted-foreground">No active templates.</p>
@@ -119,9 +119,11 @@ function IssuerProfile() {
 function TemplateSection({
   title,
   items,
+  issuerId,
 }: {
   title: string;
   items: MicroCredentialTemplate[];
+  issuerId: string;
 }) {
   if (items.length === 0) return null;
   return (
@@ -129,29 +131,37 @@ function TemplateSection({
       <h2 className="mt-10 mb-4 font-display text-xl font-semibold">{title}</h2>
       <div className="grid gap-3 md:grid-cols-2">
         {items.map((t) => (
-          <Card key={t.id}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{t.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <p className="line-clamp-3 text-muted-foreground">{t.description}</p>
-              <div className="flex flex-wrap gap-1">
-                <Badge variant="secondary" className="capitalize">
-                  {t.source === "formal" ? "Formal" : "Non-formal"}
-                </Badge>
-                {t.level !== "N/A" && <Badge variant="outline">{t.level}</Badge>}
-                {t.ects && <Badge variant="outline">{t.ects} ECTS</Badge>}
-                <Badge variant="outline" className="capitalize">
-                  {t.participation.replace(/_/g, " ")}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+          <Link
+            key={t.id}
+            to="/issuers/$id/microcredential-templates/$templateId"
+            params={{ id: issuerId, templateId: t.id }}
+            className="block transition hover:-translate-y-0.5"
+          >
+            <Card className="h-full hover:border-primary/40 hover:shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">{t.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p className="line-clamp-3 text-muted-foreground">{t.description}</p>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="capitalize">
+                    {t.source === "formal" ? "Formal" : "Non-formal"}
+                  </Badge>
+                  {t.level !== "N/A" && <Badge variant="outline">{t.level}</Badge>}
+                  {t.ects && <Badge variant="outline">{t.ects} ECTS</Badge>}
+                  <Badge variant="outline" className="capitalize">
+                    {t.participation.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </>
   );
 }
+
 
 function AccreditationDocLink({ path }: { path: string }) {
   const [loading, setLoading] = useState(false);
