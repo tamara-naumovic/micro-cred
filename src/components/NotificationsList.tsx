@@ -26,9 +26,22 @@ function useTimeAgo() {
 
 export function NotificationsList({ role }: { role: Role }) {
   const { notifications, activeUser, markAllRead, markRead } = useStore();
-  const { t } = useTranslation("earner");
+  const { t, i18n } = useTranslation("earner");
   const navigate = useNavigate();
   const timeAgo = useTimeAgo();
+
+  const buildParams = (p?: Record<string, unknown>) => {
+    if (!p) return {};
+    const out: Record<string, unknown> = { ...p };
+    if (typeof p.expiresAt === "string") {
+      try {
+        out.expiresAt = new Date(p.expiresAt).toLocaleDateString(i18n.language);
+      } catch {
+        // keep raw value
+      }
+    }
+    return out;
+  };
 
   const items = useMemo(
     () =>
