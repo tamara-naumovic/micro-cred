@@ -1,0 +1,57 @@
+{
+  "title": "Uputstvo",
+  "description": "Vodič kroz platformu — šta radi svaka sekcija i kako da je koristite.",
+  "restartTour": "Ponovo pokreni vodič",
+  "gettingStarted": {
+    "title": "Početak rada",
+    "p1": "MicroCred vam omogućava da prikupljate i delite proverljive mikro-kredencijale. Svaki izdati kredencijal je upisan na blockchain i može biti nezavisno verifikovan.",
+    "p2": "Ispod ćete naći više detalja o svakom delu platforme. Koristite linkove \"Otvori …\" za brz prelazak na odgovarajuću stranicu."
+  },
+  "sections": {
+    "dashboard": {
+      "title": "Početna",
+      "linkLabel": "Otvori Početnu",
+      "body": "Početna stranica sa pregledom aktivnih kredencijala, prijava u toku, kredencijala koji uskoro ističu i javno deljenih kredencijala. Sadrži prečice ka najnovijim kredencijalima i prijavama."
+    },
+    "myCredentials": {
+      "title": "Moji kredencijali",
+      "linkLabel": "Otvori Moje kredencijale",
+      "body": "Svi vaši izdati kredencijali. Otvorite kredencijal da biste videli pune detalje, dokaze, potvrdu na blockchain-u (anchor transakcija), QR kod za verifikaciju i opcije javnog deljenja."
+    },
+    "credentialDetails": {
+      "title": "Detalji kredencijala",
+      "linkLabel": "Otvori Moje kredencijale",
+      "body": "Svaki kredencijal prikazuje status, izdavaoca, datume izdavanja i isteka, ocenu, veštine i ishode učenja. Možete videti detalje upisa na blockchain (hash transakcije, broj bloka, ugovor), dokaze podnete uz prijavu i QR kod za verifikaciju. Ako je kredencijal na čekanju, možete ga prihvatiti čime se pokreće upisivanje na blockchain ili ga odbiti uz obrazloženje za izdavaoca."
+    },
+    "applications": {
+      "title": "Prijave",
+      "linkLabel": "Otvori Prijave",
+      "body": "Pratite status prijave: Podneta → U pregledu → Dokazi prikupljeni → Verifikovano → Izdato. Ako je prijava Odbijena, možete prihvatiti odbijanje ili otvoriti \"Izmeni i ponovo pošalji\" da podnesete ispravljenu verziju. Izdavalac može i da obnovi datum isteka već izdatom kredencijalu."
+    },
+    "apply": {
+      "title": "Prijava za kredencijal",
+      "linkLabel": "Otvori Prijavu",
+      "body": "Pregledajte dostupne mikro-kredencijale po izdavaocu, oblasti ili nivou. Otvorite šablon, pregledajte uslove i dokaze koje treba priložiti, pa podnesite prijavu."
+    },
+    "profile": {
+      "title": "Javni profil",
+      "linkLabel": "Otvori Javni profil",
+      "body": "Vaš javni profil sa kredencijalima koje ste označili kao javne. Podelite link sa poslodavcima i institucijama — svaki kredencijal sadrži verifikaciju na blockchain-u."
+    },
+    "privacy": {
+      "title": "Podešavanja privatnosti",
+      "linkLabel": "Otvori Moje kredencijale",
+      "body": "Na svakoj stranici sa detaljima kredencijala možete kontrolisati šta se vidi na javnoj stranici za verifikaciju. Možete uključiti ili isključiti javnu vidljivost kredencijala u celosti, kao i pojedinačno prikazati ili sakriti izvor, ocenu, datum isteka, nivo, preduslove, supervizijske detalje i mogućnosti nadograđivanja. Ishodi učenja i dokumenti o obezbeđenju kvaliteta su uvek vidljivi svakome ko ima link za verifikaciju."
+    },
+    "notifications": {
+      "title": "Obaveštenja",
+      "linkLabel": "Otvori Obaveštenja",
+      "body": "Informacije o promenama statusa prijava, novim kredencijalima, isticanjima i porukama od izdavaoca."
+    },
+    "settings": {
+      "title": "Podešavanja",
+      "linkLabel": "Otvori Podešavanja",
+      "body": "Podešavanja naloga, bezbednost, izbor jezika i opcije obaveštenja."
+    }
+  }
+}

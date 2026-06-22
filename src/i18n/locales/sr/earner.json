@@ -1,0 +1,36 @@
+{
+  "dashboard": {
+    "title": "Dobrodošli, {{name}}",
+    "description": "Prijavite se za nove mikro-kredencijale, pratite svoje prijave i podelite svoja postignuća.",
+    "actions": {
+      "apply": "Prijavi se za kredencijal",
+      "publicProfile": "Javni profil"
+    },
+    "metrics": {
+      "active": "Aktivni kredencijali",
+      "pending": "Prijave u toku",
+      "expiring": "Uskoro ističu",
+      "public": "Javni kredencijali"
+    },
+    "recentCredentials": "Najnoviji kredencijali",
+    "recentApplications": "Najnovije prijave",
+    "emptyCredentials": "Još nema kredencijala.",
+    "emptyApplications": "Još nema prijava."
+  },
+  "settings": {
+    "title": "Podešavanja",
+    "description": "Upravljajte svojim nalogom.",
+    "about": {
+      "title": "O vama",
+      "description": "Kratak opis koji se prikazuje na vašem javnom profilu, pored podeljenih kredencijala.",
+      "label": "O meni",
+      "placeholder": "Recite posetiocima nešto o sebi — vaše obrazovanje, interesovanja, šta učite…",
+      "saved": "Opis je sačuvan",
+      "saveFailed": "Čuvanje nije uspelo"
+    },
+    "language": {
+      "title": "Podešavanje jezika",
+      "description": "Izabrani jezik se pamti u vašem profilu i primenjuje na svim uređajima."
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "actions": {
+    "save": "Sačuvaj",
+    "cancel": "Otkaži",
+    "close": "Zatvori",
+    "loading": "Učitavanje…",
+    "error": "Greška"
+  },
+  "language": {
+    "label": "Jezik",
+    "description": "Izaberite jezik koji se koristi u earner radnom prostoru, uključujući uputstvo i vodič kroz platformu.",
+    "en": "English",
+    "sr": "Srpski",
+    "updated": "Jezik je promenjen"
+  },
+  "role": {
+    "earner": "Polaznik",
+    "issuer": "Izdavalac",
+    "admin": "Administrator sistema"
+  },
+  "header": {
+    "switchRole": "Promeni ulogu",
+    "signOut": "Odjavi se",
+    "notifications": "Obaveštenja"
+  },
+  "sidebar": {
+    "groups": {
+      "workspace": "Radni prostor",
+      "sharing": "Nalog i podešavanja"
+    },
+    "earner": {
+      "dashboard": "Početna",
+      "credentials": "Moji kredencijali",
+      "applications": "Prijave",
+      "apply": "Prijavi se za kredencijal",
+      "profile": "Javni profil",
+      "notifications": "Obaveštenja",
+      "manual": "Uputstvo",
+      "settings": "Podešavanja"
+    }
+  },
+  "credentialLifecycle": {
+    "draft": "Nacrt",
+    "pending_earner_acceptance": "Čeka prihvatanje",
+    "rejected": "Odbijeno od polaznika",
+    "issued": "Izdato",
+    "revoked": "Opozvano",
+    "expired": "Isteklo",
+    "superseded": "Zamenjeno"
+  },
+  "credentialStatus": {
+    "active": "Aktivan",
+    "revoked": "Opozvan",
+    "expired": "Istekao",
+    "superseded": "Zamenjen",
+    "rejected": "Odbijen",
+    "pending_acceptance": "Čeka prihvatanje",
+    "issued": "Izdat"
+  },
+  "blockchain": {
+    "not_requested": "Nije zatraženo",
+    "queued": "U redu čekanja",
+    "submitting": "Šalje se",
+    "submitted": "Poslato",
+    "confirmed": "Potvrđeno",
+    "failed": "Neuspešno",
+    "cancelled": "Otkazano"
+  }
+}

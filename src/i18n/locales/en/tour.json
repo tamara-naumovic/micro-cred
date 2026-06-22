@@ -1,0 +1,49 @@
+{
+  "buttons": {
+    "next": "Next",
+    "back": "Back",
+    "done": "Done"
+  },
+  "earner": {
+    "welcome": {
+      "title": "Welcome to MicroCred!",
+      "description": "A quick tour of the key parts of the platform. You can skip it and re-launch it later from the <b>Manual</b> page."
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Overview of your credentials, applications and notifications."
+    },
+    "metrics": {
+      "title": "Your key metrics",
+      "description": "Active credentials, pending applications and credentials expiring soon."
+    },
+    "myCredentials": {
+      "title": "My Credentials",
+      "description": "All of your issued credentials — details, blockchain proof and sharing options."
+    },
+    "applications": {
+      "title": "Applications",
+      "description": "Track application status (In review, Evidence collected, Verified, Issued, Rejected)."
+    },
+    "apply": {
+      "title": "Apply for Credential",
+      "description": "Browse available micro-credential templates and submit an application."
+    },
+    "profile": {
+      "title": "Public Profile",
+      "description": "Your public profile that you can share with employers and institutions."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Updates on status changes, expirations and newly issued credentials."
+    },
+    "manual": {
+      "title": "Manual",
+      "description": "Detailed guidance for every part of the platform — always available here."
+    },
+    "done": {
+      "title": "You're all set!",
+      "description": "Good luck collecting your credentials. You can re-launch this tour anytime from the Manual page."
+    }
+  }
+}
