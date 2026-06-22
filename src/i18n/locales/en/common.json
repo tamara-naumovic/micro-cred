@@ -30,13 +30,36 @@
   "sidebar": {
     "groups": {
       "workspace": "Workspace",
-      "sharing": "Account and settings"
+      "sharing": "Account and settings",
+      "overview": "Overview",
+      "microcredentials": "Micro-credentials",
+      "issuance": "Issuance",
+      "account": "Account and settings",
+      "accountShort": "Account"
     },
     "earner": {
       "dashboard": "Dashboard",
       "credentials": "My Credentials",
       "applications": "Applications",
       "apply": "Apply for Credential",
+      "profile": "Public Profile",
+      "notifications": "Notifications",
+      "manual": "Manual",
+      "settings": "Settings"
+    },
+    "issuer": {
+      "overview": "Overview",
+      "templates": "Micro-credentials",
+      "templatesStaff": "My Micro-credentials",
+      "templateNew": "Create Micro-credential",
+      "staff": "Staff",
+      "earners": "Earners",
+      "requests": "Issuance Requests",
+      "issue": "Direct Issuance",
+      "bulk": "Bulk Issuance",
+      "credentials": "Issued Credentials",
+      "revocations": "Revocations",
+      "anchoring": "Blockchain Queue",
       "profile": "Public Profile",
       "notifications": "Notifications",
       "manual": "Manual",
