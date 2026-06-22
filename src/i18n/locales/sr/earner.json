@@ -265,7 +265,7 @@
     "downloadFailed": "Preuzimanje nije uspelo",
     "pdf": {
       "label": "Preuzmi PDF",
-      "description": "Sertifikat mikrokredencijala čitljiv ljudima."
+      "description": "Sertifikat mikrokredencijala."
     },
     "json": {
       "label": "Preuzmi JSON mikrokredencijala",
