@@ -1,1 +1,7 @@
-{}
+{
+  "notifications": {
+    "headTitle": "Obaveštenja — MicroCred",
+    "title": "Obaveštenja",
+    "description": "Informacije o prijavama, izdavanju kredencijala i dodelama."
+  }
+}

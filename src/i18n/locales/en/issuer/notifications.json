@@ -1,1 +1,7 @@
-{}
+{
+  "notifications": {
+    "headTitle": "Notifications — MicroCred",
+    "title": "Notifications",
+    "description": "Updates about applications, issuance and assignments."
+  }
+}
