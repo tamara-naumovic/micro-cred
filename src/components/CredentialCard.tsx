@@ -34,6 +34,7 @@ export function CredentialCard({
   shareHref?: string;
   shareable?: boolean;
 }) {
+  const { t } = useTranslation("common");
   const c = credential;
   const showPending = c.status === "active" && c.blockchain?.chainStatus;
   return (
@@ -58,7 +59,7 @@ export function CredentialCard({
       <CardContent className="flex-1 space-y-3 text-sm">
         <div className="flex flex-wrap gap-1">
           <Badge variant="secondary" className="capitalize">
-            {c.source === "formal" ? "Formal" : "Non-formal"}
+            {c.source === "formal" ? t("source.formal") : t("source.non_formal")}
           </Badge>
           {c.level !== "N/A" && <Badge variant="outline">{c.level}</Badge>}
           {c.ects && <Badge variant="outline">{c.ects} ECTS</Badge>}
@@ -74,21 +75,21 @@ export function CredentialCard({
         )}
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <CalendarClock className="h-3 w-3" />
-          Issued {new Date(c.issuedAt).toLocaleDateString()}
-          {c.expiresAt && <> · expires {new Date(c.expiresAt).toLocaleDateString()}</>}
+          {t("credentialCard.issued")} {new Date(c.issuedAt).toLocaleDateString()}
+          {c.expiresAt && <> · {t("credentialCard.expires")} {new Date(c.expiresAt).toLocaleDateString()}</>}
         </div>
       </CardContent>
       <CardFooter className="gap-2">
         {detailHref && (
           <Button asChild variant="outline" size="sm">
-            <Link to={detailHref}>Details</Link>
+            <Link to={detailHref}>{t("credentialCard.details")}</Link>
           </Button>
         )}
         {shareable && (
           <ShareDialog
             url={c.verificationLink}
             title={c.title}
-            summary={`Verifiable micro-credential issued by ${c.issuerName}.`}
+            summary={t("credentialCard.shareSummary", { issuer: c.issuerName })}
             qrId={`qr-card-${c.id}`}
             certification={{
               name: c.title,
@@ -99,7 +100,7 @@ export function CredentialCard({
             }}
             trigger={
               <Button variant="ghost" size="sm">
-                <Share2 className="mr-1 h-3 w-3" /> Share
+                <Share2 className="mr-1 h-3 w-3" /> {t("credentialCard.share")}
               </Button>
             }
           />
@@ -108,3 +109,4 @@ export function CredentialCard({
     </Card>
   );
 }
+
