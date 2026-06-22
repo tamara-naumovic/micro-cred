@@ -134,7 +134,7 @@ function TemplateSection({
           <Link
             key={t.id}
             to="/issuers/$id_/microcredential-templates/$templateId"
-            params={{ id: issuerId, templateId: t.id }}
+            params={{ id_: issuerId, templateId: t.id }}
             className="block transition hover:-translate-y-0.5"
           >
             <Card className="h-full hover:border-primary/40 hover:shadow-sm">
