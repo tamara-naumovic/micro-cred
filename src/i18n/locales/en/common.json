@@ -138,6 +138,78 @@
     "tooShort": "New password must be at least 8 characters.",
     "mismatch": "Passwords do not match.",
     "updated": "Password updated successfully."
+  },
+  "templateLevel": {
+    "Foundation": "Foundation",
+    "Intermediate": "Intermediate",
+    "Advanced": "Advanced",
+    "Expert": "Expert",
+    "N/A": "N/A"
+  },
+  "templateParticipation": {
+    "online": "Online",
+    "onsite": "Onsite",
+    "hybrid": "Hybrid",
+    "blended": "Blended",
+    "self_paced": "Self-paced"
+  },
+  "provision": {
+    "displayName": "Display name",
+    "email": "Email",
+    "modePassword": "Set password",
+    "modeInvite": "Send invite email",
+    "tempPassword": "Temporary password",
+    "tempPasswordPlaceholder": "At least 6 characters",
+    "tempPasswordHint": "Share this with the user — they can change it after first login.",
+    "inviteHint": "The user receives an invite email with a link to set their password and log in."
+  },
+  "bulkUsers": {
+    "title": "Bulk add via CSV",
+    "hint": "Columns: <code>name, email, password</code> (one per line). Header row is optional.",
+    "placeholder": "Jane Doe, jane@uni.org, Pa$$w0rd\nJohn Roe, john@uni.org, Pa$$w0rd",
+    "uploadCsv": "Upload CSV file",
+    "counts": "{{valid}} valid · {{invalid}} invalid",
+    "addLabel_staff": "Add {{count}} staff",
+    "addLabel_earners": "Add {{count}} earners",
+    "moreErrors": "…and {{count}} more",
+    "errors": {
+      "noValidRows": "No valid rows to submit",
+      "expectedColumns": "Row {{row}}: expected \"name, email, password\"",
+      "missingField": "Row {{row}}: missing field",
+      "invalidEmail": "Row {{row}}: invalid email \"{{email}}\"",
+      "shortPassword": "Row {{row}}: password must be at least 6 characters",
+      "addFailed": "Bulk add failed"
+    },
+    "toasts": {
+      "added_staff": "{{count}} staff added",
+      "added_earners": "{{count}} earners added",
+      "partial": "{{created}} added, {{failed}} failed"
+    }
+  },
+  "issuanceResult": {
+    "title": "Issuance results",
+    "description": "Credentials are sent to each earner for acceptance. They are not anchored on the blockchain until the earner accepts.",
+    "sent": "{{count}} sent for acceptance",
+    "notSentCount": "{{count}} not sent",
+    "colRecipient": "Recipient",
+    "colCredential": "Credential",
+    "colBlockchain": "Blockchain",
+    "colAction": "Action",
+    "awaiting": "Awaiting acceptance",
+    "notIssued": "Not issued",
+    "view": "View",
+    "done": "Done"
+  },
+  "anchorMode": {
+    "title": "Blockchain registration",
+    "descTemplate": "Publishing happens immediately; anchoring is a separate, optional blockchain step.",
+    "descCredential": "Credentials are issued immediately and remain valid regardless of blockchain status.",
+    "now": "Issue and anchor now",
+    "nowDescTemplate": "Submit each template's proof transaction to Bloxberg immediately.",
+    "nowDescCredential": "Submit each credential's proof transaction to Bloxberg immediately.",
+    "later": "Issue now, anchor later",
+    "laterDesc": "Records are queued for blockchain anchoring on the next worker run.",
+    "unavailable": "Bloxberg integration is not currently available. Records will be queued and can be anchored later."
   }
 }
 

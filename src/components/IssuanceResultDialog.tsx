@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { XCircle, Clock, ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ export function IssuanceResultDialog({
   results: IssuanceResultRow[];
   onDone?: () => void;
 }) {
+  const { t } = useTranslation();
   const sent = results.filter(
     (r) => r.credentialStatus === "issued" || r.credentialStatus === "pending_earner_acceptance",
   ).length;
@@ -46,18 +48,18 @@ export function IssuanceResultDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Issuance results</DialogTitle>
+          <DialogTitle>{t("issuanceResult.title")}</DialogTitle>
         </DialogHeader>
         <p className="mb-2 text-sm text-muted-foreground">
-          Credentials are sent to each earner for acceptance. They are not anchored on the blockchain until the earner accepts.
+          {t("issuanceResult.description")}
         </p>
         <div className="mb-3 flex gap-2 text-sm">
           <Badge variant="outline" className="bg-success/10 text-success-foreground border-success/30">
-            {sent} sent for acceptance
+            {t("issuanceResult.sent", { count: sent })}
           </Badge>
           {failed > 0 && (
             <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
-              {failed} not sent
+              {t("issuanceResult.notSentCount", { count: failed })}
             </Badge>
           )}
         </div>
@@ -65,10 +67,10 @@ export function IssuanceResultDialog({
           <table className="w-full text-sm">
             <thead className="bg-muted text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-3 py-2 text-left">Recipient</th>
-                <th className="px-3 py-2 text-left">Credential</th>
-                <th className="px-3 py-2 text-left">Blockchain</th>
-                <th className="px-3 py-2 text-left">Action</th>
+                <th className="px-3 py-2 text-left">{t("issuanceResult.colRecipient")}</th>
+                <th className="px-3 py-2 text-left">{t("issuanceResult.colCredential")}</th>
+                <th className="px-3 py-2 text-left">{t("issuanceResult.colBlockchain")}</th>
+                <th className="px-3 py-2 text-left">{t("issuanceResult.colAction")}</th>
               </tr>
             </thead>
             <tbody>
@@ -85,11 +87,11 @@ export function IssuanceResultDialog({
                     <td className="px-3 py-2">
                       {sentOk ? (
                         <span className="inline-flex items-center gap-1 text-warning-foreground">
-                          <Clock className="h-3.5 w-3.5" />Awaiting acceptance
+                          <Clock className="h-3.5 w-3.5" />{t("issuanceResult.awaiting")}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-destructive">
-                          <XCircle className="h-3.5 w-3.5" />Not issued
+                          <XCircle className="h-3.5 w-3.5" />{t("issuanceResult.notIssued")}
                         </span>
                       )}
                     </td>
@@ -103,7 +105,7 @@ export function IssuanceResultDialog({
                       <div className="flex flex-wrap gap-1">
                         {r.credentialId && (
                           <Button size="sm" variant="outline" asChild>
-                            <Link to="/issuer/credentials">View</Link>
+                            <Link to="/issuer/credentials">{t("issuanceResult.view")}</Link>
                           </Button>
                         )}
                         {txUrl && (
@@ -122,7 +124,7 @@ export function IssuanceResultDialog({
           </table>
         </div>
         <DialogFooter>
-          <Button onClick={() => { onOpenChange(false); onDone?.(); }}>Done</Button>
+          <Button onClick={() => { onOpenChange(false); onDone?.(); }}>{t("issuanceResult.done")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
