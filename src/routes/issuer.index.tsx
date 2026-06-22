@@ -122,17 +122,18 @@ function Overview() {
   } = useStore();
   const [templateFilter, setTemplateFilter] = useState<string>("all");
 
-  if (!activeUser) return null;
-  const orgId = activeUser.organizationId;
-  const orgName = activeUser.organization ?? "Your institution";
-  const isStaff = activeUser.subRole === "staff";
-
   useEffect(() => {
     if (!activeUser || activeUser.role !== "issuer") return;
     const sub = activeUser.subRole ?? "admin";
     const t = window.setTimeout(() => startIssuerTour(activeUser.id, sub), 400);
     return () => window.clearTimeout(t);
   }, [activeUser]);
+
+  if (!activeUser) return null;
+  const orgId = activeUser.organizationId;
+  const orgName = activeUser.organization ?? "Your institution";
+  const isStaff = activeUser.subRole === "staff";
+
 
   const assignedIds = useMemo(
     () =>
