@@ -52,6 +52,14 @@ const SECTIONS: Section[] = [
       "All of your issued credentials. Open a credential to see the full details, evidence, blockchain proof (anchor transaction), verification QR code and public sharing options.",
   },
   {
+    icon: Award,
+    title: "Credential Details",
+    to: "/earner/credentials",
+    linkLabel: "Open My Credentials",
+    body:
+      "Each credential shows its status, issuer, issue and expiry dates, grade, skills and learning outcomes. You can view blockchain anchoring details (transaction hash, block number, contract), evidence submitted during the application, and a verification QR code. If a credential is pending, you can accept it to activate anchoring or reject it with a reason for the issuer.",
+  },
+  {
     icon: ClipboardList,
     title: "Applications",
     to: "/earner/applications",
@@ -74,6 +82,14 @@ const SECTIONS: Section[] = [
     linkLabel: "Open Public Profile",
     body:
       "Your public profile listing the credentials you have marked as public. Share the link with employers and institutions — every credential includes on-chain verification.",
+  },
+  {
+    icon: Award,
+    title: "Privacy Settings",
+    to: "/earner/credentials",
+    linkLabel: "Open My Credentials",
+    body:
+      "On every credential detail page you can control what appears on the public verification page. Toggle whether the credential is publicly visible at all, and individually show or hide the source, grade, expiry date, level, prerequisites, supervision details and stackability. Learning outcomes and quality-assurance documents are always visible to anyone with the verification link.",
   },
   {
     icon: Bell,
