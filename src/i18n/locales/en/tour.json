@@ -45,5 +45,105 @@
       "title": "You're all set!",
       "description": "Good luck collecting your credentials. You can re-launch this tour anytime from the Manual page."
     }
+  },
+  "issuer": {
+    "welcome": {
+      "title": "Welcome to MicroCred for institutions!",
+      "description": "A quick tour of the key parts of the platform. You can skip it and re-launch it later from the <b>Manual</b> page."
+    },
+    "overview": {
+      "title": "Overview",
+      "description": "Institution dashboard with KPIs, pending actions, blockchain status and recent activity."
+    },
+    "metrics": {
+      "title": "Key metrics",
+      "description": "Published micro-credentials, total issued, active learners and staff, pending actions and blockchain confirmation rate."
+    },
+    "templatesAdmin": {
+      "title": "Micro-credentials",
+      "description": "Catalog of all micro-credential templates for your institution — create, edit and publish."
+    },
+    "templatesStaff": {
+      "title": "My Micro-credentials",
+      "description": "Micro-credential templates you are assigned to as staff."
+    },
+    "templateNew": {
+      "title": "Create Micro-credential",
+      "description": "Define a new template — learning outcomes, level, evidence requirements, supervisors and quality-assurance documents."
+    },
+    "staff": {
+      "title": "Staff",
+      "description": "Manage staff members and assign them to specific micro-credentials they can issue."
+    },
+    "earners": {
+      "title": "Earners",
+      "description": "Directory of learners who have applied for or received credentials from your institution."
+    },
+    "requests": {
+      "title": "Issuance Requests",
+      "description": "Incoming applications from earners. Review evidence, request changes, verify and issue."
+    },
+    "issue": {
+      "title": "Direct Issuance",
+      "description": "Issue a credential to a single earner without an application — useful for invited recipients."
+    },
+    "bulk": {
+      "title": "Bulk Issuance",
+      "description": "Upload a CSV to issue the same micro-credential to many earners at once."
+    },
+    "credentials": {
+      "title": "Issued Credentials",
+      "description": "All credentials your institution has issued, with search, filters and blockchain status."
+    },
+    "revocations": {
+      "title": "Revocations",
+      "description": "Revoke previously issued credentials with a reason — the revocation is anchored on chain."
+    },
+    "anchoring": {
+      "title": "Blockchain Queue",
+      "description": "Anchoring status for issued credentials: pending, submitted, confirmed or failed. Retry failed anchors here."
+    },
+    "profile": {
+      "title": "Public Profile",
+      "description": "Public page of your institution that learners and employers can visit to verify credentials."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Updates on new applications, evidence submissions, anchoring failures and other events."
+    },
+    "manual": {
+      "title": "Manual",
+      "description": "Detailed guidance for every part of the platform — always available here."
+    },
+    "done": {
+      "title": "You're all set!",
+      "description": "You can re-launch this tour anytime from the Manual page."
+    },
+    "credentialsPage": {
+      "intro": {
+        "title": "Issued Credentials",
+        "description": "All credentials your institution has issued. This quick tour highlights the actions you can take from this page."
+      },
+      "filters": {
+        "title": "Search & filters",
+        "description": "Search by earner, title or credential ID, and narrow the list by micro-credential template or lifecycle status (issued, pending acceptance, rejected, revoked, expired, superseded, draft)."
+      },
+      "lifecycle": {
+        "title": "Lifecycle",
+        "description": "Shows the current state of each credential. Rejected credentials also display the earner's reason underneath."
+      },
+      "blockchain": {
+        "title": "Blockchain status",
+        "description": "Anchoring status of the credential on the blockchain: pending, submitted, confirmed or failed."
+      },
+      "actions": {
+        "title": "Available actions",
+        "description": "Per-row actions depend on the lifecycle:<br/><b>Edit & resend</b> — for <i>rejected</i> credentials: update grade and/or expiry, then resend to the earner for acceptance.<br/><b>Accept rejection</b> — permanently delete a rejected credential.<br/><b>Renew expiry</b> — for <i>issued</i> or <i>expired</i> credentials with an expiry date: walk through review, evidence and verification, then issue a new expiry on chain (no earner acceptance needed)."
+      },
+      "done": {
+        "title": "You're all set!",
+        "description": "You can re-launch this tour anytime from the <b>Manual</b> page."
+      }
+    }
   }
 }

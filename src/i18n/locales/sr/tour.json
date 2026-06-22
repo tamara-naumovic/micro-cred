@@ -45,5 +45,105 @@
       "title": "Spremni ste!",
       "description": "Srećno sa prikupljanjem kredencijala. Ovaj vodič možete ponovo pokrenuti sa stranice Uputstvo."
     }
+  },
+  "issuer": {
+    "welcome": {
+      "title": "Dobrodošli na MicroCred za institucije!",
+      "description": "Kratak vodič kroz ključne delove platforme. Možete ga preskočiti i ponovo pokrenuti kasnije sa stranice <b>Uputstvo</b>."
+    },
+    "overview": {
+      "title": "Pregled",
+      "description": "Kontrolna tabla institucije sa ključnim pokazateljima, akcijama na čekanju, statusom blockchain-a i nedavnim aktivnostima."
+    },
+    "metrics": {
+      "title": "Ključni pokazatelji",
+      "description": "Objavljeni mikrokredencijali, ukupno izdato, aktivni nosioci i zaposleni, akcije na čekanju i stopa blockchain potvrda."
+    },
+    "templatesAdmin": {
+      "title": "Mikrokredencijali",
+      "description": "Katalog svih šablona mikrokredencijala vaše institucije — kreirajte, menjajte i objavljujte."
+    },
+    "templatesStaff": {
+      "title": "Moji mikrokredencijali",
+      "description": "Šabloni mikrokredencijala na kojima ste dodeljeni kao zaposleni."
+    },
+    "templateNew": {
+      "title": "Kreiraj mikrokredencijal",
+      "description": "Definišite novi šablon — ishode učenja, nivo, zahteve za dokazima, supervizore i dokumente o obezbeđenju kvaliteta."
+    },
+    "staff": {
+      "title": "Zaposleni",
+      "description": "Upravljajte zaposlenima i dodelite ih konkretnim mikrokredencijalima koje mogu da izdaju."
+    },
+    "earners": {
+      "title": "Nosioci",
+      "description": "Imenik polaznika koji su se prijavili ili dobili kredencijale od vaše institucije."
+    },
+    "requests": {
+      "title": "Zahtevi za izdavanje",
+      "description": "Dolazne prijave nosilaca. Pregledajte dokaze, tražite izmene, verifikujte i izdajte."
+    },
+    "issue": {
+      "title": "Direktno izdavanje",
+      "description": "Izdajte kredencijal jednom nosiocu bez prijave — korisno za pozvane primaoce."
+    },
+    "bulk": {
+      "title": "Grupno izdavanje",
+      "description": "Otpremite CSV da biste izdali isti mikrokredencijal većem broju nosilaca odjednom."
+    },
+    "credentials": {
+      "title": "Izdati kredencijali",
+      "description": "Svi kredencijali koje je vaša institucija izdala — pretraga, filteri i blockchain status."
+    },
+    "revocations": {
+      "title": "Opozivi",
+      "description": "Opozovite prethodno izdate kredencijale uz obrazloženje — opoziv se upisuje na blockchain."
+    },
+    "anchoring": {
+      "title": "Red za blockchain",
+      "description": "Status upisa izdatih kredencijala na blockchain: na čekanju, poslato, potvrđeno ili neuspešno. Ponovo pokrenite neuspele upise ovde."
+    },
+    "profile": {
+      "title": "Javni profil",
+      "description": "Javna stranica vaše institucije koju nosioci i poslodavci mogu da posete radi verifikacije kredencijala."
+    },
+    "notifications": {
+      "title": "Obaveštenja",
+      "description": "Informacije o novim prijavama, podnetim dokazima, neuspelim upisima na blockchain i drugim događajima."
+    },
+    "manual": {
+      "title": "Uputstvo",
+      "description": "Detaljno objašnjenje svakog dela platforme — uvek dostupno ovde."
+    },
+    "done": {
+      "title": "Spremni ste!",
+      "description": "Ovaj vodič možete ponovo pokrenuti sa stranice Uputstvo."
+    },
+    "credentialsPage": {
+      "intro": {
+        "title": "Izdati kredencijali",
+        "description": "Svi kredencijali koje je vaša institucija izdala. Ovaj kratak vodič ističe akcije koje su vam dostupne na ovoj stranici."
+      },
+      "filters": {
+        "title": "Pretraga i filteri",
+        "description": "Pretražujte po nosiocu, naslovu ili ID-u kredencijala, i sužavajte listu po šablonu mikrokredencijala ili statusu životnog ciklusa (izdato, čeka prihvatanje, odbijeno, opozvano, isteklo, zamenjeno, nacrt)."
+      },
+      "lifecycle": {
+        "title": "Životni ciklus",
+        "description": "Prikazuje trenutno stanje svakog kredencijala. Za odbijene kredencijale ispod se vidi i razlog koji je naveo nosilac."
+      },
+      "blockchain": {
+        "title": "Blockchain status",
+        "description": "Status upisa kredencijala na blockchain: na čekanju, poslato, potvrđeno ili neuspešno."
+      },
+      "actions": {
+        "title": "Dostupne akcije",
+        "description": "Akcije po redu zavise od životnog ciklusa:<br/><b>Izmeni i pošalji ponovo</b> — za <i>odbijene</i> kredencijale: ažurirajte ocenu i/ili rok važenja, pa pošaljite nosiocu na prihvatanje.<br/><b>Prihvati odbijanje</b> — trajno obrišite odbijeni kredencijal.<br/><b>Produži rok važenja</b> — za <i>izdate</i> ili <i>istekle</i> kredencijale sa rokom važenja: prođite kroz pregled, dokaze i verifikaciju, pa upišite novi rok na blockchain (bez potrebe za prihvatanjem od nosioca)."
+      },
+      "done": {
+        "title": "Spremni ste!",
+        "description": "Ovaj vodič možete ponovo pokrenuti sa stranice <b>Uputstvo</b>."
+      }
+    }
   }
 }
