@@ -24,9 +24,8 @@ export function LanguageSwitcher() {
     if (activeUser) {
       try {
         await saveLang({ data: { language: lang } });
-        toast.success(t("language.updated"));
-      } catch (e) {
-        toast.error((e as Error).message || "Failed");
+      } catch {
+        // silently ignore
       }
     }
   };
