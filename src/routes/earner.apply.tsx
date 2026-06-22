@@ -125,8 +125,23 @@ function Apply() {
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground">Issued by {t.issuerName}</div>
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      size="sm"
+                      disabled={!!blocked}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (blocked) return;
+                        setTemplateId(t.id);
+                        setStep(2);
+                      }}
+                    >
+                      Continue
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
+
             );
           })}
           {active.length === 0 && (
