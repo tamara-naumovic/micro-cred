@@ -1,7 +1,7 @@
 {
   "dashboard": {
     "title": "Dobrodošli, {{name}}",
-    "description": "Prijavite se za nove mikro-kredencijale, pratite svoje prijave i podelite svoja postignuća.",
+    "description": "Prijavite se za nove mikrokredencijale, pratite svoje prijave i podelite svoja postignuća.",
     "actions": {
       "apply": "Prijavi se za kredencijal",
       "publicProfile": "Javni profil"
@@ -31,6 +31,230 @@
     "language": {
       "title": "Podešavanje jezika",
       "description": "Izabrani jezik se pamti u vašem profilu i primenjuje na svim uređajima."
+    }
+  },
+  "credentials": {
+    "title": "Moji kredencijali",
+    "description": "Pregledajte i prihvatite nove kredencijale, pa ih čuvajte u svom novčaniku.",
+    "sourceLabel": "Vrsta:",
+    "searchPlaceholder": "Pretraga po nazivu kredencijala ili veštini",
+    "allIssuers": "Svi izdavaoci",
+    "tabs": {
+      "pending": "Čeka prihvatanje",
+      "all": "Svi",
+      "active": "Aktivni",
+      "rejected": "Odbijeni",
+      "expired": "Istekli",
+      "revoked": "Opozvani"
+    },
+    "pendingBanner": "Pregledajte svaki kredencijal ispod. Kada ga prihvatite, kredencijal postaje važeći i upisuje se na blockchain. Ako nešto nije u redu, možete ga odbiti i navesti razlog izdavaocu.",
+    "empty": "Nema kredencijala u ovom prikazu.",
+    "pendingCard": {
+      "title": "Čeka vaše prihvatanje",
+      "issuedBy": "Izdao {{name}}",
+      "issued": "Izdato",
+      "expires": "Ističe",
+      "grade": "Ocena",
+      "level": "Nivo",
+      "accept": "Prihvati",
+      "reject": "Odbij",
+      "viewDetails": "Pogledaj detalje"
+    },
+    "rejectedCard": {
+      "title": "Odbijen",
+      "issuedBy": "Izdao {{name}}",
+      "yourReason": "Vaš razlog:",
+      "waiting": "Čeka se da izdavalac izmeni kredencijal i ponovo ga pošalje, ili prihvati odbijanje."
+    },
+    "rejectDialog": {
+      "title": "Odbij kredencijal",
+      "description": "Obrazložite izdavaocu zašto odbijate <strong>{{title}}</strong>. Može da izmeni detalje izdavanja i ponovo pošalje, ili da prihvati odbijanje.",
+      "placeholder": "npr. Ocena nije tačna — trebalo bi da bude 9/10.",
+      "confirm": "Odbij kredencijal",
+      "reasonRequired": "Molimo navedite razlog"
+    },
+    "toasts": {
+      "accepted": "Kredencijal je prihvaćen",
+      "acceptedPending": "Potvrda na blockchain-u je u toku — pojaviće se kada bude upisana.",
+      "rejected": "Kredencijal je odbijen",
+      "couldNotAccept": "Prihvatanje nije uspelo",
+      "couldNotReject": "Odbijanje nije uspelo"
+    }
+  },
+  "credentialDetail": {
+    "loading": "Učitavanje…",
+    "back": "Nazad",
+    "rejectedBanner": {
+      "title": "Odbili ste ovaj kredencijal.",
+      "reason": "Razlog: {{reason}}",
+      "waiting": "Čeka se da izdavalac izmeni i ponovo pošalje, ili da prihvati odbijanje."
+    },
+    "acceptance": {
+      "title": "Pregledajte i prihvatite ovaj kredencijal",
+      "description": "Ovaj kredencijal još uvek nije važeći i nije upisan na blockchain. Kada ga prihvatite, postaje važeći u vašem novčaniku i automatski se upisuje na blockchain. Ako nešto nije u redu, odbijte ga uz obrazloženje za izdavaoca.",
+      "acceptBtn": "Prihvati kredencijal",
+      "rejectBtn": "Odbij",
+      "demoNotice": "Demo kredencijal — prihvatanje je onemogućeno."
+    },
+    "rejectDialog": {
+      "title": "Odbij kredencijal",
+      "description": "Obrazložite izdavaocu zašto odbijate ovaj kredencijal. Može da izmeni detalje izdavanja i ponovo pošalje, ili da prihvati vaše odbijanje.",
+      "placeholder": "npr. Ocena nije tačna — trebalo bi da bude 9/10.",
+      "confirm": "Odbij kredencijal"
+    },
+    "fields": {
+      "status": "Status",
+      "issuer": "Izdavalac",
+      "courseProvider": "Provajder kursa",
+      "issued": "Izdato",
+      "expires": "Ističe",
+      "grade": "Ocena",
+      "outcomes": "Ishodi učenja",
+      "skills": "Veštine"
+    },
+    "shareCard": {
+      "title": "Deljenje i verifikacija",
+      "share": "Podeli",
+      "copy": "Kopiraj",
+      "open": "Otvori",
+      "summary": "Proverljivi mikrokredencijal koji je izdao {{name}}.",
+      "linkCopied": "Link je kopiran",
+      "copyDenied": "Kopiranje nije dozvoljeno u ovom pregledu — selektujte link ručno."
+    },
+    "visibility": {
+      "title": "Vidljivost",
+      "demoNotice": "Demo kredencijal — prekidači menjaju samo vaš lokalni prikaz.",
+      "liveNotice": "Promene se odmah primenjuju na javnoj stranici za verifikaciju.",
+      "isPublic": "Javno proverljiv",
+      "showSource": "Prikaži vrstu učenja",
+      "showGrade": "Prikaži ocenu",
+      "showExpiry": "Prikaži datum isteka",
+      "showLevel": "Prikaži nivo",
+      "showPrerequisites": "Prikaži preduslove",
+      "showSupervision": "Prikaži superviziju i verifikaciju identiteta",
+      "showIntegration": "Prikaži integraciju / mogućnost nadograđivanja",
+      "footer": "Ishodi učenja i dokumenti o obezbeđenju kvaliteta uvek su vidljivi na javnoj stranici za verifikaciju.",
+      "saveFailed": "Čuvanje nije uspelo"
+    }
+  },
+  "applications": {
+    "title": "Moje prijave",
+    "description": "Pratite svaku prijavu za kredencijal koju ste podneli.",
+    "newApplication": "Nova prijava",
+    "listTitle": "Prijave ({{count}})",
+    "empty": "Još nema prijava.",
+    "lifecycle": "Životni ciklus",
+    "lifecycleEmpty": "Izaberite prijavu da biste videli njenu istoriju."
+  },
+  "apply": {
+    "title": "Prijava za mikrokredencijal",
+    "description": "Izaberite šablon kredencijala i podnesite prijavu. Izdavalac sprovodi celokupnu internu verifikaciju.",
+    "steps": {
+      "choose": "Izaberi šablon",
+      "review": "Pregled i prijava"
+    },
+    "filters": {
+      "allIssuers": "Svi izdavaoci",
+      "allTypes": "Sve vrste",
+      "allLevels": "Svi nivoi"
+    },
+    "card": {
+      "alreadyApplied": "Već prijavljeno",
+      "alreadyIssued": "Već izdato",
+      "issuedBy": "Izdao {{name}}",
+      "seeMore": "Više informacija",
+      "continue": "Dalje"
+    },
+    "empty": {
+      "notLinked": "Još niste povezani ni sa jednom institucijom. Kontaktirajte administratora platforme da bi vas povezao sa institucijom.",
+      "noTemplates": "Trenutno nema dostupnih mikrokredencijala iz vaše institucije.",
+      "noMatches": "Nijedan mikrokredencijal ne odgovara trenutnim filterima."
+    },
+    "review": {
+      "title": "Pregled i prijava",
+      "skills": "Veštine",
+      "info": "Nakon što se prijavite, izdavalac će interno verifikovati vaše učešće i sprovesti prijavu kroz životni ciklus. Status možete pratiti na stranici Prijave."
+    },
+    "actions": {
+      "back": "Nazad",
+      "apply": "Prijavi se"
+    },
+    "toasts": {
+      "blocked": "Već imate aktivnu prijavu ili kredencijal za ovaj šablon.",
+      "submitted": "Prijava je poslata"
+    }
+  },
+  "profile": {
+    "title": "Javni profil",
+    "description": "Jedinstvena stranica koja okuplja sve kredencijale koje ste označili kao javne. Podelite je na LinkedIn-u, putem linka ili QR koda.",
+    "shareBtn": "Podeli profil",
+    "shareSummary": "Javni profil mikrokredencijala korisnika {{name}} na MicroCred-u.",
+    "shareTitle": "{{name}} — Verifikovani kredencijali",
+    "publicBadge": "{{count}} javnih",
+    "totalBadge": "{{count}} ukupno",
+    "preview": "Pregled",
+    "howItWorks": "Kako deljenje funkcioniše",
+    "howIt1": "Pojedinačno označavate kredencijale kao javne sa stranice sa detaljima svakog kredencijala.",
+    "howIt2": "Vaš javni profil prikazuje samo kredencijale koje ste izričito uključili.",
+    "howIt3": "Delite putem direktnog linka, LinkedIn objave ili QR koda za preuzimanje.",
+    "publicCredentials": "Javni kredencijali",
+    "publicCount": "{{visible}} od {{total}} vidljivo",
+    "emptyPublic": "Još niste označili ni jedan kredencijal kao javan. Otvorite kredencijal i uključite \"Javno proverljiv\"."
+  },
+  "notifications": {
+    "title": "Obaveštenja",
+    "description": "Informacije o vašim kredencijalima, prijavama i institucijama.",
+    "count_one": "{{count}} obaveštenje",
+    "count_few": "{{count}} obaveštenja",
+    "count_other": "{{count}} obaveštenja",
+    "unread": "{{count}} nepročitano",
+    "markAllRead": "Označi sve kao pročitano",
+    "empty": "Još nema obaveštenja.",
+    "timeAgo": {
+      "secs": "pre {{n}}s",
+      "mins": "pre {{n}}m",
+      "hours": "pre {{n}}h",
+      "days": "pre {{n}}d"
+    },
+    "unreadAria": "Nepročitano"
+  },
+  "templateDetail": {
+    "notFound": "Mikrokredencijal nije pronađen",
+    "back": "Nazad",
+    "backToApply": "Nazad na prijavu",
+    "specification": "Specifikacija",
+    "fields": {
+      "outcomes": "Ishodi učenja",
+      "skills": "Veštine",
+      "assessment": "Provera znanja",
+      "qualityAssurance": "Obezbeđenje kvaliteta",
+      "prerequisites": "Preduslovi",
+      "supervision": "Supervizija i verifikacija identiteta",
+      "stackability": "Integracija / Mogućnost nadograđivanja",
+      "expiry": "Istek"
+    },
+    "noPrerequisites": "Nema preduslova",
+    "noDocs": "Nije priložen ni jedan dokument.",
+    "expiresOn": "Ističe {{date}}",
+    "doesNotExpire": "Ne ističe",
+    "couldNotOpen": "Nije moguće otvoriti dokument",
+    "qa": {
+      "internal": "Interno",
+      "external": "Eksterno",
+      "internal_and_external": "Interno i eksterno",
+      "other": "Drugo",
+      "not_specified": "Nije navedeno"
+    },
+    "supervisionLabel": {
+      "unsupervised_no_id": "Bez supervizije i bez verifikacije identiteta",
+      "supervised_no_id": "Sa supervizijom, bez verifikacije identiteta",
+      "supervised_online_with_id": "Online supervizija sa verifikacijom identiteta",
+      "supervised_onsite_with_id": "Supervizija na licu mesta sa verifikacijom identiteta"
+    },
+    "stackabilityLabel": {
+      "stand_alone": "Samostalan",
+      "independent_integrated": "Nezavisni mikrokredencijal / integrisan",
+      "stackable": "Nadogradiv ka drugom kredencijalu"
     }
   }
 }
