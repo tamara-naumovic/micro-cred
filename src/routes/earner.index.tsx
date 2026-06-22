@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Award, Bell, ClipboardList, FilePlus2, Share2, ShieldCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { MetricCard } from "@/components/MetricCard";
@@ -22,11 +23,11 @@ export const Route = createFileRoute("/earner/")({
 
 function Dash() {
   const { activeUser, credentials, applications } = useStore();
+  const { t } = useTranslation("earner");
   useEffect(() => {
     if (!activeUser) return;
-    // Small delay so the sidebar/main content is fully painted before highlights mount.
-    const t = window.setTimeout(() => startEarnerTour(activeUser.id), 400);
-    return () => window.clearTimeout(t);
+    const tm = window.setTimeout(() => startEarnerTour(activeUser.id), 400);
+    return () => window.clearTimeout(tm);
   }, [activeUser]);
   if (!activeUser) return null;
   const mine = credentials.filter((c) => c.earnerId === activeUser.id);
@@ -40,34 +41,34 @@ function Dash() {
 
   return (
     <PageShell
-      title={`Welcome, ${activeUser.name.split(" ")[0]}`}
-      description="Apply for new micro-credentials, track your applications and share your achievements."
+      title={t("dashboard.title", { name: activeUser.name.split(" ")[0] })}
+      description={t("dashboard.description")}
       actions={
         <>
           <Button asChild>
             <Link to="/earner/apply">
-              <FilePlus2 className="mr-2 h-4 w-4" /> Apply for credential
+              <FilePlus2 className="mr-2 h-4 w-4" /> {t("dashboard.actions.apply")}
             </Link>
           </Button>
           <Button variant="outline" asChild>
             <Link to="/earner/profile">
-              <Share2 className="mr-2 h-4 w-4" /> Public profile
+              <Share2 className="mr-2 h-4 w-4" /> {t("dashboard.actions.publicProfile")}
             </Link>
           </Button>
         </>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="dash-metrics">
-        <MetricCard label="Active credentials" value={active} icon={<Award className="h-5 w-5" />} tone="success" />
-        <MetricCard label="Pending applications" value={pending} icon={<ClipboardList className="h-5 w-5" />} tone="warning" />
-        <MetricCard label="Expiring soon" value={expiringSoon} icon={<Bell className="h-5 w-5" />} tone="info" />
-        <MetricCard label="Public credentials" value={shared} icon={<ShieldCheck className="h-5 w-5" />} tone="purple" />
+        <MetricCard label={t("dashboard.metrics.active")} value={active} icon={<Award className="h-5 w-5" />} tone="success" />
+        <MetricCard label={t("dashboard.metrics.pending")} value={pending} icon={<ClipboardList className="h-5 w-5" />} tone="warning" />
+        <MetricCard label={t("dashboard.metrics.expiring")} value={expiringSoon} icon={<Bell className="h-5 w-5" />} tone="info" />
+        <MetricCard label={t("dashboard.metrics.public")} value={shared} icon={<ShieldCheck className="h-5 w-5" />} tone="purple" />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Recent credentials</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.recentCredentials")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -78,13 +79,13 @@ function Dash() {
                   detailHref={`/earner/credentials/${c.id}`}
                 />
               ))}
-              {mine.length === 0 && <p className="text-sm text-muted-foreground">No credentials yet.</p>}
+              {mine.length === 0 && <p className="text-sm text-muted-foreground">{t("dashboard.emptyCredentials")}</p>}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Recent applications</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.recentApplications")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {myApps.slice(0, 5).map((a) => (
@@ -97,10 +98,11 @@ function Dash() {
                 <StatusBadge status={a.status} />
               </Link>
             ))}
-            {myApps.length === 0 && <p className="text-sm text-muted-foreground">No applications yet.</p>}
+            {myApps.length === 0 && <p className="text-sm text-muted-foreground">{t("dashboard.emptyApplications")}</p>}
           </CardContent>
         </Card>
       </div>
     </PageShell>
   );
 }
+
