@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +46,9 @@ export const Route = createFileRoute("/issuers/$id_/microcredential-templates/$t
 
 function PublicTemplateDetail() {
   const params = Route.useParams() as { id?: string; id_?: string; templateId: string };
-  const id = params.id ?? params.id_;
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathIssuerId = pathname.match(/^\/issuers\/([^/]+)\/microcredential-templates\//)?.[1];
+  const id = params.id ?? params.id_ ?? pathIssuerId;
   const { templateId } = params;
   const { organizations, templates, loading } = useStore();
   const issuer = organizations.find((o) => o.id === id && o.type === "issuer");
@@ -57,7 +59,18 @@ function PublicTemplateDetail() {
       </main>
     );
   }
-  if (!issuer) throw notFound();
+  if (!issuer || !id) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-10 md:px-8">
+        <Button variant="ghost" size="sm" asChild className="mb-4">
+          <Link to="/issuers">
+            <ArrowLeft className="mr-1 h-4 w-4" /> Back to issuers
+          </Link>
+        </Button>
+        <p className="text-sm text-muted-foreground">Issuer not found.</p>
+      </main>
+    );
+  }
   const tpl = templates.find((t) => t.id === templateId);
 
   if (!tpl || tpl.issuerId !== id || tpl.status === "archived") {
