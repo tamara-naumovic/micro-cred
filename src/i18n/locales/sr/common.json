@@ -138,6 +138,78 @@
     "tooShort": "Nova lozinka mora imati najmanje 8 karaktera.",
     "mismatch": "Lozinke se ne podudaraju.",
     "updated": "Lozinka je uspešno ažurirana."
+  },
+  "templateLevel": {
+    "Foundation": "Osnovni",
+    "Intermediate": "Srednji",
+    "Advanced": "Napredni",
+    "Expert": "Ekspert",
+    "N/A": "N/A"
+  },
+  "templateParticipation": {
+    "online": "Onlajn",
+    "onsite": "Uživo",
+    "hybrid": "Hibridno",
+    "blended": "Mešano (blended)",
+    "self_paced": "Samostalno"
+  },
+  "provision": {
+    "displayName": "Ime i prezime",
+    "email": "Email",
+    "modePassword": "Postavi lozinku",
+    "modeInvite": "Pošalji pozivnicu",
+    "tempPassword": "Privremena lozinka",
+    "tempPasswordPlaceholder": "Najmanje 6 karaktera",
+    "tempPasswordHint": "Podelite je sa korisnikom — moći će da je promeni nakon prve prijave.",
+    "inviteHint": "Korisnik prima email sa pozivnicom i linkom za postavljanje lozinke i prijavu."
+  },
+  "bulkUsers": {
+    "title": "Grupno dodavanje preko CSV-a",
+    "hint": "Kolone: <code>ime, email, lozinka</code> (jedan po redu). Red sa zaglavljem je opcioni.",
+    "placeholder": "Pera Perić, pera@uni.org, Lozinka123\nMira Mirić, mira@uni.org, Lozinka123",
+    "uploadCsv": "Otpremi CSV datoteku",
+    "counts": "{{valid}} validnih · {{invalid}} nevalidnih",
+    "addLabel_staff": "Dodaj zaposlenih: {{count}}",
+    "addLabel_earners": "Dodaj nosilaca: {{count}}",
+    "moreErrors": "…i još {{count}}",
+    "errors": {
+      "noValidRows": "Nema validnih redova za slanje",
+      "expectedColumns": "Red {{row}}: očekivano \"ime, email, lozinka\"",
+      "missingField": "Red {{row}}: nedostaje polje",
+      "invalidEmail": "Red {{row}}: nevažeći email \"{{email}}\"",
+      "shortPassword": "Red {{row}}: lozinka mora imati najmanje 6 karaktera",
+      "addFailed": "Grupno dodavanje nije uspelo"
+    },
+    "toasts": {
+      "added_staff": "Dodato zaposlenih: {{count}}",
+      "added_earners": "Dodato nosilaca: {{count}}",
+      "partial": "Dodato {{created}}, neuspešno {{failed}}"
+    }
+  },
+  "issuanceResult": {
+    "title": "Rezultati izdavanja",
+    "description": "Kredencijali se šalju svakom nosiocu na prihvatanje. Sidrenje na blockchain se ne vrši dok nosilac ne prihvati.",
+    "sent": "Poslato na prihvatanje: {{count}}",
+    "notSentCount": "Nije poslato: {{count}}",
+    "colRecipient": "Primalac",
+    "colCredential": "Kredencijal",
+    "colBlockchain": "Blockchain",
+    "colAction": "Akcija",
+    "awaiting": "Čeka prihvatanje",
+    "notIssued": "Nije izdato",
+    "view": "Pogledaj",
+    "done": "Završi"
+  },
+  "anchorMode": {
+    "title": "Registracija na blockchain",
+    "descTemplate": "Objavljivanje se dešava odmah; sidrenje je zaseban, opcioni korak na blockchain-u.",
+    "descCredential": "Kredencijali se izdaju odmah i ostaju važeći nezavisno od statusa na blockchain-u.",
+    "now": "Izdaj i sidri odmah",
+    "nowDescTemplate": "Odmah pošalji transakciju dokaza za svaki šablon na Bloxberg.",
+    "nowDescCredential": "Odmah pošalji transakciju dokaza za svaki kredencijal na Bloxberg.",
+    "later": "Izdaj sada, sidri kasnije",
+    "laterDesc": "Zapisi se stavljaju u red za sidrenje na blockchain pri sledećem pokretanju radnika.",
+    "unavailable": "Bloxberg integracija trenutno nije dostupna. Zapisi će biti stavljeni u red i mogu se sidriti kasnije."
   }
 }
 

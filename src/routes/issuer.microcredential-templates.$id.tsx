@@ -107,9 +107,9 @@ function Detail() {
             ? t("templates.detail.fields.sourceFormal")
             : t("templates.detail.fields.sourceNonFormal")}
         </Badge>
-        <Badge variant="outline">{tpl.level}</Badge>
+        <Badge variant="outline">{t(`templateLevel.${tpl.level}`, { ns: "common", defaultValue: tpl.level })}</Badge>
         {tpl.ects != null && <Badge variant="outline">{tpl.ects} ECTS</Badge>}
-        <Badge variant="outline">{tpl.participation}</Badge>
+        <Badge variant="outline">{t(`templateParticipation.${tpl.participation}`, { ns: "common", defaultValue: tpl.participation })}</Badge>
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">

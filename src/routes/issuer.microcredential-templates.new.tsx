@@ -257,7 +257,7 @@ function Form() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(["Foundation", "Intermediate", "Advanced", "Expert", "N/A"] as Level[]).map((l) => (
-                    <SelectItem key={l} value={l}>{l}</SelectItem>
+                    <SelectItem key={l} value={l}>{t(`templateLevel.${l}`, { ns: "common" })}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -268,7 +268,7 @@ function Form() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(["online", "onsite", "hybrid", "blended", "self_paced"] as Participation[]).map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                    <SelectItem key={p} value={p}>{t(`templateParticipation.${p}`, { ns: "common" })}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
