@@ -6,24 +6,24 @@ const storageKey = (userId: string) => `tour:earner:${userId}`;
 const steps: DriveStep[] = [
   {
     popover: {
-      title: "Dobrodošli na MicroCred!",
+      title: "Welcome to MicroCred!",
       description:
-        "Brzi obilazak će vam pokazati ključne delove platforme. Možete ga preskočiti i kasnije pokrenuti iz stranice <b>Manual</b>.",
+        "A quick tour of the key parts of the platform. You can skip it and re-launch it later from the <b>Manual</b> page.",
     },
   },
   {
     element: '[data-tour="nav-dashboard"]',
     popover: {
       title: "Dashboard",
-      description: "Pregled vaših kredencijala, aplikacija i obaveštenja.",
+      description: "Overview of your credentials, applications and notifications.",
       side: "right",
     },
   },
   {
     element: '[data-tour="dash-metrics"]',
     popover: {
-      title: "Vaši ključni pokazatelji",
-      description: "Aktivni kredencijali, aplikacije u toku i oni koji uskoro ističu.",
+      title: "Your key metrics",
+      description: "Active credentials, pending applications and credentials expiring soon.",
       side: "bottom",
     },
   },
@@ -31,7 +31,7 @@ const steps: DriveStep[] = [
     element: '[data-tour="nav-my-credentials"]',
     popover: {
       title: "My Credentials",
-      description: "Svi vaši izdati kredencijali — detalji, blockchain dokaz i opcije deljenja.",
+      description: "All of your issued credentials — details, blockchain proof and sharing options.",
       side: "right",
     },
   },
@@ -39,7 +39,7 @@ const steps: DriveStep[] = [
     element: '[data-tour="nav-applications"]',
     popover: {
       title: "Applications",
-      description: "Pratite status aplikacija (In review, Evidence collected, Verified, Issued, Rejected).",
+      description: "Track application status (In review, Evidence collected, Verified, Issued, Rejected).",
       side: "right",
     },
   },
@@ -47,7 +47,7 @@ const steps: DriveStep[] = [
     element: '[data-tour="nav-apply"]',
     popover: {
       title: "Apply for Credential",
-      description: "Pretražite dostupne micro-credential template-e i pošaljite aplikaciju.",
+      description: "Browse available micro-credential templates and submit an application.",
       side: "right",
     },
   },
@@ -55,7 +55,7 @@ const steps: DriveStep[] = [
     element: '[data-tour="nav-profile"]',
     popover: {
       title: "Public Profile",
-      description: "Vaš javni profil koji možete podeliti sa poslodavcima i institucijama.",
+      description: "Your public profile that you can share with employers and institutions.",
       side: "right",
     },
   },
@@ -63,7 +63,7 @@ const steps: DriveStep[] = [
     element: '[data-tour="nav-notifications"]',
     popover: {
       title: "Notifications",
-      description: "Obaveštenja o promenama statusa, isteku i novim kredencijalima.",
+      description: "Updates on status changes, expirations and newly issued credentials.",
       side: "right",
     },
   },
@@ -71,14 +71,14 @@ const steps: DriveStep[] = [
     element: '[data-tour="nav-manual"]',
     popover: {
       title: "Manual",
-      description: "Detaljna uputstva za sve delove platforme — uvek dostupna ovde.",
+      description: "Detailed guidance for every part of the platform — always available here.",
       side: "right",
     },
   },
   {
     popover: {
-      title: "Spremni ste!",
-      description: "Srećno sa prikupljanjem kredencijala. Tour možete ponovo pokrenuti iz Manual stranice.",
+      title: "You're all set!",
+      description: "Good luck collecting your credentials. You can re-launch this tour anytime from the Manual page.",
     },
   },
 ];

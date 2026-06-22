@@ -41,7 +41,7 @@ const SECTIONS: Section[] = [
     to: "/earner",
     linkLabel: "Open Dashboard",
     body:
-      "Početna stranica sa pregledom aktivnih kredencijala, aplikacija u toku, kredencijala koji uskoro ističu i javno deljenih kredencijala. Tu su i prečice ka poslednjim kredencijalima i aplikacijama.",
+      "Landing page with an overview of active credentials, applications in progress, credentials expiring soon and publicly shared credentials. Includes shortcuts to your latest credentials and applications.",
   },
   {
     icon: Award,
@@ -49,7 +49,7 @@ const SECTIONS: Section[] = [
     to: "/earner/credentials",
     linkLabel: "Open My Credentials",
     body:
-      "Svi vaši izdati kredencijali. Otvorite detalje da vidite kompletne podatke, evidence, blockchain proof (anchor transakciju), QR kod za verifikaciju i opcije deljenja na javnom profilu.",
+      "All of your issued credentials. Open a credential to see the full details, evidence, blockchain proof (anchor transaction), verification QR code and public sharing options.",
   },
   {
     icon: ClipboardList,
@@ -57,7 +57,7 @@ const SECTIONS: Section[] = [
     to: "/earner/applications",
     linkLabel: "Open Applications",
     body:
-      'Pratite status aplikacija: Submitted → In review → Evidence collected → Verified → Issued. Ako je aplikacija odbijena (Rejected) možete je prihvatiti ili otvoriti "Edit & resend" da pošaljete ispravljenu verziju. Issuer može produžiti rok važenja postojećeg kredencijala.',
+      'Track application status: Submitted → In review → Evidence collected → Verified → Issued. If an application is Rejected you can either accept the rejection or open "Edit & resend" to submit a corrected version. The issuer can also renew the expiry of an already issued credential.',
   },
   {
     icon: FilePlus2,
@@ -65,7 +65,7 @@ const SECTIONS: Section[] = [
     to: "/earner/apply",
     linkLabel: "Open Apply",
     body:
-      "Pretražite dostupne micro-credential template-e po izdavaocu, oblasti ili nivou. Otvorite template, pregledajte zahteve i evidence koje treba priložiti, i pošaljite aplikaciju.",
+      "Browse available micro-credential templates by issuer, field or level. Open a template, review the requirements and evidence to attach, then submit your application.",
   },
   {
     icon: UserCircle,
@@ -73,7 +73,7 @@ const SECTIONS: Section[] = [
     to: "/earner/profile",
     linkLabel: "Open Public Profile",
     body:
-      "Vaš javni profil sa kredencijalima koje ste označili kao javne. Link možete deliti sa poslodavcima i institucijama — svaki kredencijal sadrži verifikaciju na blockchain-u.",
+      "Your public profile listing the credentials you have marked as public. Share the link with employers and institutions — every credential includes on-chain verification.",
   },
   {
     icon: Bell,
@@ -81,14 +81,14 @@ const SECTIONS: Section[] = [
     to: "/earner/notifications",
     linkLabel: "Open Notifications",
     body:
-      "Obaveštenja o promenama statusa aplikacija, izdavanju novih kredencijala, isteku i porukama od izdavaoca.",
+      "Updates on application status changes, newly issued credentials, expirations and messages from issuers.",
   },
   {
     icon: Settings,
     title: "Settings",
     to: "/earner/settings",
     linkLabel: "Open Settings",
-    body: "Podešavanja naloga, bezbednost i preference obaveštenja.",
+    body: "Account settings, security and notification preferences.",
   },
 ];
 
@@ -99,7 +99,7 @@ function Manual() {
   return (
     <PageShell
       title="Manual"
-      description="Vodič kroz platformu — šta svaki deo radi i kako se koristi."
+      description="A guide to the platform — what each section does and how to use it."
       actions={
         <Button
           variant="outline"
@@ -118,15 +118,16 @@ function Manual() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
-            MicroCred vam omogućava da prikupljate i delite verifikovane micro-credentials. Svaki
-            izdati kredencijal je zapisan na blockchain-u i može se nezavisno verifikovati.
+            MicroCred lets you collect and share verifiable micro-credentials. Every issued
+            credential is anchored on the blockchain and can be independently verified.
           </p>
           <p>
-            Ispod su detaljnija objašnjenja za svaki deo platforme. Kliknite na link „Open ..." da
-            otvorite odgovarajuću stranicu.
+            Below you'll find more detail on each part of the platform. Use the "Open ..." links to
+            jump straight to the matching page.
           </p>
         </CardContent>
       </Card>
+
 
       <div className="grid gap-4 md:grid-cols-2">
         {SECTIONS.map((s) => {
