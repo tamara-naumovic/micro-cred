@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useStore } from "@/lib/store";
+import { toast } from "sonner";
+
 
 
 export const Route = createFileRoute("/earner/apply")({
