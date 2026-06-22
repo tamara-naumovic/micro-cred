@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Award, Bell, ClipboardList, FilePlus2, Share2, ShieldCheck } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useStore } from "@/lib/store";
+import { startEarnerTour } from "@/lib/tour/earnerTour";
 
 export const Route = createFileRoute("/earner/")({
   head: () => ({ meta: [{ title: "Earner Dashboard — MicroCred" }] }),
@@ -20,6 +22,12 @@ export const Route = createFileRoute("/earner/")({
 
 function Dash() {
   const { activeUser, credentials, applications } = useStore();
+  useEffect(() => {
+    if (!activeUser) return;
+    // Small delay so the sidebar/main content is fully painted before highlights mount.
+    const t = window.setTimeout(() => startEarnerTour(activeUser.id), 400);
+    return () => window.clearTimeout(t);
+  }, [activeUser]);
   if (!activeUser) return null;
   const mine = credentials.filter((c) => c.earnerId === activeUser.id);
   const myApps = applications.filter((a) => a.earnerId === activeUser.id);
@@ -49,7 +57,7 @@ function Dash() {
         </>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="dash-metrics">
         <MetricCard label="Active credentials" value={active} icon={<Award className="h-5 w-5" />} tone="success" />
         <MetricCard label="Pending applications" value={pending} icon={<ClipboardList className="h-5 w-5" />} tone="warning" />
         <MetricCard label="Expiring soon" value={expiringSoon} icon={<Bell className="h-5 w-5" />} tone="info" />

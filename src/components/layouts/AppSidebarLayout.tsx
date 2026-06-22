@@ -55,6 +55,7 @@ interface NavItem {
   to: string;
   label: string;
   icon: typeof LayoutDashboard;
+  dataTour?: string;
 }
 
 type NavGroups = { group: string; items: NavItem[] }[];
@@ -63,17 +64,18 @@ const EARNER_NAV: NavGroups = [
   {
     group: "Workspace",
     items: [
-      { to: "/earner", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/earner/credentials", label: "My Credentials", icon: Award },
-      { to: "/earner/applications", label: "Applications", icon: ClipboardList },
-      { to: "/earner/apply", label: "Apply for Credential", icon: FilePlus2 },
+      { to: "/earner", label: "Dashboard", icon: LayoutDashboard, dataTour: "nav-dashboard" },
+      { to: "/earner/credentials", label: "My Credentials", icon: Award, dataTour: "nav-my-credentials" },
+      { to: "/earner/applications", label: "Applications", icon: ClipboardList, dataTour: "nav-applications" },
+      { to: "/earner/apply", label: "Apply for Credential", icon: FilePlus2, dataTour: "nav-apply" },
     ],
   },
   {
     group: "Sharing",
     items: [
-      { to: "/earner/profile", label: "Public Profile", icon: UserCircle },
-      { to: "/earner/notifications", label: "Notifications", icon: Bell },
+      { to: "/earner/profile", label: "Public Profile", icon: UserCircle, dataTour: "nav-profile" },
+      { to: "/earner/notifications", label: "Notifications", icon: Bell, dataTour: "nav-notifications" },
+      { to: "/earner/manual", label: "Manual", icon: BookOpen, dataTour: "nav-manual" },
       { to: "/earner/settings", label: "Settings", icon: Settings },
     ],
   },
@@ -223,7 +225,7 @@ export function AppSidebarLayout() {
                           ? currentPath === item.to
                           : currentPath === item.to || currentPath.startsWith(item.to + "/");
                       return (
-                        <SidebarMenuItem key={item.to}>
+                        <SidebarMenuItem key={item.to} data-tour={item.dataTour}>
                           <SidebarMenuButton asChild isActive={active}>
                             <Link to={item.to} className="flex items-center gap-2">
                               <Icon className="h-4 w-4" />
