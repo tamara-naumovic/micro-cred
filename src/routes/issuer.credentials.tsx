@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, CalendarClock, Check, Pencil, Send, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, Pencil, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
