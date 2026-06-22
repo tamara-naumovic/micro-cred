@@ -196,7 +196,7 @@ function List() {
       title="Issued Credentials"
       description="All micro-credentials your organisation has issued."
       actions={
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2" data-tour="cred-filters">
           <div className="relative">
             <Input
               placeholder="Search…"
