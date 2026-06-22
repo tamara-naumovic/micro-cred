@@ -216,7 +216,70 @@
       "hours": "pre {{n}}h",
       "days": "pre {{n}}d"
     },
-    "unreadAria": "Nepročitano"
+    "unreadAria": "Nepročitano",
+    "events": {
+      "credentialIssued": {
+        "title": "Mikrokredencijal je izdat",
+        "body": "{{title}} je sada u vašem novčaniku."
+      },
+      "credentialAwaitingAcceptance": {
+        "title": "Mikrokredencijal čeka vaše prihvatanje",
+        "body": "{{title}} vam je izdat. Pregledajte i prihvatite ili odbijte."
+      },
+      "credentialRevoked": {
+        "title": "Mikrokredencijal je opozvan",
+        "body": "{{title}} je opozvan.",
+        "bodyWithReason": "{{title}} je opozvan. Razlog: {{reason}}"
+      },
+      "credentialExpiryExtended": {
+        "title": "Produžen je rok važenja",
+        "body": "Rok važenja za {{title}} je produžen do {{expiresAt}}."
+      },
+      "credentialExpiryReminder": {
+        "title": "Mikrokredencijal uskoro ističe",
+        "body": "„{{title}}\" ističe {{expiresAt}}."
+      },
+      "templateArchived": {
+        "title": "Šablon mikrokredencijala je arhiviran",
+        "body": "Mikrokredencijal „{{title}}\" je arhiviran od strane izdavaoca."
+      },
+      "linkedToInstitution": {
+        "title": "Povezani ste sa novom institucijom",
+        "body": "Povezani ste sa {{org}}."
+      },
+      "applicationSubmitted": {
+        "title": "Nova prijava je poslata",
+        "body": "Nova prijava za {{template}}."
+      },
+      "applicationRejected": {
+        "title": "Prijava je odbijena",
+        "body": "{{template}}"
+      },
+      "applicationStatus": {
+        "title": "Status prijave je ažuriran",
+        "body": "{{template}}: {{status}}"
+      },
+      "earnerAccepted": {
+        "title": "Korisnik je prihvatio mikrokredencijal",
+        "body": "{{title}} je prihvaćen."
+      },
+      "earnerRejected": {
+        "title": "Korisnik je odbio mikrokredencijal",
+        "body": "{{title}} je odbijen. Razlog: {{reason}}"
+      },
+      "rejectionAccepted": {
+        "title": "Izdavalac je prihvatio odbijanje",
+        "body": "Vaše odbijanje „{{title}}\" je prihvaćeno. Mikrokredencijal je odbačen."
+      },
+      "credentialResent": {
+        "title": "Mikrokredencijal je ponovo poslat",
+        "body": "{{title}} je ažuriran i ponovo poslat. Pregledajte i prihvatite ili odbijte."
+      },
+      "assignedToTemplate": {
+        "title": "Dodeljen vam je mikrokredencijal",
+        "body": "Dodeljeni ste da izdate „{{template}}\"."
+      }
+    }
   },
   "templateDetail": {
     "notFound": "Mikrokredencijal nije pronađen",
