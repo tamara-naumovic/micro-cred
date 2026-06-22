@@ -1,11 +1,18 @@
-Na stranici Revocations trenutno postoji jedno search polje koje filtrira i po imenu earner-a i po naslovu MK template-a (title). Potrebno je razdvojiti ovo u dva nezavisna filtera:
+## Plan: per-card Continue on /earner/apply
 
-1. **Search polje** — pretraga samo po `earnerName` (case-insensitive substring). Placeholder promijeniti na odgovarajući tekst (npr. "Search earner…").
+Move the step-1 "Continue" button from the bottom of the page into each template card, so each MK template card has its own Continue action.
 
-2. **MK template dropdown** — Select komponenta koja nudi jedinstvene MK template naslove (`title`) prisutne u tabeli. Filtriran 1:1 po odabranom template-u. Opcija "All templates" (ili prazno) za prikaz svih.
+### Changes to `src/routes/earner.apply.tsx`
 
-Ovo se primjenjuje na **obje tabele** (Revocation history i Revoke a credential), sa nezavisnim state-om po tabeli — dakle:
-- `historyEarnerQ` + `historyTemplateFilter`  
-- `activeEarnerQ` + `activeTemplateFilter`
+1. **Inside each template `Card`** (step 1 list), add a `Continue` button in the `CardContent` footer:
+   - Disabled when the template is blocked (already applied / already issued).
+   - On click: `setTemplateId(t.id)` and `setStep(2)` in one go (stops propagation so the surrounding card click handler doesn't double-fire).
+   - Right-aligned, small size, matches existing button styling.
 
-Paginacija i sve ostalo ostaje nepromijenjeno.
+2. **Bottom action bar** — hide the global Continue on step 1. Keep:
+   - Step 2: `Back` + `Apply` buttons (unchanged behavior).
+   - Step 1: no bottom buttons (each card owns its own action).
+
+3. Card click-to-select behavior is preserved (visual highlight ring), but progression to step 2 now happens via the per-card Continue button.
+
+No other logic, state, or styling changes.

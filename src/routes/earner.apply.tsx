@@ -125,8 +125,23 @@ function Apply() {
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground">Issued by {t.issuerName}</div>
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      size="sm"
+                      disabled={!!blocked}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (blocked) return;
+                        setTemplateId(t.id);
+                        setStep(2);
+                      }}
+                    >
+                      Continue
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
+
             );
           })}
           {active.length === 0 && (
@@ -178,18 +193,15 @@ function Apply() {
         </Card>
       )}
 
-      <div className="mt-6 flex justify-between">
-        <Button variant="outline" disabled={step === 1} onClick={() => setStep(1)}>
-          Back
-        </Button>
-        {step === 1 ? (
-          <Button onClick={() => setStep(2)} disabled={!templateId}>
-            Continue
+      {step === 2 && (
+        <div className="mt-6 flex justify-between">
+          <Button variant="outline" onClick={() => setStep(1)}>
+            Back
           </Button>
-        ) : (
           <Button onClick={submit}>Apply</Button>
-        )}
-      </div>
+        </div>
+      )}
+
     </PageShell>
   );
 }
