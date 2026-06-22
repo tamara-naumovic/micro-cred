@@ -323,7 +323,7 @@ function Overview() {
       }
     >
       {/* Row 1 — KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-tour="dash-issuer-metrics">
         <MetricCard
           label="Published MC templates"
           value={publishedTemplates.length}
