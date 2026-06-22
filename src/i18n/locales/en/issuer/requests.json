@@ -1,1 +1,47 @@
-{}
+{
+  "requests": {
+    "headTitle": "Issuance Requests — MicroCred",
+    "title": "Issuance Requests",
+    "description": "Move each application through the lifecycle. The final step issues and signs the credential.",
+    "filters": {
+      "earnerLabel": "Earner name",
+      "earnerPlaceholder": "Search earner…",
+      "templateLabel": "Micro-credential",
+      "allTemplates": "All templates",
+      "statusLabel": "Status",
+      "allStatuses": "All statuses",
+      "clearFilters": "Clear filters",
+      "showing": "Showing {{count}} of {{total}} requests"
+    },
+    "empty": {
+      "noMatch": "No requests match the current filters.",
+      "noActive": "No active applications."
+    },
+    "card": {
+      "earner": "Earner:",
+      "viewProfile": "View earner's public profile"
+    },
+    "actions": {
+      "advanceTo": "Advance to {{next}}",
+      "issueSign": "Issue & sign",
+      "reject": "Reject"
+    },
+    "dialogs": {
+      "issue": {
+        "title": "Issue & sign credential",
+        "description": "Finalize <title>{{templateTitle}}</title> for <earner>{{earnerName}}</earner>.",
+        "gradeLabel": "Grade (optional)",
+        "gradePlaceholder": "e.g. A, Pass, 9/10",
+        "expiryLabel": "Expiry date (optional)",
+        "templateDefault": "Template default: {{date}}",
+        "cancel": "Cancel",
+        "confirm": "Issue & sign"
+      }
+    },
+    "toasts": {
+      "sentToEarner": "Sent to earner for acceptance",
+      "movedTo": "Moved to {{next}}",
+      "rejected": "Application rejected"
+    }
+  }
+}
