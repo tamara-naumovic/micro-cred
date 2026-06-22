@@ -66,9 +66,12 @@ export function TemplateBlockchainProofCard({
 
   useEffect(() => {
     void load();
-    void checkAvail().then((r: any) => setAvailable(r?.status ?? "ok")).catch(() => {});
+    if (canManage) {
+      void checkAvail().then((r: any) => setAvailable(r?.status ?? "ok")).catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId]);
+  }, [templateId, canManage]);
+
 
   if (loading) {
     return (
