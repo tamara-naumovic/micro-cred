@@ -219,6 +219,9 @@ export interface AppNotification {
   createdAt: string;
   read: boolean;
   link?: string;
+  titleKey?: string;
+  bodyKey?: string;
+  params?: Record<string, unknown>;
 }
 
 export interface RegistrationRequest {
