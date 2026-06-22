@@ -202,8 +202,7 @@ export function AppSidebarLayout() {
 
   const groups = getNav(activeUser, t);
   const RoleIcon = ROLE_ICON[activeUser.role];
-  const roleLabel =
-    activeUser.role === "earner" ? t("role.earner") : ROLE_LABEL[activeUser.role];
+  const roleLabel = t(`role.${activeUser.role}`, { defaultValue: ROLE_LABEL[activeUser.role] });
   const unread = notifications.filter(
     (n) => !n.read && n.forRole === activeUser.role && (!n.forUserId || n.forUserId === activeUser.id),
   ).length;
