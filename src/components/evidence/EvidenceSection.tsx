@@ -141,6 +141,7 @@ function EvidenceButton({
   icon,
   label,
   description,
+  busyLabel,
   busy,
   disabled,
   onClick,
@@ -148,6 +149,7 @@ function EvidenceButton({
   icon: React.ReactNode;
   label: string;
   description: string;
+  busyLabel: string;
   busy: boolean;
   disabled: boolean;
   onClick: () => void;
@@ -166,10 +168,11 @@ function EvidenceButton({
           {label}
           {busy && (
             <span className="text-xs font-normal text-muted-foreground">
-              preparing…
+              {busyLabel}
             </span>
           )}
         </div>
+
         <div className="mt-0.5 text-xs text-muted-foreground">{description}</div>
       </div>
       <Download className="mt-1 h-4 w-4 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
