@@ -30,13 +30,36 @@
   "sidebar": {
     "groups": {
       "workspace": "Radni prostor",
-      "sharing": "Nalog i podešavanja"
+      "sharing": "Nalog i podešavanja",
+      "overview": "Pregled",
+      "microcredentials": "Mikrokredencijali",
+      "issuance": "Izdavanje",
+      "account": "Nalog i podešavanja",
+      "accountShort": "Nalog"
     },
     "earner": {
       "dashboard": "Početna",
       "credentials": "Moji kredencijali",
       "applications": "Prijave",
       "apply": "Prijavi se za kredencijal",
+      "profile": "Javni profil",
+      "notifications": "Obaveštenja",
+      "manual": "Uputstvo",
+      "settings": "Podešavanja"
+    },
+    "issuer": {
+      "overview": "Pregled",
+      "templates": "Mikrokredencijali",
+      "templatesStaff": "Moji mikrokredencijali",
+      "templateNew": "Kreiraj mikrokredencijal",
+      "staff": "Zaposleni",
+      "earners": "Nosioci",
+      "requests": "Zahtevi za izdavanje",
+      "issue": "Direktno izdavanje",
+      "bulk": "Grupno izdavanje",
+      "credentials": "Izdati kredencijali",
+      "revocations": "Opozivi",
+      "anchoring": "Red za blockchain",
       "profile": "Javni profil",
       "notifications": "Obaveštenja",
       "manual": "Uputstvo",
