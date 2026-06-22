@@ -1,7 +1,6 @@
 import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,9 +24,8 @@ export function LanguageSwitcher() {
     if (activeUser) {
       try {
         await saveLang({ data: { language: lang } });
-        toast.success(t("language.updated"));
-      } catch (e) {
-        toast.error((e as Error).message || "Failed");
+      } catch {
+        // silently ignore
       }
     }
   };
