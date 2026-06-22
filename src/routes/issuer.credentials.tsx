@@ -70,6 +70,12 @@ function List() {
   const discard = useServerFn(discardRejectedCredential);
   const renew = useServerFn(renewCredential);
 
+  useEffect(() => {
+    if (!activeUser || activeUser.role !== "issuer") return;
+    const t = window.setTimeout(() => startIssuerCredentialsTour(activeUser.id), 400);
+    return () => window.clearTimeout(t);
+  }, [activeUser]);
+
   if (!activeUser) return null;
   const isStaff = activeUser.subRole === "staff";
   const assignedIds = new Set(
