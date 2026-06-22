@@ -21,7 +21,7 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
-import { resetIssuerTour, startIssuerTour } from "@/lib/tour/issuerTour";
+import { resetIssuerTour, startIssuerTour, resetIssuerCredentialsTour } from "@/lib/tour/issuerTour";
 
 export const Route = createFileRoute("/issuer/manual")({
   head: () => ({ meta: [{ title: "Manual — MicroCred" }] }),
