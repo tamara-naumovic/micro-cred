@@ -1,1 +1,52 @@
-{}
+{
+  "revocations": {
+    "headTitle": "Revocations — MicroCred",
+    "title": "Revocations",
+    "description": "Mark credentials as revoked when integrity issues are confirmed.",
+    "history": {
+      "heading": "Revocation history"
+    },
+    "revokeSection": {
+      "heading": "Revoke a credential"
+    },
+    "filters": {
+      "searchPlaceholder": "Search earner…",
+      "allTemplates": "All templates"
+    },
+    "table": {
+      "id": "ID",
+      "earner": "Earner",
+      "title": "Title",
+      "reason": "Reason",
+      "status": "Status"
+    },
+    "empty": {
+      "noRevocations": "No revocations on record.",
+      "noMatchingRevocations": "No matching revocations.",
+      "noActive": "No active credentials.",
+      "noMatchingActive": "No matching credentials."
+    },
+    "pager": {
+      "rowsPerPage": "Rows per page",
+      "pageOf": "Page {{current}} of {{pages}} · {{total}} result",
+      "pageOf_plural": "Page {{current}} of {{pages}} · {{total}} results"
+    },
+    "dialogs": {
+      "revoke": {
+        "title": "Revoke {{id}}",
+        "reasonPlaceholder": "Reason for revocation",
+        "cancel": "Cancel",
+        "confirm": "Confirm revocation",
+        "confirming": "Revoking…"
+      }
+    },
+    "actions": {
+      "revoke": "Revoke"
+    },
+    "toasts": {
+      "provideReason": "Provide a reason",
+      "revokedQueued": "Revocation queued for on-chain anchoring",
+      "revoked": "Credential revoked"
+    }
+  }
+}
