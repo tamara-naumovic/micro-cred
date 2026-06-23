@@ -1,34 +1,38 @@
-## Plan: Razdvojen prikaz formalnih/neformalnih MK + filteri
+## 1. Staff filter → searchable multi-select (templates list)
 
-Izmena u `src/routes/issuer.microcredential-templates.index.tsx`:
+Fajl: `src/routes/issuer.microcredential-templates.index.tsx`
 
-### 1. Tabovi (formalni / neformalni)
-- Koristiti shadcn `Tabs` komponentu sa dva taba: "Formalni" i "Neformalni".
-- Lista šablona se deli po `tmpl.source === "formal"` vs `"non_formal"`.
-- Broj šablona prikazan u oznaci taba (npr. `Formalni (5)`).
+- Zameniti postojeći `Select` za staff sa **Popover + Command** (shadcn `cmdk`) komponentom:
+  - Trigger: `Button` koji pokazuje "Svi staff" ili "N odabranih" (sa malim X chip-om za reset).
+  - Sadržaj: `Command` sa `CommandInput` (search po imenu/emailu), `CommandList` sa `CommandItem` za svakog staff člana iz `orgStaff`, plus stavka "Bez dodeljenog staff-a" (`__unassigned__`).
+  - Svaka stavka prikazuje checkbox (✓ ikona) za multi-select; klik toggluje izbor.
+  - Dodati "Clear" dugme u footeru popovera.
+- State: `staffFilter: string[]` (umesto string-a). Filter logika: template prolazi ako ima bar jednog assignee-a iz selektovanog skupa (ili je neassigned kad je `__unassigned__` izabran). Prazan niz = bez filtera.
+- `resetFilters` postavlja na `[]`.
+- Prevodi u `src/i18n/locales/{en,sr}/issuer/templates.json` (sekcija `filters`):
+  - `staffPlaceholder` ("Pretraži staff…"), `staffSelectedCount` ("{{count}} odabranih"), `staffNoResults` ("Nema rezultata"), `staffClear` ("Poništi izbor"). Postojeći `staffAll`, `staffUnassigned` ostaju.
 
-### 2. Filteri (zajednički, primenjuju se na oba prikaza)
-Iznad tabova, red sa tri kontrole:
-- **Pretraga po naslovu** — `Input` sa ikonicom, filtrira po `tmpl.title` (case-insensitive substring).
-- **Filter po nivou** — `Select` sa opcijama: Svi, Foundation, Intermediate, Advanced, Expert, N/A. Filtrira po `tmpl.level`.
-- **Filter po dodeljenom zaposlenom** — `Select` sa opcijama: Svi + lista staff korisnika organizacije (iz `users` + `templateAssignees`). Filtrira šablone u kojima izabrani staff ima dodelu (`templateAssignees.some(a => a.templateId === tmpl.id && a.userId === selectedStaffId)`).
-- Filter po staff-u se prikazuje samo za `issuer_admin` (staff korisnik već vidi samo svoje).
-- Dugme "Resetuj filtere" kada je bilo koji filter aktivan.
+## 2. User menu (gornji desni ugao) — ukloniti Switch role, dodati Public profile + Settings
 
-### 3. Prazno stanje
-- Ako filteri sakriju sve rezultate: poruka "Nema šablona koji odgovaraju filterima".
-- Ako organizacija nema nijedan šablon u toj kategoriji: postojeća empty poruka.
+Fajl: `src/components/layouts/AppSidebarLayout.tsx` (linije 304–306 i okolina)
 
-### 4. Prevodi
-Dodati ključeve u `src/i18n/locales/{en,sr}/issuer/templates.json` pod `index.filters`:
-- `tabFormal`, `tabNonFormal`
-- `searchPlaceholder`, `levelLabel`, `levelAll`, `staffLabel`, `staffAll`
-- `resetButton`, `emptyFiltered`
+- Ukloniti `DropdownMenuItem` koji navigira na `/login` ("Switch role").
+- Dodati dve nove stavke iznad "Sign out", po ulozi:
+  - **Public profile** (ikona `UserCircle`):
+    - earner → `/earner/profile`
+    - issuer (admin i staff) → `/issuer/profile`
+    - admin → sakriti stavku (nema javnog profila)
+  - **Settings** (ikona `Settings`):
+    - earner → `/earner/settings`
+    - issuer → `/issuer/settings`
+    - admin → `/admin/settings`
+- Prevodi: dodati u `src/i18n/locales/{en,sr}/common.json` pod `header`:
+  - `publicProfile` ("Javni profil" / "Public profile")
+  - `settings` ("Podešavanja" / "Settings")
+- Ukloniti neiskorišćen `header.switchRole` ključ (opciono ostaviti radi kompatibilnosti).
 
-### Tehnički detalji
-- State: `useState` za `search`, `levelFilter`, `staffFilter`, `activeTab`.
-- `useMemo` za filtriranu listu da izbegne re-render.
-- Lista staff korisnika: `users.filter(u => u.organizationId === activeUser.organizationId && u.subRole === "staff")` iz `useStore()`.
-- Postojeća grid kartica i akcije ostaju nepromenjene.
+## Tehničke napomene
 
-Bez izmena na backend/store sloju.
+- Nema promene u store-u ili tipovima — `staffFilter` postaje `string[]` lokalno u komponenti.
+- `Command` komponenta već postoji (`src/components/ui/command.tsx`), `Popover` takođe.
+- Issuer staff vidi templates listu ali ne vidi staff filter (postojeći `isIssuerAdmin` gate ostaje).

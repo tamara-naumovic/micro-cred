@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { FilePlus2, BookOpen, Search, X } from "lucide-react";
+import { FilePlus2, BookOpen, Search, X, Check, ChevronsUpDown, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import type { MicroCredentialTemplate } from "@/lib/types";
 
@@ -32,7 +35,8 @@ function List() {
 
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("all");
-  const [staffFilter, setStaffFilter] = useState<string>("all");
+  const [staffFilter, setStaffFilter] = useState<string[]>([]);
+  const [staffOpen, setStaffOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"formal" | "non_formal">("formal");
 
   const assignedIds = useMemo(
@@ -61,16 +65,18 @@ function List() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const includeUnassigned = staffFilter.includes("__unassigned__");
+    const selectedStaffIds = staffFilter.filter((s) => s !== "__unassigned__");
     return mine.filter((tmpl) => {
       if (q && !tmpl.title.toLowerCase().includes(q)) return false;
       if (levelFilter !== "all" && tmpl.level !== levelFilter) return false;
-      if (!isStaff && staffFilter !== "all") {
+      if (!isStaff && staffFilter.length > 0) {
         const tmplAssignees = templateAssignees.filter((a) => a.templateId === tmpl.id);
-        if (staffFilter === "__unassigned__") {
-          if (tmplAssignees.length > 0) return false;
-        } else if (!tmplAssignees.some((a) => a.userId === staffFilter)) {
-          return false;
-        }
+        const matchUnassigned = includeUnassigned && tmplAssignees.length === 0;
+        const matchSelected =
+          selectedStaffIds.length > 0 &&
+          tmplAssignees.some((a) => selectedStaffIds.includes(a.userId));
+        if (!matchUnassigned && !matchSelected) return false;
       }
       return true;
     });
@@ -80,12 +86,19 @@ function List() {
   const nonFormal = filtered.filter((t) => t.source === "non_formal");
 
   const filtersActive =
-    search.trim() !== "" || levelFilter !== "all" || staffFilter !== "all";
+    search.trim() !== "" || levelFilter !== "all" || staffFilter.length > 0;
   const resetFilters = () => {
     setSearch("");
     setLevelFilter("all");
-    setStaffFilter("all");
+    setStaffFilter([]);
   };
+
+  const toggleStaff = (id: string) => {
+    setStaffFilter((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+    );
+  };
+
 
   const renderGrid = (list: MicroCredentialTemplate[]) => {
     if (mine.length === 0) {
@@ -202,22 +215,102 @@ function List() {
           </SelectContent>
         </Select>
         {!isStaff && (
-          <Select value={staffFilter} onValueChange={setStaffFilter}>
-            <SelectTrigger className="md:w-56">
-              <SelectValue placeholder={t("templates.index.filters.staffLabel")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("templates.index.filters.staffAll")}</SelectItem>
-              <SelectItem value="__unassigned__">
-                {t("templates.index.filters.staffUnassigned")}
-              </SelectItem>
-              {orgStaff.map((u) => (
-                <SelectItem key={u.id} value={u.id}>
-                  {u.name || u.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={staffOpen} onOpenChange={setStaffOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={staffOpen}
+                className="justify-between gap-2 md:w-64"
+              >
+                <span className="flex items-center gap-2 truncate">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="truncate">
+                    {staffFilter.length === 0
+                      ? t("templates.index.filters.staffAll")
+                      : t("templates.index.filters.staffSelectedCount", {
+                          count: staffFilter.length,
+                        })}
+                  </span>
+                </span>
+                <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-0" align="start">
+              <Command>
+                <CommandInput
+                  placeholder={t("templates.index.filters.staffPlaceholder")}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {t("templates.index.filters.staffNoResults")}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem
+                      value={t("templates.index.filters.staffUnassigned")}
+                      onSelect={() => toggleStaff("__unassigned__")}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          staffFilter.includes("__unassigned__")
+                            ? "opacity-100"
+                            : "opacity-0",
+                        )}
+                      />
+                      {t("templates.index.filters.staffUnassigned")}
+                    </CommandItem>
+                  </CommandGroup>
+                  {orgStaff.length > 0 && (
+                    <>
+                      <CommandSeparator />
+                      <CommandGroup>
+                        {orgStaff.map((u) => {
+                          const label = u.name || u.email;
+                          const selected = staffFilter.includes(u.id);
+                          return (
+                            <CommandItem
+                              key={u.id}
+                              value={`${label} ${u.email}`}
+                              onSelect={() => toggleStaff(u.id)}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selected ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              <div className="flex min-w-0 flex-col">
+                                <span className="truncate text-sm">{label}</span>
+                                {u.name && (
+                                  <span className="truncate text-xs text-muted-foreground">
+                                    {u.email}
+                                  </span>
+                                )}
+                              </div>
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </>
+                  )}
+                </CommandList>
+                {staffFilter.length > 0 && (
+                  <div className="border-t p-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setStaffFilter([])}
+                    >
+                      <X className="mr-1 h-4 w-4" />
+                      {t("templates.index.filters.staffClear")}
+                    </Button>
+                  </div>
+                )}
+              </Command>
+            </PopoverContent>
+          </Popover>
         )}
         {filtersActive && (
           <Button variant="ghost" size="sm" onClick={resetFilters}>

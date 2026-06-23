@@ -25,7 +25,9 @@
   "header": {
     "switchRole": "Promeni ulogu",
     "signOut": "Odjavi se",
-    "notifications": "Obaveštenja"
+    "notifications": "Obaveštenja",
+    "publicProfile": "Javni profil",
+    "settings": "Podešavanja"
   },
   "sidebar": {
     "groups": {

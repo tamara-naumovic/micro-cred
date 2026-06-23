@@ -25,7 +25,9 @@
   "header": {
     "switchRole": "Switch role",
     "signOut": "Sign out",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "publicProfile": "Public profile",
+    "settings": "Settings"
   },
   "sidebar": {
     "groups": {

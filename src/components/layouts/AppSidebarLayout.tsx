@@ -301,9 +301,30 @@ export function AppSidebarLayout() {
                     )}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate({ to: "/login" })}>
-                    {t("header.switchRole")}
+                  {activeUser.role !== "admin" && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        navigate({
+                          to: activeUser.role === "earner" ? "/earner/profile" : "/issuer/profile",
+                        })
+                      }
+                    >
+                      <UserCircle className="mr-2 h-4 w-4" /> {t("header.publicProfile")}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const map: Record<Role, string> = {
+                        earner: "/earner/settings",
+                        issuer: "/issuer/settings",
+                        admin: "/admin/settings",
+                      };
+                      navigate({ to: map[activeUser.role] });
+                    }}
+                  >
+                    <Settings className="mr-2 h-4 w-4" /> {t("header.settings")}
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={async () => {
                       const { supabase } = await import("@/integrations/supabase/client");

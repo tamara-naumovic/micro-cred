@@ -36,6 +36,10 @@
         "staffLabel": "Assigned staff",
         "staffAll": "All staff",
         "staffUnassigned": "Unassigned",
+        "staffPlaceholder": "Search staff…",
+        "staffSelectedCount": "{{count}} selected",
+        "staffNoResults": "No results",
+        "staffClear": "Clear selection",
         "resetButton": "Reset filters",
         "emptyFiltered": "No micro-credentials match the current filters."
       },
