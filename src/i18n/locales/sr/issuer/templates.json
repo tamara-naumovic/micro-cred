@@ -36,6 +36,10 @@
         "staffLabel": "Dodeljeni zaposleni",
         "staffAll": "Svi zaposleni",
         "staffUnassigned": "Bez dodele",
+        "staffPlaceholder": "Pretraži zaposlene…",
+        "staffSelectedCount": "{{count}} odabranih",
+        "staffNoResults": "Nema rezultata",
+        "staffClear": "Poništi izbor",
         "resetButton": "Resetuj filtere",
         "emptyFiltered": "Nijedan mikrokredencijal ne odgovara izabranim filterima."
       },
