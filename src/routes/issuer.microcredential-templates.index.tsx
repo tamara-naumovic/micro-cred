@@ -215,22 +215,102 @@ function List() {
           </SelectContent>
         </Select>
         {!isStaff && (
-          <Select value={staffFilter} onValueChange={setStaffFilter}>
-            <SelectTrigger className="md:w-56">
-              <SelectValue placeholder={t("templates.index.filters.staffLabel")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("templates.index.filters.staffAll")}</SelectItem>
-              <SelectItem value="__unassigned__">
-                {t("templates.index.filters.staffUnassigned")}
-              </SelectItem>
-              {orgStaff.map((u) => (
-                <SelectItem key={u.id} value={u.id}>
-                  {u.name || u.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={staffOpen} onOpenChange={setStaffOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={staffOpen}
+                className="justify-between gap-2 md:w-64"
+              >
+                <span className="flex items-center gap-2 truncate">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="truncate">
+                    {staffFilter.length === 0
+                      ? t("templates.index.filters.staffAll")
+                      : t("templates.index.filters.staffSelectedCount", {
+                          count: staffFilter.length,
+                        })}
+                  </span>
+                </span>
+                <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-0" align="start">
+              <Command>
+                <CommandInput
+                  placeholder={t("templates.index.filters.staffPlaceholder")}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {t("templates.index.filters.staffNoResults")}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem
+                      value={t("templates.index.filters.staffUnassigned")}
+                      onSelect={() => toggleStaff("__unassigned__")}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          staffFilter.includes("__unassigned__")
+                            ? "opacity-100"
+                            : "opacity-0",
+                        )}
+                      />
+                      {t("templates.index.filters.staffUnassigned")}
+                    </CommandItem>
+                  </CommandGroup>
+                  {orgStaff.length > 0 && (
+                    <>
+                      <CommandSeparator />
+                      <CommandGroup>
+                        {orgStaff.map((u) => {
+                          const label = u.name || u.email;
+                          const selected = staffFilter.includes(u.id);
+                          return (
+                            <CommandItem
+                              key={u.id}
+                              value={`${label} ${u.email}`}
+                              onSelect={() => toggleStaff(u.id)}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selected ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              <div className="flex min-w-0 flex-col">
+                                <span className="truncate text-sm">{label}</span>
+                                {u.name && (
+                                  <span className="truncate text-xs text-muted-foreground">
+                                    {u.email}
+                                  </span>
+                                )}
+                              </div>
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </>
+                  )}
+                </CommandList>
+                {staffFilter.length > 0 && (
+                  <div className="border-t p-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setStaffFilter([])}
+                    >
+                      <X className="mr-1 h-4 w-4" />
+                      {t("templates.index.filters.staffClear")}
+                    </Button>
+                  </div>
+                )}
+              </Command>
+            </PopoverContent>
+          </Popover>
         )}
         {filtersActive && (
           <Button variant="ghost" size="sm" onClick={resetFilters}>
