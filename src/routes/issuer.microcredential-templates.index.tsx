@@ -35,7 +35,8 @@ function List() {
 
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("all");
-  const [staffFilter, setStaffFilter] = useState<string>("all");
+  const [staffFilter, setStaffFilter] = useState<string[]>([]);
+  const [staffOpen, setStaffOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"formal" | "non_formal">("formal");
 
   const assignedIds = useMemo(
