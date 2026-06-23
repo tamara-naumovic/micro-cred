@@ -27,6 +27,18 @@
       "createButton": "Kreiraj mikrokredencijal",
       "emptyAdmin": "Još nema mikrokredencijala za vašu instituciju.",
       "emptyStaff": "Još uvek vam nisu dodeljeni mikrokredencijali.",
+      "filters": {
+        "tabFormal": "Formalni",
+        "tabNonFormal": "Neformalni",
+        "searchPlaceholder": "Pretraga po naslovu…",
+        "levelLabel": "Nivo",
+        "levelAll": "Svi nivoi",
+        "staffLabel": "Dodeljeni zaposleni",
+        "staffAll": "Svi zaposleni",
+        "staffUnassigned": "Bez dodele",
+        "resetButton": "Resetuj filtere",
+        "emptyFiltered": "Nijedan mikrokredencijal ne odgovara izabranim filterima."
+      },
       "card": {
         "sourceFormal": "Formalno",
         "sourceNonFormal": "Neformalno",

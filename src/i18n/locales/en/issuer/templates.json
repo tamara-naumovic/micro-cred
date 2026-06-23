@@ -27,6 +27,18 @@
       "createButton": "Create micro-credential",
       "emptyAdmin": "No micro-credentials yet for your institution.",
       "emptyStaff": "No micro-credentials are assigned to you yet.",
+      "filters": {
+        "tabFormal": "Formal",
+        "tabNonFormal": "Non-formal",
+        "searchPlaceholder": "Search by title…",
+        "levelLabel": "Level",
+        "levelAll": "All levels",
+        "staffLabel": "Assigned staff",
+        "staffAll": "All staff",
+        "staffUnassigned": "Unassigned",
+        "resetButton": "Reset filters",
+        "emptyFiltered": "No micro-credentials match the current filters."
+      },
       "card": {
         "sourceFormal": "Formal",
         "sourceNonFormal": "Non-formal",
