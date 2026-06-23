@@ -390,17 +390,13 @@ function Overview() {
         />
       </div>
 
-      {/* Row 2 — Lifecycle */}
-      <div className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t("overview.lifecycle.title")}</CardTitle>
-            <CardDescription>{t("overview.lifecycle.description")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <LifecycleChart counts={lifecycleCounts} />
-          </CardContent>
-        </Card>
+      {/* Row 2 — Top templates + Learner overview */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <TopTemplatesTable templates={orgTemplates} credentials={orgCredsAll} />
+        <LearnerOverview
+          credentials={orgCredsAll}
+          pendingAcceptance={pendingAcceptance.length}
+        />
       </div>
 
       {/* Row 3 — Actions + Bloxberg */}
@@ -427,22 +423,26 @@ function Overview() {
         />
       </div>
 
-      {/* Row 4 — Templates + Issuers */}
+      {/* Row 4 — Lifecycle */}
+      <div className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("overview.lifecycle.title")}</CardTitle>
+            <CardDescription>{t("overview.lifecycle.description")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LifecycleChart counts={lifecycleCounts} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Row 5 — Issuer activity + Template status */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <TopTemplatesTable templates={orgTemplates} credentials={orgCredsAll} />
         <IssuerActivityTable
           users={orgUsers}
           credentials={orgCredsAll}
           applications={orgApps}
           templateAssignees={templateAssignees}
-        />
-      </div>
-
-      {/* Row 5 — Learner overview + Recent activity */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <LearnerOverview
-          credentials={orgCredsAll}
-          pendingAcceptance={pendingAcceptance.length}
         />
         <TemplateStatusPanel
           templates={orgTemplates}
