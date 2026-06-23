@@ -65,16 +65,18 @@ function List() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const includeUnassigned = staffFilter.includes("__unassigned__");
+    const selectedStaffIds = staffFilter.filter((s) => s !== "__unassigned__");
     return mine.filter((tmpl) => {
       if (q && !tmpl.title.toLowerCase().includes(q)) return false;
       if (levelFilter !== "all" && tmpl.level !== levelFilter) return false;
-      if (!isStaff && staffFilter !== "all") {
+      if (!isStaff && staffFilter.length > 0) {
         const tmplAssignees = templateAssignees.filter((a) => a.templateId === tmpl.id);
-        if (staffFilter === "__unassigned__") {
-          if (tmplAssignees.length > 0) return false;
-        } else if (!tmplAssignees.some((a) => a.userId === staffFilter)) {
-          return false;
-        }
+        const matchUnassigned = includeUnassigned && tmplAssignees.length === 0;
+        const matchSelected =
+          selectedStaffIds.length > 0 &&
+          tmplAssignees.some((a) => selectedStaffIds.includes(a.userId));
+        if (!matchUnassigned && !matchSelected) return false;
       }
       return true;
     });
@@ -84,12 +86,19 @@ function List() {
   const nonFormal = filtered.filter((t) => t.source === "non_formal");
 
   const filtersActive =
-    search.trim() !== "" || levelFilter !== "all" || staffFilter !== "all";
+    search.trim() !== "" || levelFilter !== "all" || staffFilter.length > 0;
   const resetFilters = () => {
     setSearch("");
     setLevelFilter("all");
-    setStaffFilter("all");
+    setStaffFilter([]);
   };
+
+  const toggleStaff = (id: string) => {
+    setStaffFilter((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+    );
+  };
+
 
   const renderGrid = (list: MicroCredentialTemplate[]) => {
     if (mine.length === 0) {
