@@ -87,7 +87,7 @@ function List() {
     setStaffFilter("all");
   };
 
-  const renderGrid = (list: Template[]) => {
+  const renderGrid = (list: MicroCredentialTemplate[]) => {
     if (mine.length === 0) {
       return (
         <Card>
