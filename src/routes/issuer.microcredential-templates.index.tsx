@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStore } from "@/lib/store";
-import type { Template } from "@/lib/types";
+import type { MicroCredentialTemplate } from "@/lib/types";
 
 export const Route = createFileRoute("/issuer/microcredential-templates/")({
   head: () => ({ meta: [{ title: "Micro-credentials — MicroCred" }] }),
