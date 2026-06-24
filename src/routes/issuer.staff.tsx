@@ -238,15 +238,49 @@ function StaffPage() {
               )}
               {pageRows.map((r) => (
                 <TableRow key={r.userId}>
-                  <TableCell>{r.displayName || "—"}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span>{r.displayName || "—"}</span>
+                      {r.isAdmin && (
+                        <Badge variant="secondary" className="text-xs">{t("staff.table.alsoAdmin")}</Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{r.email}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(r.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Button size="icon" variant="ghost" onClick={() => onRemove(r.userId)} disabled={busy}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      {r.userId !== activeUser?.id && (
+                        r.isAdmin ? (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => onToggleAdmin(r.userId, false)}
+                            disabled={busy}
+                            title={t("staff.table.revokeAdmin")}
+                            aria-label={t("staff.table.revokeAdmin")}
+                          >
+                            <ShieldOff className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => onToggleAdmin(r.userId, true)}
+                            disabled={busy}
+                            title={t("staff.table.promoteAdmin")}
+                            aria-label={t("staff.table.promoteAdmin")}
+                          >
+                            <ShieldCheck className="h-4 w-4" />
+                          </Button>
+                        )
+                      )}
+                      <Button size="icon" variant="ghost" onClick={() => onRemove(r.userId)} disabled={busy}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
