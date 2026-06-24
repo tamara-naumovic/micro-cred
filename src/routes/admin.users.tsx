@@ -416,13 +416,21 @@ function EditUserDialog({ user }: { user: MockUser }) {
   const [busy, setBusy] = useState(false);
   const [displayName, setDisplayName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
-  const [role, setRole] = useState<AppRole>(mockUserToAppRole(user));
+  const [category, setCategory] = useState<RoleCategory>(mockUserToCategory(user));
+  const initialSubs = user.subRoles ?? (user.subRole ? [user.subRole] : []);
+  const [issuerAdmin, setIssuerAdmin] = useState(initialSubs.includes("admin"));
+  const [issuerStaff, setIssuerStaff] = useState(initialSubs.includes("staff"));
   const [orgId, setOrgId] = useState<string>(user.organizationId ?? "");
 
-  const needsOrg = role === "issuer_admin" || role === "issuer_staff";
+  const needsOrg = category === "issuer";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const roles = rolesFromCategory(category, issuerAdmin, issuerStaff);
+    if (roles.length === 0) {
+      toast.error("Pick at least one issuer sub-role (admin and/or staff)");
+      return;
+    }
     if (needsOrg && !orgId) {
       toast.error("Pick an institution for this role");
       return;
@@ -434,7 +442,7 @@ function EditUserDialog({ user }: { user: MockUser }) {
           userId: user.id,
           email: email !== user.email ? email : undefined,
           displayName: displayName !== user.name ? displayName : undefined,
-          role,
+          roles,
           organizationId: needsOrg ? orgId : null,
         },
       });
@@ -472,12 +480,11 @@ function EditUserDialog({ user }: { user: MockUser }) {
             </div>
             <div>
               <Label>Role</Label>
-              <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+              <Select value={category} onValueChange={(v) => setCategory(v as RoleCategory)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="earner">Earner (student)</SelectItem>
-                  <SelectItem value="issuer_staff">Issuer staff</SelectItem>
-                  <SelectItem value="issuer_admin">Issuer admin</SelectItem>
+                  <SelectItem value="issuer">Issuer (institution)</SelectItem>
                   <SelectItem value="platform_admin">Platform admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -496,6 +503,34 @@ function EditUserDialog({ user }: { user: MockUser }) {
               </div>
             )}
           </div>
+          {needsOrg && (
+            <div className="rounded-md border border-border p-3">
+              <Label className="text-sm">Issuer sub-roles</Label>
+              <p className="mb-2 text-xs text-muted-foreground">
+                A user can be both institution admin and staff at the same time.
+              </p>
+              <div className="flex flex-col gap-2">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={issuerAdmin}
+                    onChange={(e) => setIssuerAdmin(e.target.checked)}
+                    disabled={busy}
+                  />
+                  <span className="text-sm">Institution admin</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={issuerStaff}
+                    onChange={(e) => setIssuerStaff(e.target.checked)}
+                    disabled={busy}
+                  />
+                  <span className="text-sm">Staff</span>
+                </label>
+              </div>
+            </div>
+          )}
           <DialogFooter>
             <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
           </DialogFooter>
