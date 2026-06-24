@@ -46,6 +46,7 @@ function StaffPage() {
   const add = useServerFn(addIssuerStaff);
   const remove = useServerFn(removeIssuerStaff);
   const bulk = useServerFn(bulkAddIssuerStaff);
+  const setAdmin = useServerFn(setIssuerAdminRole);
   const [rows, setRows] = useState<Row[]>([]);
   const [tab, setTab] = useState<"existing" | "new" | "bulk">("existing");
   const [existingEmail, setExistingEmail] = useState("");
