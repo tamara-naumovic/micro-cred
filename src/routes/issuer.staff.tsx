@@ -36,7 +36,7 @@ export const Route = createFileRoute("/issuer/staff")({
   ),
 });
 
-type Row = { userId: string; email: string; displayName: string; createdAt: string };
+type Row = { userId: string; email: string; displayName: string; createdAt: string; isAdmin: boolean };
 
 function StaffPage() {
   const { t } = useTranslation("issuer");
