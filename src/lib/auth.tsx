@@ -57,12 +57,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       const primary = sorted[0];
       const mapped = mapDbRole(primary.role as string);
+      // For issuer: collect both admin/staff sub-roles within the primary org
+      let subRoles: ("admin" | "staff")[] | undefined;
+      if (mapped.role === "issuer" && primary.organization_id) {
+        const set = new Set<"admin" | "staff">();
+        for (const r of roles ?? []) {
+          if (r.organization_id !== primary.organization_id) continue;
+          if (r.role === "issuer_admin") set.add("admin");
+          if (r.role === "issuer_staff") set.add("staff");
+        }
+        subRoles = Array.from(set);
+      }
       const mock: MockUser = {
         id: u.id,
         name: profile?.display_name || u.email?.split("@")[0] || "User",
         email: profile?.email || u.email || "",
         role: mapped.role,
         subRole: mapped.subRole,
+        subRoles,
         organizationId: primary?.organization_id ?? undefined,
         studentId: profile?.student_id ?? undefined,
       };
