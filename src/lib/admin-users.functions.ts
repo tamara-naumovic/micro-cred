@@ -402,7 +402,7 @@ export const orgCreateEarner = createServerFn({ method: "POST" })
     const r = await provisionUser({
       email: data.email,
       displayName: data.displayName,
-      role: "earner",
+      roles: ["earner"],
       mode: data.mode,
       password: data.password,
       redirectTo: data.redirectTo,
