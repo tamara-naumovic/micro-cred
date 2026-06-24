@@ -31,7 +31,7 @@ async function assertOrgAdmin(supabase: any, userId: string, orgId: string) {
 async function provisionUser(opts: {
   email: string;
   displayName: string;
-  role: AppRole;
+  roles: AppRole[];
   organizationId?: string;
   mode: "password" | "invite";
   password?: string;
@@ -39,6 +39,10 @@ async function provisionUser(opts: {
 }): Promise<{ userId: string; alreadyExisted: boolean }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const email = opts.email.trim().toLowerCase();
+
+  if (!opts.roles || opts.roles.length === 0) {
+    throw new Error("At least one role is required");
+  }
 
   // Try to find an existing profile by email first
   const { data: existing } = await supabaseAdmin
@@ -82,9 +86,9 @@ async function provisionUser(opts: {
       { onConflict: "id" },
     );
 
-  // The handle_new_user trigger inserts a default 'earner' role. If we want a
-  // non-earner role, remove the default first.
-  if (opts.role !== "earner") {
+  // The handle_new_user trigger inserts a default 'earner' role. Remove it
+  // unless 'earner' is one of the requested roles.
+  if (!opts.roles.includes("earner")) {
     await supabaseAdmin
       .from("user_roles")
       .delete()
@@ -93,13 +97,16 @@ async function provisionUser(opts: {
       .is("organization_id", null);
   }
 
-  const { error: roleErr } = await supabaseAdmin.from("user_roles").insert({
-    user_id: userId,
-    role: opts.role,
-    organization_id: opts.organizationId ?? null,
-  });
-  if (roleErr && !String(roleErr.message).toLowerCase().includes("duplicate")) {
-    throw new Error(roleErr.message);
+  for (const role of opts.roles) {
+    const isIssuer = role === "issuer_admin" || role === "issuer_staff";
+    const { error: roleErr } = await supabaseAdmin.from("user_roles").insert({
+      user_id: userId,
+      role,
+      organization_id: isIssuer ? opts.organizationId ?? null : null,
+    });
+    if (roleErr && !String(roleErr.message).toLowerCase().includes("duplicate")) {
+      throw new Error(roleErr.message);
+    }
   }
 
   return { userId, alreadyExisted };
