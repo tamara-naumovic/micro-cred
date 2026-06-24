@@ -144,6 +144,20 @@ function StaffPage() {
     }
   };
 
+  const onToggleAdmin = async (userId: string, makeAdmin: boolean) => {
+    setBusy(true);
+    try {
+      await setAdmin({ data: { userId, organizationId: orgId, makeAdmin } });
+      toast.success(makeAdmin ? t("staff.toasts.promoted") : t("staff.toasts.demoted"));
+      await refresh();
+      router.invalidate();
+    } catch (e: any) {
+      toast.error(e.message ?? t("staff.toasts.failedRoleChange"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <PageShell
       title={t("staff.title")}
