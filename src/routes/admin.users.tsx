@@ -127,7 +127,9 @@ function UsersPage() {
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
                       {u.role}
-                      {u.subRole ? ` · ${u.subRole}` : ""}
+                      {u.role === "issuer" && (u.subRoles?.length
+                        ? ` · ${u.subRoles.join(" + ")}`
+                        : u.subRole ? ` · ${u.subRole}` : "")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">
