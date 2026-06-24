@@ -20,7 +20,10 @@
       "email": "E-adresa",
       "added": "Dodat",
       "loading": "Učitavanje…",
-      "empty": "Još uvek nema zaposlenih."
+      "empty": "Još uvek nema zaposlenih.",
+      "alsoAdmin": "Takođe admin",
+      "promoteAdmin": "Unaprediti u administratora institucije",
+      "revokeAdmin": "Oduzmi admin rolu"
     },
     "pagination": {
       "page": "Strana {{page}} od {{pageCount}} · ukupno {{total}}",
@@ -30,9 +33,12 @@
     "toasts": {
       "added": "Zaposleni je dodat",
       "removed": "Zaposleni je uklonjen",
+      "promoted": "Dodeljena je rola administratora institucije",
+      "demoted": "Oduzeta je rola administratora institucije",
       "failedLoad": "Učitavanje zaposlenih nije uspelo",
       "failedAdd": "Dodavanje zaposlenog nije uspelo",
       "failedRemove": "Uklanjanje zaposlenog nije uspelo",
+      "failedRoleChange": "Promena role nije uspela",
       "adminOnly": "Samo administratori institucije mogu upravljati zaposlenima."
     }
   }

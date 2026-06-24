@@ -1,13 +1,14 @@
 import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Trash2, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,7 +16,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
 import { BulkUsersUpload } from "@/components/admin/BulkUsersUpload";
 import { useStore } from "@/lib/store";
-import { addIssuerStaff, bulkAddIssuerStaff, listIssuerStaff, removeIssuerStaff } from "@/lib/issuer-staff.functions";
+import {
+  addIssuerStaff,
+  bulkAddIssuerStaff,
+  listIssuerStaff,
+  removeIssuerStaff,
+  setIssuerAdminRole,
+} from "@/lib/issuer-staff.functions";
 
 const PAGE_SIZE = 10;
 
@@ -29,7 +36,7 @@ export const Route = createFileRoute("/issuer/staff")({
   ),
 });
 
-type Row = { userId: string; email: string; displayName: string; createdAt: string };
+type Row = { userId: string; email: string; displayName: string; createdAt: string; isAdmin: boolean };
 
 function StaffPage() {
   const { t } = useTranslation("issuer");
@@ -39,6 +46,7 @@ function StaffPage() {
   const add = useServerFn(addIssuerStaff);
   const remove = useServerFn(removeIssuerStaff);
   const bulk = useServerFn(bulkAddIssuerStaff);
+  const setAdmin = useServerFn(setIssuerAdminRole);
   const [rows, setRows] = useState<Row[]>([]);
   const [tab, setTab] = useState<"existing" | "new" | "bulk">("existing");
   const [existingEmail, setExistingEmail] = useState("");
@@ -136,6 +144,20 @@ function StaffPage() {
     }
   };
 
+  const onToggleAdmin = async (userId: string, makeAdmin: boolean) => {
+    setBusy(true);
+    try {
+      await setAdmin({ data: { userId, organizationId: orgId, makeAdmin } });
+      toast.success(makeAdmin ? t("staff.toasts.promoted") : t("staff.toasts.demoted"));
+      await refresh();
+      router.invalidate();
+    } catch (e: any) {
+      toast.error(e.message ?? t("staff.toasts.failedRoleChange"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <PageShell
       title={t("staff.title")}
@@ -216,15 +238,49 @@ function StaffPage() {
               )}
               {pageRows.map((r) => (
                 <TableRow key={r.userId}>
-                  <TableCell>{r.displayName || "—"}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span>{r.displayName || "—"}</span>
+                      {r.isAdmin && (
+                        <Badge variant="secondary" className="text-xs">{t("staff.table.alsoAdmin")}</Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{r.email}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(r.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Button size="icon" variant="ghost" onClick={() => onRemove(r.userId)} disabled={busy}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      {r.userId !== activeUser?.id && (
+                        r.isAdmin ? (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => onToggleAdmin(r.userId, false)}
+                            disabled={busy}
+                            title={t("staff.table.revokeAdmin")}
+                            aria-label={t("staff.table.revokeAdmin")}
+                          >
+                            <ShieldOff className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => onToggleAdmin(r.userId, true)}
+                            disabled={busy}
+                            title={t("staff.table.promoteAdmin")}
+                            aria-label={t("staff.table.promoteAdmin")}
+                          >
+                            <ShieldCheck className="h-4 w-4" />
+                          </Button>
+                        )
+                      )}
+                      <Button size="icon" variant="ghost" onClick={() => onRemove(r.userId)} disabled={busy}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

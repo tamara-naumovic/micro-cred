@@ -10,6 +10,9 @@ export interface MockUser {
   role: Role;
   // For Issuer role only: distinguishes institution admin from staff employee
   subRole?: "admin" | "staff";
+  // For Issuer role only: all sub-roles held in the same organization.
+  // A user can simultaneously be admin and staff at the same institution.
+  subRoles?: ("admin" | "staff")[];
   organizationId?: string;
   organization?: string;
   studentId?: string;

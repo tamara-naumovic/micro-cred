@@ -31,7 +31,7 @@ async function assertOrgAdmin(supabase: any, userId: string, orgId: string) {
 async function provisionUser(opts: {
   email: string;
   displayName: string;
-  role: AppRole;
+  roles: AppRole[];
   organizationId?: string;
   mode: "password" | "invite";
   password?: string;
@@ -39,6 +39,10 @@ async function provisionUser(opts: {
 }): Promise<{ userId: string; alreadyExisted: boolean }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const email = opts.email.trim().toLowerCase();
+
+  if (!opts.roles || opts.roles.length === 0) {
+    throw new Error("At least one role is required");
+  }
 
   // Try to find an existing profile by email first
   const { data: existing } = await supabaseAdmin
@@ -82,9 +86,9 @@ async function provisionUser(opts: {
       { onConflict: "id" },
     );
 
-  // The handle_new_user trigger inserts a default 'earner' role. If we want a
-  // non-earner role, remove the default first.
-  if (opts.role !== "earner") {
+  // The handle_new_user trigger inserts a default 'earner' role. Remove it
+  // unless 'earner' is one of the requested roles.
+  if (!opts.roles.includes("earner")) {
     await supabaseAdmin
       .from("user_roles")
       .delete()
@@ -93,13 +97,16 @@ async function provisionUser(opts: {
       .is("organization_id", null);
   }
 
-  const { error: roleErr } = await supabaseAdmin.from("user_roles").insert({
-    user_id: userId,
-    role: opts.role,
-    organization_id: opts.organizationId ?? null,
-  });
-  if (roleErr && !String(roleErr.message).toLowerCase().includes("duplicate")) {
-    throw new Error(roleErr.message);
+  for (const role of opts.roles) {
+    const isIssuer = role === "issuer_admin" || role === "issuer_staff";
+    const { error: roleErr } = await supabaseAdmin.from("user_roles").insert({
+      user_id: userId,
+      role,
+      organization_id: isIssuer ? opts.organizationId ?? null : null,
+    });
+    if (roleErr && !String(roleErr.message).toLowerCase().includes("duplicate")) {
+      throw new Error(roleErr.message);
+    }
   }
 
   return { userId, alreadyExisted };
@@ -115,7 +122,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     (d: {
       email: string;
       displayName: string;
-      role: AppRole;
+      roles: AppRole[];
       organizationId?: string;
       mode: "password" | "invite";
       password?: string;
@@ -124,10 +131,8 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertPlatformAdmin(context.supabase, context.userId);
-    if (
-      (data.role === "issuer_admin" || data.role === "issuer_staff") &&
-      !data.organizationId
-    ) {
+    const needsOrg = data.roles.some((r) => r === "issuer_admin" || r === "issuer_staff");
+    if (needsOrg && !data.organizationId) {
       throw new Error("organizationId is required for institution roles");
     }
     const r = await provisionUser(data);
@@ -144,7 +149,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
       userId: string;
       email?: string;
       displayName?: string;
-      role?: AppRole;
+      roles?: AppRole[];
       organizationId?: string | null;
     }) => d,
   )
@@ -152,11 +157,10 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     await assertPlatformAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    if (
-      data.role &&
-      (data.role === "issuer_admin" || data.role === "issuer_staff") &&
-      !data.organizationId
-    ) {
+    const needsOrg = (data.roles ?? []).some(
+      (r) => r === "issuer_admin" || r === "issuer_staff",
+    );
+    if (data.roles && needsOrg && !data.organizationId) {
       throw new Error("organizationId is required for institution roles");
     }
 
@@ -184,22 +188,24 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     }
 
     // Replace role assignment if requested
-    if (data.role) {
+    if (data.roles && data.roles.length > 0) {
       const { error: delErr } = await supabaseAdmin
         .from("user_roles")
         .delete()
         .eq("user_id", data.userId);
       if (delErr) throw new Error(delErr.message);
 
-      const { error: insErr } = await supabaseAdmin.from("user_roles").insert({
-        user_id: data.userId,
-        role: data.role,
-        organization_id:
-          data.role === "issuer_admin" || data.role === "issuer_staff"
-            ? data.organizationId ?? null
-            : null,
-      });
-      if (insErr) throw new Error(insErr.message);
+      for (const role of data.roles) {
+        const isIssuer = role === "issuer_admin" || role === "issuer_staff";
+        const { error: insErr } = await supabaseAdmin.from("user_roles").insert({
+          user_id: data.userId,
+          role,
+          organization_id: isIssuer ? data.organizationId ?? null : null,
+        });
+        if (insErr && !String(insErr.message).toLowerCase().includes("duplicate")) {
+          throw new Error(insErr.message);
+        }
+      }
     }
 
     return { ok: true };
@@ -313,7 +319,7 @@ export const adminCreateInstitution = createServerFn({ method: "POST" })
       const r = await provisionUser({
         email: data.adminEmail,
         displayName: data.adminDisplayName,
-        role: "issuer_admin",
+        roles: ["issuer_admin"],
         organizationId: org.id as string,
         mode: data.mode,
         password: data.adminPassword,
@@ -396,7 +402,7 @@ export const orgCreateEarner = createServerFn({ method: "POST" })
     const r = await provisionUser({
       email: data.email,
       displayName: data.displayName,
-      role: "earner",
+      roles: ["earner"],
       mode: data.mode,
       password: data.password,
       redirectTo: data.redirectTo,
@@ -431,7 +437,7 @@ export const orgBulkCreateEarners = createServerFn({ method: "POST" })
         const r = await provisionUser({
           email: row.email,
           displayName: row.name,
-          role: "earner",
+          roles: ["earner"],
           mode: "password",
           password: row.password,
         });

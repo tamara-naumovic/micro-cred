@@ -20,7 +20,10 @@
       "email": "Email",
       "added": "Added",
       "loading": "Loading…",
-      "empty": "No staff yet."
+      "empty": "No staff yet.",
+      "alsoAdmin": "Also admin",
+      "promoteAdmin": "Promote to institution admin",
+      "revokeAdmin": "Revoke admin role"
     },
     "pagination": {
       "page": "Page {{page}} of {{pageCount}} · {{total}} total",
@@ -30,9 +33,12 @@
     "toasts": {
       "added": "Staff added",
       "removed": "Staff removed",
+      "promoted": "Granted institution admin role",
+      "demoted": "Revoked institution admin role",
       "failedLoad": "Failed to load staff",
       "failedAdd": "Failed to add staff",
       "failedRemove": "Failed to remove staff",
+      "failedRoleChange": "Failed to change role",
       "adminOnly": "Only institution admins can manage staff."
     }
   }
