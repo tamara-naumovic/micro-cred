@@ -33,12 +33,19 @@ export const listIssuerStaff = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const userIds = (roles ?? []).map((r: any) => r.user_id);
     if (userIds.length === 0) return [];
-    const { data: profs, error: pErr } = await supabaseAdmin
-      .from("profiles")
-      .select("id, email, display_name")
-      .in("id", userIds);
+    const [{ data: profs, error: pErr }, { data: adminRoles, error: aErr }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id, email, display_name").in("id", userIds),
+      supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "issuer_admin")
+        .eq("organization_id", data.organizationId)
+        .in("user_id", userIds),
+    ]);
     if (pErr) throw new Error(pErr.message);
+    if (aErr) throw new Error(aErr.message);
     const byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    const adminSet = new Set((adminRoles ?? []).map((r: any) => r.user_id));
     return (roles ?? []).map((r: any) => {
       const p: any = byId.get(r.user_id) ?? {};
       return {
@@ -46,6 +53,7 @@ export const listIssuerStaff = createServerFn({ method: "POST" })
         email: p.email ?? "",
         displayName: p.display_name ?? "",
         createdAt: r.created_at,
+        isAdmin: adminSet.has(r.user_id),
       };
     });
   });
