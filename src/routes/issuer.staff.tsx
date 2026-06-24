@@ -1,13 +1,14 @@
 import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Trash2, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,7 +16,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
 import { BulkUsersUpload } from "@/components/admin/BulkUsersUpload";
 import { useStore } from "@/lib/store";
-import { addIssuerStaff, bulkAddIssuerStaff, listIssuerStaff, removeIssuerStaff } from "@/lib/issuer-staff.functions";
+import {
+  addIssuerStaff,
+  bulkAddIssuerStaff,
+  listIssuerStaff,
+  removeIssuerStaff,
+  setIssuerAdminRole,
+} from "@/lib/issuer-staff.functions";
 
 const PAGE_SIZE = 10;
 
