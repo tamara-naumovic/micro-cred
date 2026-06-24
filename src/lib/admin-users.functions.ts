@@ -437,7 +437,7 @@ export const orgBulkCreateEarners = createServerFn({ method: "POST" })
         const r = await provisionUser({
           email: row.email,
           displayName: row.name,
-          role: "earner",
+          roles: ["earner"],
           mode: "password",
           password: row.password,
         });
