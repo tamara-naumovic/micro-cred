@@ -152,22 +152,50 @@ function UsersPage() {
   );
 }
 
+type RoleCategory = "earner" | "issuer" | "platform_admin";
+
+function mockUserToCategory(u: MockUser): RoleCategory {
+  if (u.role === "admin") return "platform_admin";
+  if (u.role === "issuer") return "issuer";
+  return "earner";
+}
+
+function rolesFromCategory(
+  cat: RoleCategory,
+  issuerAdmin: boolean,
+  issuerStaff: boolean,
+): AppRole[] {
+  if (cat === "earner") return ["earner"];
+  if (cat === "platform_admin") return ["platform_admin"];
+  const roles: AppRole[] = [];
+  if (issuerAdmin) roles.push("issuer_admin");
+  if (issuerStaff) roles.push("issuer_staff");
+  return roles;
+}
+
 function AddUserDialog() {
   const { organizations, reset: storeReset } = useStore();
   const create = useServerFn(adminCreateUser);
   const assign = useServerFn(assignEarnerInstitution);
   const [open, setOpen] = useState(false);
-  const [role, setRole] = useState<AppRole>("earner");
+  const [category, setCategory] = useState<RoleCategory>("earner");
+  const [issuerAdmin, setIssuerAdmin] = useState(true);
+  const [issuerStaff, setIssuerStaff] = useState(false);
   const [orgId, setOrgId] = useState<string>("");
   const [earnerOrgIds, setEarnerOrgIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [form, setForm, reset] = useProvisionState();
 
-  const needsOrg = role === "issuer_admin" || role === "issuer_staff";
-  const isEarner = role === "earner";
+  const needsOrg = category === "issuer";
+  const isEarner = category === "earner";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const roles = rolesFromCategory(category, issuerAdmin, issuerStaff);
+    if (roles.length === 0) {
+      toast.error("Pick at least one issuer sub-role (admin and/or staff)");
+      return;
+    }
     if (needsOrg && !orgId) {
       toast.error("Pick an institution for this role");
       return;
@@ -178,7 +206,7 @@ function AddUserDialog() {
         data: {
           email: form.email,
           displayName: form.displayName,
-          role,
+          roles,
           organizationId: needsOrg ? orgId : undefined,
           mode: form.mode,
           password: form.password,
@@ -227,12 +255,11 @@ function AddUserDialog() {
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
               <Label>Role</Label>
-              <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+              <Select value={category} onValueChange={(v) => setCategory(v as RoleCategory)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="earner">Earner (student)</SelectItem>
-                  <SelectItem value="issuer_staff">Issuer staff</SelectItem>
-                  <SelectItem value="issuer_admin">Issuer admin</SelectItem>
+                  <SelectItem value="issuer">Issuer (institution)</SelectItem>
                   <SelectItem value="platform_admin">Platform admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -251,6 +278,34 @@ function AddUserDialog() {
               </div>
             )}
           </div>
+          {needsOrg && (
+            <div className="rounded-md border border-border p-3">
+              <Label className="text-sm">Issuer sub-roles</Label>
+              <p className="mb-2 text-xs text-muted-foreground">
+                A user can be both institution admin and staff at the same time.
+              </p>
+              <div className="flex flex-col gap-2">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={issuerAdmin}
+                    onChange={(e) => setIssuerAdmin(e.target.checked)}
+                    disabled={busy}
+                  />
+                  <span className="text-sm">Institution admin</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={issuerStaff}
+                    onChange={(e) => setIssuerStaff(e.target.checked)}
+                    disabled={busy}
+                  />
+                  <span className="text-sm">Staff</span>
+                </label>
+              </div>
+            </div>
+          )}
           {isEarner && organizations.length > 0 && (
             <div>
               <Label>Institutions (optional)</Label>
