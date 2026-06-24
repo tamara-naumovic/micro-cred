@@ -6,6 +6,7 @@ type StaffMember = {
   email: string;
   displayName: string;
   createdAt: string;
+  isAdmin: boolean;
 };
 
 async function assertOrgAdmin(supabase: any, userId: string, organizationId: string) {
