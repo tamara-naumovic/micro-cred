@@ -148,10 +148,58 @@ export const removeIssuerStaff = createServerFn({ method: "POST" })
       .eq("role", "issuer_staff")
       .eq("organization_id", data.organizationId);
     if (error) throw new Error(error.message);
-    // Cleanup template assignments
-    await supabaseAdmin.from("template_assignees").delete().eq("user_id", data.userId);
+    // Only wipe template assignments when the user no longer has any issuer
+    // role in this org (otherwise an admin who is also a staff member loses
+    // their template assignments unexpectedly).
+    const { data: remaining } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId)
+      .eq("organization_id", data.organizationId);
+    if (!remaining || remaining.length === 0) {
+      await supabaseAdmin.from("template_assignees").delete().eq("user_id", data.userId);
+    }
     return { ok: true };
   });
+
+export const setIssuerAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; organizationId: string; makeAdmin: boolean }) => d)
+  .handler(async ({ data, context }) => {
+    await assertOrgAdmin(context.supabase, context.userId, data.organizationId);
+    if (!data.makeAdmin && data.userId === context.userId) {
+      throw new Error("You cannot revoke your own admin role");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.makeAdmin) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: data.userId, role: "issuer_admin", organization_id: data.organizationId });
+      if (error && !String(error.message).toLowerCase().includes("duplicate")) {
+        throw new Error(error.message);
+      }
+    } else {
+      // Refuse to remove the last admin in the org
+      const { data: admins, error: cErr } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "issuer_admin")
+        .eq("organization_id", data.organizationId);
+      if (cErr) throw new Error(cErr.message);
+      if ((admins?.length ?? 0) <= 1) {
+        throw new Error("Cannot revoke the last institution admin");
+      }
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "issuer_admin")
+        .eq("organization_id", data.organizationId);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
 
 export const bulkAddIssuerStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
