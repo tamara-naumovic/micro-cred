@@ -384,12 +384,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
         const primary = sorted[0];
         const primaryRole = (primary?.role as string | undefined) ?? "earner";
+        const role = mapDbRoleToRole(primaryRole);
+        let subRoles: ("admin" | "staff")[] | undefined;
+        if (role === "issuer" && primary?.organization_id) {
+          const set = new Set<"admin" | "staff">();
+          for (const r of userRoles) {
+            if (r.organization_id !== primary.organization_id) continue;
+            if (r.role === "issuer_admin") set.add("admin");
+            if (r.role === "issuer_staff") set.add("staff");
+          }
+          subRoles = Array.from(set);
+        }
         return {
           id: p.id as string,
           name: (p.display_name as string) || ((p.email as string)?.split("@")[0] ?? "User"),
           email: (p.email as string) ?? "",
-          role: mapDbRoleToRole(primaryRole),
+          role,
           subRole: mapDbRoleToSubRole(primaryRole),
+          subRoles,
           organizationId: (primary?.organization_id as string | undefined) ?? undefined,
           organization: primary?.organization_id
             ? orgName.get(primary.organization_id as string)
