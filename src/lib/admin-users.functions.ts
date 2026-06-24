@@ -319,7 +319,7 @@ export const adminCreateInstitution = createServerFn({ method: "POST" })
       const r = await provisionUser({
         email: data.adminEmail,
         displayName: data.adminDisplayName,
-        role: "issuer_admin",
+        roles: ["issuer_admin"],
         organizationId: org.id as string,
         mode: data.mode,
         password: data.adminPassword,
