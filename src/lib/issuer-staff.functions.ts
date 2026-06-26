@@ -193,6 +193,18 @@ export const setIssuerAdminRole = createServerFn({ method: "POST" })
       if ((admins?.length ?? 0) <= 1) {
         throw new Error("Cannot revoke the last institution admin");
       }
+      // Ensure user keeps at least one issuer role in this org
+      const { data: existing, error: eErr } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.userId)
+        .eq("organization_id", data.organizationId)
+        .in("role", ["issuer_admin", "issuer_staff"]);
+      if (eErr) throw new Error(eErr.message);
+      const hasStaff = (existing ?? []).some((r: any) => r.role === "issuer_staff");
+      if (!hasStaff) {
+        throw new Error("User must keep at least one role. Remove the member instead.");
+      }
       const { error } = await supabaseAdmin
         .from("user_roles")
         .delete()
