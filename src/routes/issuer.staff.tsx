@@ -54,17 +54,37 @@ function StaffPage() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   const orgId = activeUser?.organizationId ?? "";
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const roleAdminTerms = t("staff.search.roleAdmin").toLowerCase();
+  const roleStaffTerms = t("staff.search.roleStaff").toLowerCase();
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => {
+      const roleHaystack = r.isAdmin ? `${roleAdminTerms} ${roleStaffTerms}` : roleStaffTerms;
+      return (
+        (r.displayName ?? "").toLowerCase().includes(q) ||
+        (r.email ?? "").toLowerCase().includes(q) ||
+        roleHaystack.includes(q)
+      );
+    });
+  }, [rows, search, roleAdminTerms, roleStaffTerms]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const pageRows = useMemo(
-    () => rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [rows, page],
+    () => filteredRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredRows, page],
   );
   useEffect(() => {
     if (page > pageCount) setPage(pageCount);
   }, [page, pageCount]);
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
 
   async function refresh() {
