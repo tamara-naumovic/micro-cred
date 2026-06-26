@@ -240,6 +240,17 @@ function StaffPage() {
 
       <Card>
         <CardContent className="p-0">
+          <div className="border-b p-3">
+            <div className="relative max-w-sm">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("staff.search.placeholder")}
+                className="pl-9"
+              />
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -253,8 +264,8 @@ function StaffPage() {
               {loading && (
                 <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{t("staff.table.loading")}</TableCell></TableRow>
               )}
-              {!loading && rows.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{t("staff.table.empty")}</TableCell></TableRow>
+              {!loading && filteredRows.length === 0 && (
+                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{search.trim() ? t("staff.search.noResults") : t("staff.table.empty")}</TableCell></TableRow>
               )}
               {pageRows.map((r) => (
                 <TableRow key={r.userId}>
