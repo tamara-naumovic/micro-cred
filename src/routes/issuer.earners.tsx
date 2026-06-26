@@ -47,16 +47,23 @@ function EarnersPage() {
   const [busy, setBusy] = useState(false);
   const [form, setForm, reset] = useProvisionState();
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   const orgId = activeUser?.organizationId ?? "";
 
-  const rows = useMemo(() => {
+  const allRows = useMemo(() => {
     if (!orgId) return [];
     const ids = new Set(
       earnerInstitutions.filter((e) => e.organizationId === orgId).map((e) => e.earnerId),
     );
     return users.filter((u) => ids.has(u.id));
   }, [earnerInstitutions, users, orgId]);
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return allRows;
+    return allRows.filter((u) => u.name.toLowerCase().includes(q));
+  }, [allRows, search]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const pageRows = useMemo(
@@ -66,6 +73,9 @@ function EarnersPage() {
   useEffect(() => {
     if (page > pageCount) setPage(pageCount);
   }, [page, pageCount]);
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
 
   if (!activeUser) return null;
