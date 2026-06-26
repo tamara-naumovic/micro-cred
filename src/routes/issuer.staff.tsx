@@ -317,10 +317,10 @@ function StaffPage() {
               ))}
             </TableBody>
           </Table>
-          {rows.length > PAGE_SIZE && (
+          {filteredRows.length > PAGE_SIZE && (
             <div className="flex items-center justify-between border-t p-3 text-sm">
               <div className="text-muted-foreground">
-                {t("staff.pagination.page", { page, pageCount, total: rows.length })}
+                {t("staff.pagination.page", { page, pageCount, total: filteredRows.length })}
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
