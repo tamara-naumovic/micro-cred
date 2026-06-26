@@ -25,11 +25,17 @@
       "name": "Name",
       "email": "Email",
       "added": "Added",
+      "role": "Role",
       "loading": "Loading…",
-      "empty": "No staff yet.",
+      "empty": "No members yet.",
       "alsoAdmin": "Also admin",
+      "badgeAdmin": "Admin",
+      "badgeStaff": "Staff",
       "promoteAdmin": "Promote to institution admin",
-      "revokeAdmin": "Revoke admin role"
+      "revokeAdmin": "Revoke admin role",
+      "grantStaff": "Grant staff role",
+      "revokeStaff": "Revoke staff role",
+      "removeMember": "Remove from institution"
     },
     "pagination": {
       "page": "Page {{page}} of {{pageCount}} · {{total}} total",
@@ -38,13 +44,16 @@
     },
     "toasts": {
       "added": "Staff added",
-      "removed": "Staff removed",
+      "removed": "Member removed",
       "promoted": "Granted institution admin role",
       "demoted": "Revoked institution admin role",
-      "failedLoad": "Failed to load staff",
+      "staffGranted": "Granted staff role",
+      "staffRevoked": "Revoked staff role",
+      "failedLoad": "Failed to load members",
       "failedAdd": "Failed to add staff",
-      "failedRemove": "Failed to remove staff",
+      "failedRemove": "Failed to remove member",
       "failedRoleChange": "Failed to change role",
+      "failedStaffChange": "Failed to change staff role",
       "adminOnly": "Only institution admins can manage staff."
     }
   }

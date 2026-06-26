@@ -25,11 +25,17 @@
       "name": "Ime",
       "email": "E-adresa",
       "added": "Dodat",
+      "role": "Uloga",
       "loading": "Učitavanje…",
-      "empty": "Još uvek nema zaposlenih.",
+      "empty": "Još uvek nema članova.",
       "alsoAdmin": "Takođe admin",
-      "promoteAdmin": "Unaprediti u administratora institucije",
-      "revokeAdmin": "Oduzmi admin rolu"
+      "badgeAdmin": "Admin",
+      "badgeStaff": "Zaposleni",
+      "promoteAdmin": "Dodeli admin rolu",
+      "revokeAdmin": "Oduzmi admin rolu",
+      "grantStaff": "Dodeli staff rolu",
+      "revokeStaff": "Oduzmi staff rolu",
+      "removeMember": "Ukloni iz institucije"
     },
     "pagination": {
       "page": "Strana {{page}} od {{pageCount}} · ukupno {{total}}",
@@ -38,13 +44,16 @@
     },
     "toasts": {
       "added": "Zaposleni je dodat",
-      "removed": "Zaposleni je uklonjen",
+      "removed": "Član je uklonjen",
       "promoted": "Dodeljena je rola administratora institucije",
       "demoted": "Oduzeta je rola administratora institucije",
-      "failedLoad": "Učitavanje zaposlenih nije uspelo",
+      "staffGranted": "Dodeljena je staff rola",
+      "staffRevoked": "Oduzeta je staff rola",
+      "failedLoad": "Učitavanje članova nije uspelo",
       "failedAdd": "Dodavanje zaposlenog nije uspelo",
-      "failedRemove": "Uklanjanje zaposlenog nije uspelo",
+      "failedRemove": "Uklanjanje člana nije uspelo",
       "failedRoleChange": "Promena role nije uspela",
+      "failedStaffChange": "Promena staff role nije uspela",
       "adminOnly": "Samo administratori institucije mogu upravljati zaposlenima."
     }
   }

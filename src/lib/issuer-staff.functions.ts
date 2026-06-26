@@ -7,6 +7,7 @@ type StaffMember = {
   displayName: string;
   createdAt: string;
   isAdmin: boolean;
+  isStaff: boolean;
 };
 
 async function assertOrgAdmin(supabase: any, userId: string, organizationId: string) {
@@ -27,33 +28,36 @@ export const listIssuerStaff = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: roles, error } = await supabaseAdmin
       .from("user_roles")
-      .select("user_id, created_at")
-      .eq("role", "issuer_staff")
-      .eq("organization_id", data.organizationId);
+      .select("user_id, role, created_at")
+      .eq("organization_id", data.organizationId)
+      .in("role", ["issuer_admin", "issuer_staff"]);
     if (error) throw new Error(error.message);
-    const userIds = (roles ?? []).map((r: any) => r.user_id);
+    const byUser = new Map<string, { isAdmin: boolean; isStaff: boolean; createdAt: string }>();
+    for (const r of roles ?? []) {
+      const existing = byUser.get(r.user_id) ?? { isAdmin: false, isStaff: false, createdAt: r.created_at };
+      if (r.role === "issuer_admin") existing.isAdmin = true;
+      if (r.role === "issuer_staff") existing.isStaff = true;
+      if (r.created_at < existing.createdAt) existing.createdAt = r.created_at;
+      byUser.set(r.user_id, existing);
+    }
+    const userIds = Array.from(byUser.keys());
     if (userIds.length === 0) return [];
-    const [{ data: profs, error: pErr }, { data: adminRoles, error: aErr }] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, email, display_name").in("id", userIds),
-      supabaseAdmin
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "issuer_admin")
-        .eq("organization_id", data.organizationId)
-        .in("user_id", userIds),
-    ]);
+    const { data: profs, error: pErr } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, display_name")
+      .in("id", userIds);
     if (pErr) throw new Error(pErr.message);
-    if (aErr) throw new Error(aErr.message);
     const byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
-    const adminSet = new Set((adminRoles ?? []).map((r: any) => r.user_id));
-    return (roles ?? []).map((r: any) => {
-      const p: any = byId.get(r.user_id) ?? {};
+    return userIds.map((uid) => {
+      const agg = byUser.get(uid)!;
+      const p: any = byId.get(uid) ?? {};
       return {
-        userId: r.user_id,
+        userId: uid,
         email: p.email ?? "",
         displayName: p.display_name ?? "",
-        createdAt: r.created_at,
-        isAdmin: adminSet.has(r.user_id),
+        createdAt: agg.createdAt,
+        isAdmin: agg.isAdmin,
+        isStaff: agg.isStaff,
       };
     });
   });
@@ -189,6 +193,18 @@ export const setIssuerAdminRole = createServerFn({ method: "POST" })
       if ((admins?.length ?? 0) <= 1) {
         throw new Error("Cannot revoke the last institution admin");
       }
+      // Ensure user keeps at least one issuer role in this org
+      const { data: existing, error: eErr } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.userId)
+        .eq("organization_id", data.organizationId)
+        .in("role", ["issuer_admin", "issuer_staff"]);
+      if (eErr) throw new Error(eErr.message);
+      const hasStaff = (existing ?? []).some((r: any) => r.role === "issuer_staff");
+      if (!hasStaff) {
+        throw new Error("User must keep at least one role. Remove the member instead.");
+      }
       const { error } = await supabaseAdmin
         .from("user_roles")
         .delete()
@@ -199,6 +215,76 @@ export const setIssuerAdminRole = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+export const setIssuerStaffRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; organizationId: string; makeStaff: boolean }) => d)
+  .handler(async ({ data, context }) => {
+    await assertOrgAdmin(context.supabase, context.userId, data.organizationId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.makeStaff) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: data.userId, role: "issuer_staff", organization_id: data.organizationId });
+      if (error && !String(error.message).toLowerCase().includes("duplicate")) {
+        throw new Error(error.message);
+      }
+    } else {
+      // Ensure user keeps at least one issuer role in this org
+      const { data: existing, error: cErr } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.userId)
+        .eq("organization_id", data.organizationId)
+        .in("role", ["issuer_admin", "issuer_staff"]);
+      if (cErr) throw new Error(cErr.message);
+      const hasAdmin = (existing ?? []).some((r: any) => r.role === "issuer_admin");
+      if (!hasAdmin) {
+        throw new Error("User must keep at least one role. Remove the member instead.");
+      }
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "issuer_staff")
+        .eq("organization_id", data.organizationId);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const removeIssuerMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; organizationId: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertOrgAdmin(context.supabase, context.userId, data.organizationId);
+    if (data.userId === context.userId) {
+      throw new Error("You cannot remove yourself");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Block removing the last admin
+    const { data: admins, error: aErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "issuer_admin")
+      .eq("organization_id", data.organizationId);
+    if (aErr) throw new Error(aErr.message);
+    const adminIds = new Set((admins ?? []).map((r: any) => r.user_id));
+    if (adminIds.has(data.userId) && adminIds.size <= 1) {
+      throw new Error("Cannot remove the last institution admin");
+    }
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.userId)
+      .eq("organization_id", data.organizationId)
+      .in("role", ["issuer_admin", "issuer_staff"]);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("template_assignees").delete().eq("user_id", data.userId);
+    return { ok: true };
+  });
+
+
 
 
 export const bulkAddIssuerStaff = createServerFn({ method: "POST" })

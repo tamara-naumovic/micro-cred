@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Trash2, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Trash2, UserMinus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -20,8 +20,9 @@ import {
   addIssuerStaff,
   bulkAddIssuerStaff,
   listIssuerStaff,
-  removeIssuerStaff,
+  removeIssuerMember,
   setIssuerAdminRole,
+  setIssuerStaffRole,
 } from "@/lib/issuer-staff.functions";
 
 const PAGE_SIZE = 10;
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/issuer/staff")({
   ),
 });
 
-type Row = { userId: string; email: string; displayName: string; createdAt: string; isAdmin: boolean };
+type Row = { userId: string; email: string; displayName: string; createdAt: string; isAdmin: boolean; isStaff: boolean };
 
 function StaffPage() {
   const { t } = useTranslation("issuer");
@@ -44,9 +45,10 @@ function StaffPage() {
   const router = useRouter();
   const list = useServerFn(listIssuerStaff);
   const add = useServerFn(addIssuerStaff);
-  const remove = useServerFn(removeIssuerStaff);
+  const remove = useServerFn(removeIssuerMember);
   const bulk = useServerFn(bulkAddIssuerStaff);
   const setAdmin = useServerFn(setIssuerAdminRole);
+  const setStaff = useServerFn(setIssuerStaffRole);
   const [rows, setRows] = useState<Row[]>([]);
   const [tab, setTab] = useState<"existing" | "new" | "bulk">("existing");
   const [existingEmail, setExistingEmail] = useState("");
@@ -178,6 +180,20 @@ function StaffPage() {
     }
   };
 
+  const onToggleStaff = async (userId: string, makeStaff: boolean) => {
+    setBusy(true);
+    try {
+      await setStaff({ data: { userId, organizationId: orgId, makeStaff } });
+      toast.success(makeStaff ? t("staff.toasts.staffGranted") : t("staff.toasts.staffRevoked"));
+      await refresh();
+      router.invalidate();
+    } catch (e: any) {
+      toast.error(e.message ?? t("staff.toasts.failedStaffChange"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <PageShell
       title={t("staff.title")}
@@ -256,59 +272,91 @@ function StaffPage() {
               <TableRow>
                 <TableHead>{t("staff.table.name")}</TableHead>
                 <TableHead>{t("staff.table.email")}</TableHead>
+                <TableHead>{t("staff.table.role")}</TableHead>
                 <TableHead>{t("staff.table.added")}</TableHead>
-                <TableHead className="w-20" />
+                <TableHead className="w-32" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && (
-                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{t("staff.table.loading")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="p-8 text-center text-sm text-muted-foreground">{t("staff.table.loading")}</TableCell></TableRow>
               )}
               {!loading && filteredRows.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{search.trim() ? t("staff.search.noResults") : t("staff.table.empty")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="p-8 text-center text-sm text-muted-foreground">{search.trim() ? t("staff.search.noResults") : t("staff.table.empty")}</TableCell></TableRow>
               )}
               {pageRows.map((r) => (
                 <TableRow key={r.userId}>
+                  <TableCell>{r.displayName || "—"}</TableCell>
+                  <TableCell>{r.email}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span>{r.displayName || "—"}</span>
+                    <div className="flex flex-wrap items-center gap-1">
                       {r.isAdmin && (
-                        <Badge variant="secondary" className="text-xs">{t("staff.table.alsoAdmin")}</Badge>
+                        <Badge variant="secondary" className="text-xs">{t("staff.table.badgeAdmin")}</Badge>
+                      )}
+                      {r.isStaff && (
+                        <Badge variant="outline" className="text-xs">{t("staff.table.badgeStaff")}</Badge>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{r.email}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(r.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
-                      {r.userId !== activeUser?.id && (
-                        r.isAdmin ? (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => onToggleAdmin(r.userId, false)}
-                            disabled={busy}
-                            title={t("staff.table.revokeAdmin")}
-                            aria-label={t("staff.table.revokeAdmin")}
-                          >
-                            <ShieldOff className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => onToggleAdmin(r.userId, true)}
-                            disabled={busy}
-                            title={t("staff.table.promoteAdmin")}
-                            aria-label={t("staff.table.promoteAdmin")}
-                          >
-                            <ShieldCheck className="h-4 w-4" />
-                          </Button>
-                        )
+                      {r.isAdmin ? (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => onToggleAdmin(r.userId, false)}
+                          disabled={busy || r.userId === activeUser?.id}
+                          title={t("staff.table.revokeAdmin")}
+                          aria-label={t("staff.table.revokeAdmin")}
+                        >
+                          <ShieldOff className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => onToggleAdmin(r.userId, true)}
+                          disabled={busy}
+                          title={t("staff.table.promoteAdmin")}
+                          aria-label={t("staff.table.promoteAdmin")}
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                        </Button>
                       )}
-                      <Button size="icon" variant="ghost" onClick={() => onRemove(r.userId)} disabled={busy}>
+                      {r.isStaff ? (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => onToggleStaff(r.userId, false)}
+                          disabled={busy}
+                          title={t("staff.table.revokeStaff")}
+                          aria-label={t("staff.table.revokeStaff")}
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => onToggleStaff(r.userId, true)}
+                          disabled={busy}
+                          title={t("staff.table.grantStaff")}
+                          aria-label={t("staff.table.grantStaff")}
+                        >
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => onRemove(r.userId)}
+                        disabled={busy || r.userId === activeUser?.id}
+                        title={t("staff.table.removeMember")}
+                        aria-label={t("staff.table.removeMember")}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
