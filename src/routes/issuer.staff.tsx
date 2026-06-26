@@ -193,7 +193,6 @@ function StaffPage() {
       setBusy(false);
     }
   };
-  };
 
   return (
     <PageShell
