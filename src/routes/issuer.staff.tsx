@@ -20,8 +20,9 @@ import {
   addIssuerStaff,
   bulkAddIssuerStaff,
   listIssuerStaff,
-  removeIssuerStaff,
+  removeIssuerMember,
   setIssuerAdminRole,
+  setIssuerStaffRole,
 } from "@/lib/issuer-staff.functions";
 
 const PAGE_SIZE = 10;
