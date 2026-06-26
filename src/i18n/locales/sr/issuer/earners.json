@@ -15,6 +15,10 @@
       "hint": "Osoba mora već imati nalog nosioca na platformi."
     },
     "addButton": "Dodaj nosioca",
+    "search": {
+      "placeholder": "Pretraga po imenu…",
+      "noResults": "Nema rezultata za pretragu."
+    },
     "table": {
       "name": "Ime",
       "email": "E-adresa",
