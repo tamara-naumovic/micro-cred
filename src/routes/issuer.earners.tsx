@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Trash2, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -47,16 +47,23 @@ function EarnersPage() {
   const [busy, setBusy] = useState(false);
   const [form, setForm, reset] = useProvisionState();
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   const orgId = activeUser?.organizationId ?? "";
 
-  const rows = useMemo(() => {
+  const allRows = useMemo(() => {
     if (!orgId) return [];
     const ids = new Set(
       earnerInstitutions.filter((e) => e.organizationId === orgId).map((e) => e.earnerId),
     );
     return users.filter((u) => ids.has(u.id));
   }, [earnerInstitutions, users, orgId]);
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return allRows;
+    return allRows.filter((u) => u.name.toLowerCase().includes(q));
+  }, [allRows, search]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const pageRows = useMemo(
@@ -66,6 +73,9 @@ function EarnersPage() {
   useEffect(() => {
     if (page > pageCount) setPage(pageCount);
   }, [page, pageCount]);
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
 
   if (!activeUser) return null;
@@ -190,6 +200,17 @@ function EarnersPage() {
 
       <Card>
         <CardContent className="p-0">
+          <div className="border-b p-3">
+            <div className="relative max-w-sm">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("earners.search.placeholder")}
+                className="pl-9"
+              />
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -202,7 +223,7 @@ function EarnersPage() {
               {rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="p-8 text-center text-sm text-muted-foreground">
-                    {t("earners.table.empty")}
+                    {search.trim() ? t("earners.search.noResults") : t("earners.table.empty")}
                   </TableCell>
                 </TableRow>
               )}

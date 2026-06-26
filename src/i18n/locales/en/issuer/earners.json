@@ -15,6 +15,10 @@
       "hint": "The person must already have an earner account on the platform."
     },
     "addButton": "Add earner",
+    "search": {
+      "placeholder": "Search by name…",
+      "noResults": "No results for your search."
+    },
     "table": {
       "name": "Name",
       "email": "Email",

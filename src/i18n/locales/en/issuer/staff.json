@@ -15,6 +15,12 @@
       "hint": "The person must already have an account on the platform."
     },
     "addButton": "Add staff",
+    "search": {
+      "placeholder": "Search by name, email or role…",
+      "noResults": "No results for your search.",
+      "roleAdmin": "admin institution admin",
+      "roleStaff": "staff"
+    },
     "table": {
       "name": "Name",
       "email": "Email",

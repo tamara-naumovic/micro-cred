@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Trash2, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -54,17 +54,37 @@ function StaffPage() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   const orgId = activeUser?.organizationId ?? "";
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const roleAdminTerms = t("staff.search.roleAdmin").toLowerCase();
+  const roleStaffTerms = t("staff.search.roleStaff").toLowerCase();
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => {
+      const roleHaystack = r.isAdmin ? `${roleAdminTerms} ${roleStaffTerms}` : roleStaffTerms;
+      return (
+        (r.displayName ?? "").toLowerCase().includes(q) ||
+        (r.email ?? "").toLowerCase().includes(q) ||
+        roleHaystack.includes(q)
+      );
+    });
+  }, [rows, search, roleAdminTerms, roleStaffTerms]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const pageRows = useMemo(
-    () => rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [rows, page],
+    () => filteredRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredRows, page],
   );
   useEffect(() => {
     if (page > pageCount) setPage(pageCount);
   }, [page, pageCount]);
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
 
   async function refresh() {
@@ -220,6 +240,17 @@ function StaffPage() {
 
       <Card>
         <CardContent className="p-0">
+          <div className="border-b p-3">
+            <div className="relative max-w-sm">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("staff.search.placeholder")}
+                className="pl-9"
+              />
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -233,8 +264,8 @@ function StaffPage() {
               {loading && (
                 <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{t("staff.table.loading")}</TableCell></TableRow>
               )}
-              {!loading && rows.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{t("staff.table.empty")}</TableCell></TableRow>
+              {!loading && filteredRows.length === 0 && (
+                <TableRow><TableCell colSpan={4} className="p-8 text-center text-sm text-muted-foreground">{search.trim() ? t("staff.search.noResults") : t("staff.table.empty")}</TableCell></TableRow>
               )}
               {pageRows.map((r) => (
                 <TableRow key={r.userId}>
@@ -286,10 +317,10 @@ function StaffPage() {
               ))}
             </TableBody>
           </Table>
-          {rows.length > PAGE_SIZE && (
+          {filteredRows.length > PAGE_SIZE && (
             <div className="flex items-center justify-between border-t p-3 text-sm">
               <div className="text-muted-foreground">
-                {t("staff.pagination.page", { page, pageCount, total: rows.length })}
+                {t("staff.pagination.page", { page, pageCount, total: filteredRows.length })}
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>

@@ -15,6 +15,12 @@
       "hint": "Osoba mora već imati nalog na platformi."
     },
     "addButton": "Dodaj zaposlenog",
+    "search": {
+      "placeholder": "Pretraga po imenu, e-adresi ili ulozi…",
+      "noResults": "Nema rezultata za pretragu.",
+      "roleAdmin": "admin administrator institucije",
+      "roleStaff": "staff zaposleni"
+    },
     "table": {
       "name": "Ime",
       "email": "E-adresa",
