@@ -37,7 +37,7 @@ export const Route = createFileRoute("/issuer/staff")({
   ),
 });
 
-type Row = { userId: string; email: string; displayName: string; createdAt: string; isAdmin: boolean };
+type Row = { userId: string; email: string; displayName: string; createdAt: string; isAdmin: boolean; isStaff: boolean };
 
 function StaffPage() {
   const { t } = useTranslation("issuer");
@@ -45,9 +45,10 @@ function StaffPage() {
   const router = useRouter();
   const list = useServerFn(listIssuerStaff);
   const add = useServerFn(addIssuerStaff);
-  const remove = useServerFn(removeIssuerStaff);
+  const remove = useServerFn(removeIssuerMember);
   const bulk = useServerFn(bulkAddIssuerStaff);
   const setAdmin = useServerFn(setIssuerAdminRole);
+  const setStaff = useServerFn(setIssuerStaffRole);
   const [rows, setRows] = useState<Row[]>([]);
   const [tab, setTab] = useState<"existing" | "new" | "bulk">("existing");
   const [existingEmail, setExistingEmail] = useState("");
