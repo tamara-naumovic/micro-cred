@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Trash2, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { RoleGuard } from "@/components/RoleGuard";
