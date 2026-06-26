@@ -1,50 +1,138 @@
-# Issuer admin: prikaz svih članova i izmena role
+# Dokument poslovnih pravila — `docs/business-rules.md`
 
-Cilj: na stranici Staff (`/issuer/staff`) institucionalni admin vidi sve članove organizacije nezavisno od kombinacije rola (samo admin, samo staff, ili admin+staff) i može da menja role direktno iz tabele.
+Cilj: jedan Markdown fajl koji za svaku funkciju platforme opisuje poslovna pravila po traženom šablonu (10 stavki), na srpskom jeziku.
 
-## Backend (`src/lib/issuer-staff.functions.ts`)
+## Lokacija i format
+- Fajl: `docs/business-rules.md` (kreira se nov direktorijum `docs/` u rootu repozitorijuma).
+- Jezik: srpski (latinica), isti stil kao postojeći planovi u `.lovable/`.
+- Struktura: kratak uvod (uloge, entiteti, legenda statusa implementacije) + sekcije po modulima, a unutar svake sekcije po jedna pod-sekcija za svaku funkciju.
 
-1. **`listIssuerStaff`** — vratiti sve članove organizacije sa bilo kojom issuer rolom:
-   - Učitati sve redove iz `user_roles` gde je `organization_id = orgId` i `role IN ('issuer_admin', 'issuer_staff')`.
-   - Po `userId` agregirati `isAdmin` i nov `isStaff` flag; `createdAt` = najraniji `created_at` u toj organizaciji.
-   - Tip `StaffMember` proširiti sa `isStaff: boolean`.
+## Šablon po funkciji
+Svaka funkcija će biti opisana tabelom/spiskom sa tačno ovim poljima:
+1. Naziv funkcije
+2. Korisnička uloga koja je izvršava (`platform_admin`, `issuer_admin`, `issuer_staff`, `earner`, javni/anoniman korisnik, sistem/cron)
+3. Preduslovi (autentikacija, role, stanje entiteta, postojanje povezanih objekata)
+4. Ulazni/izmenjeni podaci (polja forme ili payload server funkcije)
+5. Rezultat funkcije (šta se kreira/menja, povratna vrednost, notifikacije)
+6. Statusi pre i posle izvršenja (vrednosti iz `status-labels`/`credentials`/`applications`/`registration_requests`/anchor jobs)
+7. Ograničenja (RLS, validacije, jedinstvenost, limiti, biznis pravila tipa "poslednji admin")
+8. Izuzeci i alternativni tokovi (greške, fallback putanje, odbijanja, retry)
+9. Povezani entiteti (tabele iz baze i ključne veze)
+10. Status implementacije: ✅ implementirano / 🟡 delimično / ⏳ planirano
 
-2. **Nova `setIssuerStaffRole({ userId, organizationId, makeStaff })`**:
-   - `assertOrgAdmin` + admin uvek može da menja staff rolu drugima i sebi.
-   - `makeStaff = true`: insert `issuer_staff` (ignorisati duplicate).
-   - `makeStaff = false`: delete `issuer_staff` za (user, org); ako korisnik nakon brisanja više nema nijednu issuer rolu u toj organizaciji, obrisati i `template_assignees` za tog korisnika (poštujući postojeće ponašanje `removeIssuerStaff`).
-   - Sprečiti uklanjanje poslednje preostale role: ako bi user ostao bez ijedne issuer role u toj organizaciji, baciti grešku "Korisnik mora imati bar jednu rolu. Uklonite ga umesto toga."
+## Moduli i pokrivene funkcije
 
-3. **`setIssuerAdminRole`** ostaje kao što je (sa zaštitom poslednjeg admina i zabranom samoukidanja admin role), ali dodati istu provjeru "korisnik mora imati bar jednu issuer rolu u organizaciji" kada se admin uklanja a user nema `issuer_staff`.
+Spisak nastao iz mapiranja ruta (`src/routes/*`), server funkcija (`src/lib/*.functions.ts`, `src/lib/chain/*`, `src/lib/evidence/*`) i tabela u bazi.
 
-## Frontend (`src/routes/issuer.staff.tsx`)
+### 1. Autentikacija i nalozi
+- Prijava (email+lozinka, Google OAuth) — `/login`
+- Postavljanje lozinke nakon invite/reset — `/set-password`
+- Zaboravljena lozinka / reset
+- Promena lozinke (`ChangePasswordForm`)
+- Odjava
+- Inicijalno popunjavanje profila (trigger → `profiles`, default role)
 
-1. **Tip `Row`** proširiti sa `isStaff: boolean`. Iz `listIssuerStaff` sada stižu i admin-only korisnici.
+### 2. Registracija institucija
+- Podnošenje zahteva za registraciju institucije — `registration_requests`
+- Pregled zahteva (platform admin) — `/admin/registrations`
+- Odobravanje / odbijanje zahteva (kreira `organizations` + `issuer_admin`)
 
-2. **Kolone tabele** — zameniti trenutni "Also admin" badge sa kolonom "Role" koja prikazuje badge(ove):
-   - `Admin` (kad `isAdmin`)
-   - `Staff` (kad `isStaff`)
-   - oba ako oba.
+### 3. Platform administracija
+- Pregled i pretraga korisnika — `/admin/users` (`admin-users.functions.ts`)
+- Dodela/oduzimanje platformskih i institucionalnih rola
+- Upravljanje organizacijama — `/admin/organizations`
+- Konfiguracija role definicija — `/admin/roles`
+- Sistemska podešavanja — `/admin/settings`
+- Audit log — `/admin/audit`
+- Aktivnost platforme — `/admin/activity`
+- Bulk upload korisnika (`BulkUsersUpload`)
 
-3. **Akcije po redu** (zameniti postojeće dugme za admin toggle):
-   - Toggle Staff (`ShieldUser`/checkbox ikona) — poziva `setIssuerStaffRole`.
-   - Toggle Admin (`ShieldCheck`/`ShieldOff`) — postojeće, poziva `setIssuerAdminRole`.
-   - Remove (`Trash2`) — kompletno uklanjanje iz organizacije: poziva i `setIssuerAdminRole({ makeAdmin: false })` (ako admin) i `removeIssuerStaff` (ako staff), redom; zadržava postojeće zaštite poslednjeg admina/samoukidanja na backendu. Alternativno: jedan novi server fn `removeIssuerMember` koji briše obe role u jednoj transakciji — preferirati ovo radi atomarnosti.
+### 4. Issuer — institucija
+- Pregled (dashboard) — `/issuer`
+- Profil institucije — `/issuer/profile`
+- Podešavanja institucije — `/issuer/settings`
 
-4. **Filter pretrage uloge** (`search.roleAdmin`/`roleStaff`) — radi i dalje preko trenutnih lokalizovanih termina; nije potrebna promena.
+### 5. Issuer — staff i članstvo (relevantno za nedavne izmene)
+- Listanje članova (admin + staff) — `listIssuerStaff`
+- Dodavanje postojećeg korisnika kao staff — `addIssuerStaff` (mode `existing`)
+- Kreiranje novog naloga sa lozinkom — `addIssuerStaff` (mode `password`)
+- Invite korisnika emailom — `addIssuerStaff` (mode `invite`)
+- Bulk dodavanje staff-a — `bulkAddIssuerStaff`
+- Dodela/oduzimanje admin role — `setIssuerAdminRole` (sa zaštitom poslednjeg admina i samoukidanja)
+- Dodela/oduzimanje staff role — `setIssuerStaffRole` (sa zaštitom poslednje role)
+- Uklanjanje člana iz institucije — `removeIssuerMember` (atomarno)
+- Pretraga staff-a po imenu/emailu/roli
 
-5. **Toasts** — dodati ključeve `staff.toasts.staffGranted`, `staff.toasts.staffRevoked`, `staff.toasts.failedStaffChange` u en/sr lokalizaciju; reupotrebiti postojeće `promoted`/`demoted` za admin akciju.
+### 6. Issuer — earners
+- Listanje povezanih nosilaca — `/issuer/earners`
+- Pretraga po imenu
+- Veza `earner_institutions`
 
-6. **i18n** — `staff.table.role` (kolona), `staff.table.badgeAdmin`, `staff.table.badgeStaff`, `staff.table.grantStaff`, `staff.table.revokeStaff` u en/sr.
+### 7. Šabloni mikrokredencijala
+- Listanje — `/issuer/microcredential-templates`
+- Kreiranje — `/issuer/microcredential-templates/new`
+- Izmena / verzionisanje — `template_versions`
+- Dodela staff-a šablonu — `template_assignees`
+- Anchoring šablona na blockchain — `template_anchor_jobs`, `template_blockchain_records`
+- Javni pregled šablona — `/issuers/$id/microcredential-templates/$templateId`
 
-## Bulk add — bez promene
-`bulkAddIssuerStaff` i dalje dodaje samo `issuer_staff` (po imenu sekcije). Promovisanje u admina ide ručno po redu, što je već prirodan tok.
+### 8. Apliciranje i zahtevi za izdavanje
+- Earner aplikacija na šablon — `/earner/apply` → `applications`
+- Komentari i timeline aplikacije — `application_comments`, `application_timeline`
+- Issuer pregled zahteva — `/issuer/requests`
+- Napredovanje kroz lifecycle (status pre/posle)
+- Odbijanje zahteva
+- Izdavanje i potpisivanje kredencijala (finalni korak)
 
-## Van opsega
-- Promene RLS i šeme.
-- Promena UI-ja za platform admin (`/admin/users`).
-- Promene na earner stranici.
+### 9. Izdavanje kredencijala
+- Pojedinačno izdavanje — `/issuer/issue`
+- Bulk izdavanje — `/issuer/issue/bulk`
+- Kreiranje VC i tajni — `credentials`, `credential_secrets`
+- Anchoring kredencijala — `credential_anchor_jobs`, `credential_blockchain_records`, `chain_anchor_jobs`
+- Anchoring queue prikaz — `/issuer/anchoring-queue`
 
-## Tehnički detalji
-- Novi server fn `removeIssuerMember({ userId, organizationId })`: assert org admin, zabrana samoukidanja, zabrana uklanjanja poslednjeg admina; obriše sve `user_roles` redove gde su role u (`issuer_admin`,`issuer_staff`) za tu organizaciju i taj user; po brisanju očisti i `template_assignees`.
-- `listIssuerStaff` SQL: `.from('user_roles').select('user_id, role, created_at').eq('organization_id', orgId).in('role', ['issuer_admin','issuer_staff'])` pa agregacija u JS-u.
+### 10. Životni ciklus kredencijala
+- Pregled kredencijala (issuer) — `/issuer/credentials`
+- Revokacija — `/issuer/revocations`
+- Istek i reminderi — cron `api/public/hooks/expiry-reminders`
+- Evidence paket — `evidence/package.functions.ts`
+
+### 11. Earner iskustvo
+- Dashboard — `/earner`
+- Lista kredencijala — `/earner/credentials`
+- Detalj kredencijala — `/earner/credentials/$id`
+- Prihvatanje izdatog kredencijala
+- Aplikacije — `/earner/applications`
+- Profil i javni profil tokenom — `/earner/profile`, `/profile/$token`
+- Podešavanja — `/earner/settings`
+- Notifikacije — `/earner/notifications`
+
+### 12. Javne stranice i verifikacija
+- Lista institucija — `/issuers`
+- Profil institucije — `/issuers/$id`
+- Verifikacija kredencijala — `/verify/$id` (`public-credential.functions.ts`)
+- Blockchain provera (`CredentialBlockchainVerificationCard`)
+
+### 13. Notifikacije
+- Generisanje notifikacija (sistem) — `notifications`
+- Pregled notifikacija (issuer/earner)
+
+### 14. Sistemski/cron procesi
+- Expiry reminders webhook
+- Anchor worker (`chain/worker.server.ts`)
+- Audit logging (`audit_log`, `platform_events`)
+
+## Šta NIJE u opsegu
+- Tehnički API ugovori (tipovi, šeme) — dokument je poslovan, ne developerski.
+- Detalji RLS politika red-po-red — pominje se samo gde je biznis-relevantno (npr. "samo admin org-a").
+- UI copy i prevodi.
+
+## Tehnički detalji izvora
+Za svaku funkciju izvor istine biće:
+- Server funkcije: `src/lib/*.functions.ts`, `src/lib/chain/anchor.functions.ts`, `src/lib/evidence/package.functions.ts`, `src/lib/public-credential.functions.ts`.
+- Rute i tokovi: `src/routes/*`.
+- Statusi: `src/lib/status-labels.ts`, `src/lib/types.ts`.
+- Entiteti i ograničenja: tabele iz baze (`applications`, `credentials`, `user_roles`, `organizations`, `template_*`, `*_anchor_jobs`, `notifications`, `registration_requests`, itd.).
+- Status implementacije: ako u kodu postoji handler + UI → ✅; ako postoji deo (npr. samo UI bez backend handlera ili obrnuto) → 🟡; ako se pominje u planovima/i18n a nema implementacije → ⏳.
+
+Procenjena dužina dokumenta: ~1500–2500 linija, jedan fajl `docs/business-rules.md`.
