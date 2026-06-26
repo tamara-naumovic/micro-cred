@@ -180,6 +180,21 @@ function StaffPage() {
     }
   };
 
+  const onToggleStaff = async (userId: string, makeStaff: boolean) => {
+    setBusy(true);
+    try {
+      await setStaff({ data: { userId, organizationId: orgId, makeStaff } });
+      toast.success(makeStaff ? t("staff.toasts.staffGranted") : t("staff.toasts.staffRevoked"));
+      await refresh();
+      router.invalidate();
+    } catch (e: any) {
+      toast.error(e.message ?? t("staff.toasts.failedStaffChange"));
+    } finally {
+      setBusy(false);
+    }
+  };
+  };
+
   return (
     <PageShell
       title={t("staff.title")}
