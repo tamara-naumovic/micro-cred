@@ -68,7 +68,7 @@ function Home() {
             .
           </h1>
           <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-            MicroCred lets accredited issuers design, award and revoke micro-credentials, and lets
+            CredSeal lets accredited issuers design, award and revoke micro-credentials, and lets
             employers and verifiers check them in one click — with controlled visibility set by
             the earner.
           </p>
