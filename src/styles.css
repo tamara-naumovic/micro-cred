@@ -56,13 +56,13 @@
 :root {
   --radius: 0.75rem;
 
-  /* Academic / trustworthy light palette */
-  --background: oklch(0.99 0.005 250);
-  --foreground: oklch(0.22 0.04 260);
+  /* CredSeal — soft off-white bg (#F7FAFC), deep navy text (#111827) */
+  --background: oklch(0.985 0.005 250);
+  --foreground: oklch(0.21 0.03 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.04 260);
+  --card-foreground: oklch(0.21 0.03 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.04 260);
+  --popover-foreground: oklch(0.21 0.03 260);
 
   /* soft academic blue */
   --primary: oklch(0.5 0.13 255);
