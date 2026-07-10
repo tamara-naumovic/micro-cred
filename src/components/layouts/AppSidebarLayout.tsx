@@ -38,6 +38,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { BrandMark } from "@/components/BrandMark";
 import {
   DropdownMenu,
   DropdownMenuContent,
