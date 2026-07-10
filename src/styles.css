@@ -81,8 +81,9 @@
   --destructive: oklch(0.6 0.18 25);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --success: oklch(0.7 0.13 155);
-  --success-foreground: oklch(0.18 0.05 160);
+  /* CredSeal mint — #5BC8A5 */
+  --success: oklch(0.78 0.13 165);
+  --success-foreground: oklch(0.2 0.05 165);
 
   --warning: oklch(0.82 0.14 80);
   --warning-foreground: oklch(0.3 0.08 65);
