@@ -19,13 +19,13 @@ import { getDashboardPath } from "@/components/DashboardHomeLink";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "MicroCred — Trusted higher education micro-credentials" },
+      { title: "CredSeal — Verified skills, trusted credentials" },
       {
         name: "description",
         content:
           "Browse public issuer profiles, verify shared credentials and earner profiles. Blockchain-anchored on Bloxberg for higher education.",
       },
-      { property: "og:title", content: "MicroCred — Higher Education Credentialing" },
+      { property: "og:title", content: "CredSeal — Higher Education Credentialing" },
       {
         property: "og:description",
         content:
