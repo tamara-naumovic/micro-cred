@@ -56,16 +56,16 @@
 :root {
   --radius: 0.75rem;
 
-  /* Academic / trustworthy light palette */
-  --background: oklch(0.99 0.005 250);
-  --foreground: oklch(0.22 0.04 260);
+  /* CredSeal — soft off-white bg (#F7FAFC), deep navy text (#111827) */
+  --background: oklch(0.985 0.005 250);
+  --foreground: oklch(0.21 0.03 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.04 260);
+  --card-foreground: oklch(0.21 0.03 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.04 260);
+  --popover-foreground: oklch(0.21 0.03 260);
 
-  /* soft academic blue */
-  --primary: oklch(0.5 0.13 255);
+  /* CredSeal primary — #2563EB */
+  --primary: oklch(0.55 0.21 260);
   --primary-foreground: oklch(0.99 0.005 250);
 
   --secondary: oklch(0.96 0.015 260);
@@ -81,8 +81,9 @@
   --destructive: oklch(0.6 0.18 25);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --success: oklch(0.7 0.13 155);
-  --success-foreground: oklch(0.18 0.05 160);
+  /* CredSeal mint — #5BC8A5 */
+  --success: oklch(0.78 0.13 165);
+  --success-foreground: oklch(0.2 0.05 165);
 
   --warning: oklch(0.82 0.14 80);
   --warning-foreground: oklch(0.3 0.08 65);
@@ -90,7 +91,8 @@
   --info: oklch(0.7 0.11 235);
   --info-foreground: oklch(0.2 0.06 240);
 
-  --purple: oklch(0.62 0.17 295);
+  /* CredSeal lilac — #8B7CF6 */
+  --purple: oklch(0.68 0.19 290);
   --purple-foreground: oklch(0.99 0 0);
 
   --border: oklch(0.92 0.01 255);
@@ -128,7 +130,7 @@
   --status-approved: var(--success);
   --status-sent: var(--purple);
 
-  --gradient-soft: linear-gradient(135deg, oklch(0.97 0.03 260), oklch(0.96 0.04 295) 60%, oklch(0.97 0.04 200));
+  --gradient-soft: linear-gradient(135deg, oklch(0.96 0.05 260), oklch(0.95 0.06 295) 55%, oklch(0.96 0.05 165));
   --shadow-card: 0 1px 2px oklch(0.2 0.04 260 / 0.04), 0 8px 24px oklch(0.2 0.04 260 / 0.05);
 }
 

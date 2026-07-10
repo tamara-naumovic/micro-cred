@@ -19,13 +19,13 @@ import { getDashboardPath } from "@/components/DashboardHomeLink";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "MicroCred — Trusted higher education micro-credentials" },
+      { title: "CredSeal — Verified skills, trusted credentials" },
       {
         name: "description",
         content:
           "Browse public issuer profiles, verify shared credentials and earner profiles. Blockchain-anchored on Bloxberg for higher education.",
       },
-      { property: "og:title", content: "MicroCred — Higher Education Credentialing" },
+      { property: "og:title", content: "CredSeal — Higher Education Credentialing" },
       {
         property: "og:description",
         content:
@@ -68,7 +68,7 @@ function Home() {
             .
           </h1>
           <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-            MicroCred lets accredited issuers design, award and revoke micro-credentials, and lets
+            CredSeal lets accredited issuers design, award and revoke micro-credentials, and lets
             employers and verifiers check them in one click — with controlled visibility set by
             the earner.
           </p>

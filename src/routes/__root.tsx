@@ -68,20 +68,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MicroCred — Higher Education Micro-Credential Platform" },
+      { title: "CredSeal — Verified Skills. Trusted Credentials." },
       {
         name: "description",
         content:
-          "A research prototype platform for issuing, managing, sharing and verifying higher education micro-credentials.",
+          "CredSeal is a higher education micro-credentialing platform for issuing, sharing and verifying blockchain-anchored credentials.",
       },
-      { property: "og:title", content: "MicroCred — Higher Education Micro-Credential Platform" },
+      { property: "og:title", content: "CredSeal — Verified Skills. Trusted Credentials." },
       {
         property: "og:description",
         content:
           "Role-based platform for earners, course providers, issuers and verifiers. EBSI-ready architecture.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:title", content: "MicroCred — Higher Education Micro-Credential Platform" },
+      { name: "twitter:title", content: "CredSeal — Verified Skills. Trusted Credentials." },
       { name: "description", content: "A client-side application for managing microcredentials, built on a modern TypeScript stack." },
       { property: "og:description", content: "A client-side application for managing microcredentials, built on a modern TypeScript stack." },
       { name: "twitter:description", content: "A client-side application for managing microcredentials, built on a modern TypeScript stack." },
@@ -91,6 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

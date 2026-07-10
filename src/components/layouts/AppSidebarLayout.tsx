@@ -38,6 +38,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { BrandMark } from "@/components/BrandMark";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -214,11 +215,9 @@ export function AppSidebarLayout() {
           <SidebarContent>
             <div className="px-3 py-4">
               <Link to="/" className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
+                <BrandMark size={32} />
                 <div className="leading-tight">
-                  <div className="text-sm font-semibold">MicroCred</div>
+                  <div className="text-sm font-semibold">CredSeal</div>
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     {roleLabel}
                   </div>
