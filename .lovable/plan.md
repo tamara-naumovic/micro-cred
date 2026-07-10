@@ -1,40 +1,76 @@
-# Plan: Scenario testiranja za Issuer-Administrator ulogu
+# Rebrand MicroCred → CredSeal
 
-Kreiraću MD fajl `/mnt/documents/Issuer_Administrator_scenario.md` po ugledu na priloženi earner scenario (E1–E11), prilagođen ulozi administratora institucije (issuer sa `subRole = admin`).
+Rename the platform to **CredSeal** and replace the generic shield/check icon with a distinctive abstract "MC" mark. Keep the header clean and minimal.
 
-## Struktura dokumenta
+## Scope
 
-**Uvod** — isti okvir kao earner dokument: cilj testiranja, upotreba testnih podataka, kriterijumi na koje testeri obraćaju pažnju.
+Header branding only (logo mark, wordmark, subtitle). No changes to routes, business logic, or content pages beyond text swaps for the platform name where it appears in navigation/footer/meta.
 
-**Scenariji (IA1–IA12):**
+## 1. New logo mark (SVG component)
 
-- **IA1. Prijava i pregled kontrolne table** — login, pregled metrika institucije, glavne sekcije (Zaposleni, Nosioci, Mikrokredencijali, Zahtevi, Kredencijali, Anchoring, Revocations, Notifikacije, Profil, Podešavanja).
-- **IA2. Uređivanje javnog profila institucije** — izmena naziva, opisa, logotipa, kontakt podataka; provera javne stranice institucije.
-- **IA3. Upravljanje zaposlenima (Staff panel)** — dodavanje postojećeg korisnika, kreiranje novog naloga, grupno dodavanje, pretraga, paginacija.
-- **IA4. Upravljanje ulogama zaposlenih** — dodela/oduzimanje admin i staff role, kombinovane role (admin+staff), zaštita od menjanja sopstvene role, uklanjanje člana iz institucije.
-- **IA5. Upravljanje nosiocima (Earners)** — povezivanje postojećeg earnera, kreiranje novog earner naloga, grupno dodavanje, pretraga.
-- **IA6. Kreiranje šablona mikrokredencijala** — kreiranje draft šablona sa svim poljima (naziv, opis, veštine, ishodi učenja, nivo, preduslovi, trajanje, rok važenja).
-- **IA7. Objavljivanje šablona i blockchain anchoring** — objavljivanje šablona, dodela staff članova, Bloxberg anchoring, verifikacija dokaza.
-- **IA8. Obrada zahteva za izdavanje** — pregled zahteva, filtriranje, komentari na timeline-u, napredovanje kroz statuse (review → evidence → verification → issuance), odbijanje sa razlogom.
-- **IA9. Manuelno izdavanje kredencijala** — pojedinačno izdavanje kredencijala nosiocu (izbor šablona, ocena, datum isteka), i grupno izdavanje.
-- **IA10. Anchoring queue i upravljanje kredencijalima** — praćenje statusa anchoring poslova, pregled izdatih kredencijala, revocation sa razlogom.
-- **IA11. Obaveštenja** — pregled i navigacija do povezanog entiteta iz notifikacije.
-- **IA12. Odjava sa platforme** — provera da zaštićene stranice više nisu dostupne.
+Create `src/components/BrandMark.tsx` — an inline SVG component (no raster asset needed for the navbar; scales cleanly, themable).
 
-## Format svakog scenarija (isti kao PDF)
+Design concept: abstract "MC" monogram that reads as a stylized credential card + verification seal.
 
-- **Situacija** — kontekst.
-- **Preduslov** — po potrebi (npr. institucija je registrovana i odobrena).
-- **Zadatak** — numerisani koraci.
-- **Zadatak je uspešno završen kada** — merljiv kriterijum.
-- **Obratite pažnju na sledeće** — checklista za testera (kod ključnih scenarija: IA3/IA4, IA7, IA8, IA9, IA10).
-- **Važan očekivani tok / izuzeci** — gde su statusni tokovi bitni (IA7 anchoring, IA8 lifecycle, IA10 revocation).
+- Rounded-square container (16px radius on 40px) suggesting a credential card.
+- Inside: an "M" formed by two upward strokes with a subtle notch at the top, joined to a "C" arc that wraps the right side — the C doubles as a verification tick and as an open link (blockchain node connector).
+- Three small dots along the bottom-right of the C, evoking chained blocks / decentralised nodes.
+- Fill: soft gradient `#2563EB → #8B7CF6 → #5BC8A5` (diagonal, top-left to bottom-right).
+- Strokes: white, rounded caps and joins, ~2.5px stroke on 40px viewbox.
+- Works at 16px (favicon), 40px (navbar), and 128px+ (app icon) because geometry is simple with generous stroke weight.
 
-Napomene o testnim podacima ponavljam u scenarijima koji uključuju unos (IA3, IA5, IA6, IA9).
+Props: `size?: number` (default 36), `className?: string`.
 
-## Isporuka
+## 2. Header wordmark update
 
-- Jedan fajl: `/mnt/documents/Issuer_Administrator_scenario.md`
-- Jezik: srpski (isti stil i terminologija kao priloženi PDF)
-- Bez izmena u kodu projekta
-- Emitujem `<presentation-artifact>` tag za preuzimanje
+Edit `src/components/layouts/PublicLayout.tsx`:
+
+- Replace the `<div className="flex h-9 w-9 …"><ShieldCheck /></div>` block with `<BrandMark size={36} />`.
+- Wordmark:
+  - Line 1: `CredSeal` — `font-display font-semibold text-base`, color `text-foreground` (deep navy via existing `--foreground` token).
+  - Line 2: `VERIFIED SKILLS · TRUSTED CREDENTIALS` — `text-[10px] uppercase tracking-widest text-muted-foreground`.
+- Remove the now-unused `ShieldCheck` import.
+
+## 3. Design tokens (light-mode only touch-up)
+
+Edit `src/styles.css` `:root` to align the palette with the brand spec (dark mode untouched):
+
+- `--primary` → oklch equivalent of `#2563EB` (deep blue).
+- `--purple` → oklch equivalent of `#8B7CF6` (lilac).
+- `--success` → oklch equivalent of `#5BC8A5` (mint).
+- `--foreground` → oklch equivalent of `#111827` (near-black navy for text).
+- `--background` → oklch equivalent of `#F7FAFC` (soft off-white).
+- Update `--gradient-soft` to a blue→lilac→mint blend so the hero backdrop matches the new brand.
+
+Existing semantic tokens (`--ring`, `--sidebar-primary`, `--chart-*`) already reference these variables, so they update automatically.
+
+## 4. Platform name swaps
+
+Rename "MicroCred" → "CredSeal" only in user-facing brand surfaces (leave code identifiers, folder names, and DB values alone):
+
+- `src/components/layouts/PublicLayout.tsx` — nav wordmark (already covered above) and footer text.
+- `src/routes/__root.tsx` — `head()` meta: `title`, `description`, `og:title`, `og:description`, `twitter:title`, `twitter:description`.
+- `src/routes/index.tsx` — `head()` meta title/description and any body copy referring to "MicroCred" by name.
+
+Sidebar app layout (`AppSidebarLayout.tsx`) will be checked for the same brand string and updated if present.
+
+## 5. Favicon
+
+Generate a matching favicon PNG from the same mark (solid rounded-square background so it reads at 16×16), save to `public/favicon.png`, register in `__root.tsx` `links`, and delete the default `public/favicon.ico`.
+
+## Out of scope
+
+- No changes to i18n JSON files (they contain no "MicroCred" brand string in current context; will verify during build, and only touch en/sr common bundles if the literal appears).
+- No dark-mode palette change.
+- No changes to issuer/earner/admin dashboards, routes, DB, or business rules.
+- No new marketing copy beyond the subtitle swap.
+
+## Files changed
+
+- **new** `src/components/BrandMark.tsx`
+- **new** `public/favicon.png` (+ delete `public/favicon.ico`)
+- **edit** `src/components/layouts/PublicLayout.tsx`
+- **edit** `src/components/layouts/AppSidebarLayout.tsx` (if brand string present)
+- **edit** `src/routes/__root.tsx` (favicon link + meta)
+- **edit** `src/routes/index.tsx` (meta + body brand references)
+- **edit** `src/styles.css` (palette + gradient)
