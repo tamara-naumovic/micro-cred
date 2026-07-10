@@ -91,7 +91,8 @@
   --info: oklch(0.7 0.11 235);
   --info-foreground: oklch(0.2 0.06 240);
 
-  --purple: oklch(0.62 0.17 295);
+  /* CredSeal lilac — #8B7CF6 */
+  --purple: oklch(0.68 0.19 290);
   --purple-foreground: oklch(0.99 0 0);
 
   --border: oklch(0.92 0.01 255);
