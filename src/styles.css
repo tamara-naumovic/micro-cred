@@ -130,7 +130,7 @@
   --status-approved: var(--success);
   --status-sent: var(--purple);
 
-  --gradient-soft: linear-gradient(135deg, oklch(0.97 0.03 260), oklch(0.96 0.04 295) 60%, oklch(0.97 0.04 200));
+  --gradient-soft: linear-gradient(135deg, oklch(0.96 0.05 260), oklch(0.95 0.06 295) 55%, oklch(0.96 0.05 165));
   --shadow-card: 0 1px 2px oklch(0.2 0.04 260 / 0.04), 0 8px 24px oklch(0.2 0.04 260 / 0.05);
 }
 
