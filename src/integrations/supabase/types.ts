@@ -1188,6 +1188,7 @@ export type Database = {
     }
     Functions: {
       can_access_application: { Args: { _app_id: string }; Returns: boolean }
+      can_view_profile: { Args: { _profile_id: string }; Returns: boolean }
       get_credential_visibility: {
         Args: { _share_token: string }
         Returns: {
