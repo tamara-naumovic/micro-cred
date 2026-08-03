@@ -1691,8 +1691,9 @@ export const backfillAllPendingCredentials = createServerFn({ method: "POST" })
   });
 
 /**
- * Drain the chain anchor queues. Restricted to issuer admins, issuer staff,
- * and platform admins — triggered manually from the Blockchain Queue page.
+ * Drain the chain anchor queues. Restricted to platform admins (all jobs) and
+ * issuer admins/staff, who may only process jobs belonging to templates and
+ * credentials of their own organization(s).
  */
 export const processAnchorQueueFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -1701,15 +1702,24 @@ export const processAnchorQueueFn = createServerFn({ method: "POST" })
 
     const [{ data: isAdmin }, { data: roles }] = await Promise.all([
       supabase.rpc("is_platform_admin", { _user_id: userId }),
-      supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase.from("user_roles").select("role, organization_id").eq("user_id", userId),
     ]);
-    const roleSet = new Set(((roles as { role: string }[] | null) ?? []).map((r) => r.role));
-    if (!isAdmin && !roleSet.has("issuer_admin") && !roleSet.has("issuer_staff")) {
+    const roleRows = ((roles as { role: string; organization_id: string | null }[] | null) ?? []);
+    const callerOrgIds = Array.from(
+      new Set(
+        roleRows
+          .filter((r) => r.role === "issuer_admin" || r.role === "issuer_staff")
+          .map((r) => r.organization_id)
+          .filter((x): x is string => !!x),
+      ),
+    );
+    if (!isAdmin && callerOrgIds.length === 0) {
       throw new Error("Forbidden");
     }
 
     const MAX_PER_RUN = 10;
     const MAX_ATTEMPTS = 5;
+    const CANDIDATE_LIMIT = 200;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
 
@@ -1720,17 +1730,54 @@ export const processAnchorQueueFn = createServerFn({ method: "POST" })
         .in("status", ["queued", "failed"])
         .lt("attempts", MAX_ATTEMPTS)
         .order("created_at", { ascending: true })
-        .limit(MAX_PER_RUN),
+        .limit(isAdmin ? MAX_PER_RUN : CANDIDATE_LIMIT),
       (supabaseAdmin as any)
         .from("credential_anchor_jobs")
         .select("*")
         .in("status", ["queued", "failed"])
         .lt("attempts", MAX_ATTEMPTS)
         .order("created_at", { ascending: true })
-        .limit(MAX_PER_RUN),
+        .limit(isAdmin ? MAX_PER_RUN : CANDIDATE_LIMIT),
     ]);
     if (tplRes.error) throw new Error(tplRes.error.message);
     if (credRes.error) throw new Error(credRes.error.message);
+
+    // Tenant scoping: non platform admins may only drain jobs owned by their org(s).
+    if (!isAdmin) {
+      const tplIds = Array.from(
+        new Set(((tplRes.data ?? []) as Record<string, any>[]).map((j) => j.template_id).filter(Boolean)),
+      );
+      const credIds = Array.from(
+        new Set(((credRes.data ?? []) as Record<string, any>[]).map((j) => j.credential_id).filter(Boolean)),
+      );
+
+      const ownedTemplates = new Set<string>();
+      const ownedCredentials = new Set<string>();
+
+      if (tplIds.length) {
+        const { data } = await (supabaseAdmin as any)
+          .from("templates")
+          .select("id")
+          .in("id", tplIds)
+          .in("issuer_id", callerOrgIds);
+        for (const r of (data ?? []) as { id: string }[]) ownedTemplates.add(r.id);
+      }
+      if (credIds.length) {
+        const { data } = await (supabaseAdmin as any)
+          .from("credentials")
+          .select("id")
+          .in("id", credIds)
+          .in("issuer_id", callerOrgIds);
+        for (const r of (data ?? []) as { id: string }[]) ownedCredentials.add(r.id);
+      }
+
+      tplRes.data = ((tplRes.data ?? []) as Record<string, any>[])
+        .filter((j) => j.template_id && ownedTemplates.has(j.template_id))
+        .slice(0, MAX_PER_RUN);
+      credRes.data = ((credRes.data ?? []) as Record<string, any>[])
+        .filter((j) => j.credential_id && ownedCredentials.has(j.credential_id))
+        .slice(0, MAX_PER_RUN);
+    }
 
     const { processCredentialAnchor, processTemplateAnchor } = await import(
       "@/lib/chain/worker.server"
