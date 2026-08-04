@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Building2, Plus } from "lucide-react";
@@ -27,7 +28,16 @@ import { adminCreateInstitution } from "@/lib/admin-users.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin/organizations")({
-  head: () => ({ meta: [{ title: "Organisations — MicroCred Admin" }] }),
+  head: () => ({
+    meta: [
+      { title: "Institutions — CredSeal Admin" },
+      { name: "description", content: "Issuer institutions registered on the CredSeal platform." },
+      { property: "og:title", content: "Institutions — CredSeal Admin" },
+      { property: "og:description", content: "Issuer institutions registered on the CredSeal platform." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: () => (
     <RoleGuard role="admin">
       <Orgs />
@@ -37,10 +47,11 @@ export const Route = createFileRoute("/admin/organizations")({
 
 function Orgs() {
   const { organizations } = useStore();
+  const { t } = useTranslation("admin");
   return (
     <PageShell
-      title="Institutions"
-      description="Issuers registered on the platform."
+      title={t("organizations.title")}
+      description={t("organizations.description")}
       actions={<AddInstitutionDialog />}
     >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -54,7 +65,7 @@ function Orgs() {
                 <div className="min-w-0">
                   <div className="font-display text-base font-semibold">{o.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {o.country} · since {new Date(o.registeredAt).getFullYear()}
+                    {o.country} · {t("organizations.since")} {new Date(o.registeredAt).getFullYear()}
                   </div>
                 </div>
               </div>
@@ -66,7 +77,7 @@ function Orgs() {
           </Card>
         ))}
         {organizations.length === 0 && (
-          <p className="text-sm text-muted-foreground">No institutions yet.</p>
+          <p className="text-sm text-muted-foreground">{t("organizations.empty")}</p>
         )}
       </div>
     </PageShell>
@@ -74,6 +85,7 @@ function Orgs() {
 }
 
 function AddInstitutionDialog() {
+  const { t } = useTranslation("admin");
   const create = useServerFn(adminCreateInstitution);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -98,7 +110,7 @@ function AddInstitutionDialog() {
             contentType: accreditationFile.type || undefined,
             upsert: false,
           });
-        if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+        if (upErr) throw new Error(t("organizations.add.uploadFailed", { message: upErr.message }));
         accreditationDocumentPath = path;
       }
       await create({
@@ -115,12 +127,12 @@ function AddInstitutionDialog() {
           redirectTo: typeof window !== "undefined" ? `${window.location.origin}/set-password` : undefined,
         },
       });
-      toast.success("Institution created");
+      toast.success(t("organizations.add.created"));
       setName(""); setCountry(""); setWebsite(""); setAbout(""); setAccreditationFile(null);
       resetAdmin();
       setOpen(false);
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to create institution");
+      toast.error(e?.message ?? t("organizations.add.failed"));
     } finally {
       setBusy(false);
     }
@@ -129,36 +141,34 @@ function AddInstitutionDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button><Plus className="mr-2 h-4 w-4" /> Add institution</Button>
+        <Button><Plus className="mr-2 h-4 w-4" /> {t("organizations.add.trigger")}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add institution</DialogTitle>
-          <DialogDescription>
-            Create the institution and provision its first admin account.
-          </DialogDescription>
+          <DialogTitle>{t("organizations.add.title")}</DialogTitle>
+          <DialogDescription>{t("organizations.add.description")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
-              <Label htmlFor="i-name">Name</Label>
+              <Label htmlFor="i-name">{t("organizations.add.name")}</Label>
               <Input id="i-name" required value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="i-country">Country</Label>
+              <Label htmlFor="i-country">{t("organizations.add.country")}</Label>
               <Input id="i-country" required value={country} onChange={(e) => setCountry(e.target.value)} />
             </div>
           </div>
           <div>
-            <Label htmlFor="i-website">Website</Label>
+            <Label htmlFor="i-website">{t("organizations.add.website")}</Label>
             <Input id="i-website" value={website} onChange={(e) => setWebsite(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="i-about">About</Label>
+            <Label htmlFor="i-about">{t("organizations.add.about")}</Label>
             <Textarea id="i-about" rows={2} value={about} onChange={(e) => setAbout(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="i-accreditation">Accreditation document</Label>
+            <Label htmlFor="i-accreditation">{t("organizations.add.accreditation")}</Label>
             <Input
               id="i-accreditation"
               type="file"
@@ -166,16 +176,16 @@ function AddInstitutionDialog() {
               onChange={(e) => setAccreditationFile(e.target.files?.[0] ?? null)}
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Optional. PDF or image proof of accreditation (max ~10 MB).
+              {t("organizations.add.accreditationHint")}
             </p>
           </div>
           <Separator />
           <div>
-            <p className="mb-2 text-sm font-medium">Institution admin</p>
+            <p className="mb-2 text-sm font-medium">{t("organizations.add.adminSection")}</p>
             <ProvisionFields value={admin} onChange={setAdmin} disabled={busy} />
           </div>
           <DialogFooter>
-            <SubmitButton busy={busy}>Create institution</SubmitButton>
+            <SubmitButton busy={busy}>{t("organizations.add.submit")}</SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>
