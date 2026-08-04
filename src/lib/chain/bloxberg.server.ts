@@ -122,7 +122,7 @@ export type AvailabilityStatus =
   | { status: "missing_role"; reason: string; issuerAddress: string; missingOn: ("template" | "credential")[] };
 
 /** Normalize an arbitrary hex (with/without 0x) to 32-byte (64 hex chars). Short inputs are keccak-hashed. */
-function toBytes32Hex(hex: string): string {
+export function toBytes32Hex(hex: string): string {
   const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
   if (clean.length === 64) return clean;
   return keccak256Hex(hex);

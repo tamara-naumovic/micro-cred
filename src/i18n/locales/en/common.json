@@ -212,6 +212,56 @@
     "later": "Issue now, anchor later",
     "laterDesc": "Records are queued for blockchain anchoring on the next worker run.",
     "unavailable": "Bloxberg integration is not currently available. Records will be queued and can be anchored later."
+  },
+  "chainVerify": {
+    "title": "Blockchain verification",
+    "notRunYet": "Live blockchain verification has not been performed yet.",
+    "cta": "Verify on blockchain",
+    "again": "Verify again",
+    "loading": "Checking the blockchain...",
+    "rpcError": "The credential information is available, but live blockchain verification could not be completed.",
+    "network": "Network",
+    "chainId": "Chain ID",
+    "checkedAt": "Checked at",
+    "onChainStatus": "On-chain status",
+    "hashMatch": "Hash match",
+    "expired": "Expired",
+    "templateResult": "Template verification",
+    "issuerWallet": "Issuer wallet",
+    "issuerName": "Issuer name snapshot",
+    "storedTx": "Transaction hash",
+    "storedBlock": "Block number",
+    "dbLifecycle": "Database lifecycle",
+    "dbChainStatus": "Database chain status",
+    "warnings": "Consistency warnings",
+    "consistent": "Database and blockchain match",
+    "unavailable": "Unavailable",
+    "yes": "Yes",
+    "no": "No",
+    "verdict": {
+      "valid": "Valid",
+      "invalid": "Invalid",
+      "notFound": "Not found on chain",
+      "expired": "Expired",
+      "revoked": "Revoked on chain",
+      "superseded": "Superseded on chain"
+    },
+    "warning": {
+      "missing_stored_document_hash": "No stored document hash — the credential was never prepared for anchoring.",
+      "missing_contract_config": "The blockchain contract configuration is missing.",
+      "rpc_unavailable": "The blockchain node could not be reached.",
+      "not_on_chain": "This credential is not anchored on the blockchain.",
+      "confirmed_but_not_on_chain": "The database marks this credential as anchored, but it was not found on chain.",
+      "document_hash_mismatch": "The stored document hash differs from the hash recorded on chain.",
+      "verify_credential_false": "The contract reports this credential as not valid for the presented hash.",
+      "revoked_offchain_active_onchain": "The credential is revoked in the database but still Active on chain.",
+      "active_offchain_revoked_onchain": "The credential is active in the database but revoked or superseded on chain.",
+      "template_ref_mismatch": "The template reference in the database differs from the one recorded on chain.",
+      "template_not_on_chain": "The template version is not registered on chain.",
+      "template_archived": "The template version is archived on chain.",
+      "template_data_unavailable": "Template verification data is not available for this credential.",
+      "template_rpc_unavailable": "The template registry could not be reached.",
+      "missing_template_config": "The template registry contract is not configured."
+    }
   }
 }
-

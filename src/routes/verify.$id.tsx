@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
+import { PublicChainVerificationPanel } from "@/components/PublicChainVerificationPanel";
 import { useStore } from "@/lib/store";
 import { fetchPublicCredential, fetchCredentialVisibility } from "@/lib/credentials";
 import { getPublicQaDocumentUrl } from "@/lib/public-credential.functions";
@@ -196,6 +197,13 @@ function RealVerify({
               issuerAddress: (cred as any).chain_issuer_address ?? null,
             }}
           />
+
+          <PublicChainVerificationPanel
+            shareToken={shareToken}
+            storedTxHash={(cred as any).chain_tx_hash ?? null}
+            storedBlockNumber={(cred as any).chain_block_number ?? null}
+          />
+
         </CardContent>
       </Card>
 

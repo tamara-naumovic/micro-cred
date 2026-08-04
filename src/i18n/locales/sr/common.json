@@ -212,6 +212,56 @@
     "later": "Izdaj sada, sidri kasnije",
     "laterDesc": "Zapisi se stavljaju u red za sidrenje na blockchain pri sledećem pokretanju radnika.",
     "unavailable": "Bloxberg integracija trenutno nije dostupna. Zapisi će biti stavljeni u red i mogu se sidriti kasnije."
+  },
+  "chainVerify": {
+    "title": "Provera na blockchain mreži",
+    "notRunYet": "Neposredna provera na blockchain mreži još nije izvršena.",
+    "cta": "Proveri na blockchain mreži",
+    "again": "Proveri ponovo",
+    "loading": "Provera blockchain zapisa...",
+    "rpcError": "Podaci o kredencijalu su dostupni, ali neposredna provera na blockchain mreži trenutno nije mogla biti izvršena.",
+    "network": "Mreža",
+    "chainId": "ID mreže",
+    "checkedAt": "Vreme provere",
+    "onChainStatus": "Status na mreži",
+    "hashMatch": "Poklapanje heša",
+    "expired": "Isteklo",
+    "templateResult": "Provera šablona",
+    "issuerWallet": "Novčanik izdavaoca",
+    "issuerName": "Zabeleženi naziv izdavaoca",
+    "storedTx": "Heš transakcije",
+    "storedBlock": "Broj bloka",
+    "dbLifecycle": "Životni ciklus u bazi",
+    "dbChainStatus": "Status lanca u bazi",
+    "warnings": "Upozorenja o neusklađenosti",
+    "consistent": "Baza i blockchain se poklapaju",
+    "unavailable": "Nedostupno",
+    "yes": "Da",
+    "no": "Ne",
+    "verdict": {
+      "valid": "Važeći",
+      "invalid": "Nevažeći",
+      "notFound": "Nije pronađen na mreži",
+      "expired": "Istekao",
+      "revoked": "Povučen na mreži",
+      "superseded": "Zamenjen na mreži"
+    },
+    "warning": {
+      "missing_stored_document_hash": "Nema sačuvanog heša dokumenta — kredencijal nije pripremljen za upis na mrežu.",
+      "missing_contract_config": "Konfiguracija pametnih ugovora nije podešena.",
+      "rpc_unavailable": "Blockchain čvor nije dostupan.",
+      "not_on_chain": "Ovaj kredencijal nije upisan na blockchain mrežu.",
+      "confirmed_but_not_on_chain": "U bazi je označen kao upisan na mrežu, ali nije pronađen na lancu.",
+      "document_hash_mismatch": "Sačuvani heš dokumenta se razlikuje od heša zapisanog na mreži.",
+      "verify_credential_false": "Ugovor javlja da kredencijal nije važeći za dostavljeni heš.",
+      "revoked_offchain_active_onchain": "Kredencijal je povučen u bazi, ali je i dalje aktivan na mreži.",
+      "active_offchain_revoked_onchain": "Kredencijal je aktivan u bazi, ali je povučen ili zamenjen na mreži.",
+      "template_ref_mismatch": "Referenca šablona u bazi se razlikuje od reference na mreži.",
+      "template_not_on_chain": "Verzija šablona nije registrovana na mreži.",
+      "template_archived": "Verzija šablona je arhivirana na mreži.",
+      "template_data_unavailable": "Podaci za proveru šablona nisu dostupni za ovaj kredencijal.",
+      "template_rpc_unavailable": "Registar šablona nije dostupan.",
+      "missing_template_config": "Ugovor registra šablona nije podešen."
+    }
   }
 }
-
