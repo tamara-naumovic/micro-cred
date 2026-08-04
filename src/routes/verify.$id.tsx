@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlockchainVerificationCard";
+import { PublicChainVerificationPanel } from "@/components/PublicChainVerificationPanel";
 import { useStore } from "@/lib/store";
 import { fetchPublicCredential, fetchCredentialVisibility } from "@/lib/credentials";
 import { getPublicQaDocumentUrl } from "@/lib/public-credential.functions";
