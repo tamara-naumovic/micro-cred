@@ -2,8 +2,8 @@
   "overview": {
     "headTitle": "Kontrolna tabla institucije — MicroCred",
     "title": "Kontrolna tabla institucije",
-    "descriptionAdmin": "Faculty of organizational s — operacije, upravljanje i blockchain status vaše institucije.",
-    "descriptionStaff": "Faculty of organizational s — dodeljeni mikrokredencijali i aktivnost izdavanja.",
+    "descriptionAdmin": "Faculty of organizational sciences — operacije, upravljanje i blockchain status vaše institucije.",
+    "descriptionStaff": "Faculty of organizational sciences — dodeljeni mikrokredencijali i aktivnost izdavanja.",
     "metrics": {
       "publishedTemplates": "Objavljeni šabloni MK",
       "publishedTemplatesHint": "{{count}} aktivnih",

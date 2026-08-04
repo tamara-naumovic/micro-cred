@@ -2,8 +2,8 @@
   "overview": {
     "headTitle": "Institution Dashboard — MicroCred",
     "title": "Institution Dashboard",
-    "descriptionAdmin": "Faculty of organizational s — operations, governance and blockchain status for your institution.",
-    "descriptionStaff": "Faculty of organizational s — your assigned micro-credentials and issuance activity.",
+    "descriptionAdmin": "Faculty of organizational sciences — operations, governance and blockchain status for your institution.",
+    "descriptionStaff": "Faculty of organizational sciences — your assigned micro-credentials and issuance activity.",
     "metrics": {
       "publishedTemplates": "Published MC templates",
       "publishedTemplatesHint": "{{count}} active",
