@@ -22,7 +22,8 @@ import { CredentialBlockchainVerificationCard } from "@/components/CredentialBlo
 import { PublicChainVerificationPanel } from "@/components/PublicChainVerificationPanel";
 import { useStore } from "@/lib/store";
 import { fetchPublicCredential, fetchCredentialVisibility } from "@/lib/credentials";
-import { getPublicQaDocumentUrl } from "@/lib/public-credential.functions";
+import { getPublicQaDocumentUrl, getPublicSupersedeInfo } from "@/lib/public-credential.functions";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/verify/$id")({
   head: ({ params }) => ({
@@ -106,12 +107,35 @@ function RealVerify({
   cred: PublicCred;
   shareToken: string;
 }) {
+  const { t } = useTranslation("common");
+  const supersedeQuery = useQuery({
+    queryKey: ["public-supersede", shareToken],
+    queryFn: () => getPublicSupersedeInfo({ data: { shareToken } }),
+    retry: false,
+  });
+  const supersede = supersedeQuery.data;
   const isRevoked = cred.status === "revoked";
   const isExpired = cred.status === "expired";
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 md:px-8">
       <DashboardHomeLink />
+
+      {supersede?.superseded && (
+        <div className="mb-4 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
+          <div className="font-medium">{t("publicVerify.supersededTitle")}</div>
+          <p className="mt-1 text-muted-foreground">{t("publicVerify.supersededBody")}</p>
+          {supersede.replacementShareToken && (
+            <Link
+              to="/verify/$id"
+              params={{ id: supersede.replacementShareToken }}
+              className="mt-2 inline-block font-medium text-primary hover:underline"
+            >
+              {t("publicVerify.supersededLink")}
+            </Link>
+          )}
+        </div>
+      )}
 
       <Card>
         <CardContent className="space-y-5 p-6 md:p-8">
@@ -217,6 +241,13 @@ function RealVerify({
 /* ---------------- Mock fallback ---------------- */
 
 function MockVerify({ cred }: { cred: NonNullable<ReturnType<typeof useStore>["credentials"][number]> }) {
+  const { t } = useTranslation("common");
+  const supersedeQuery = useQuery({
+    queryKey: ["public-supersede", shareToken],
+    queryFn: () => getPublicSupersedeInfo({ data: { shareToken } }),
+    retry: false,
+  });
+  const supersede = supersedeQuery.data;
   const isRevoked = cred.status === "revoked";
   const isExpired = cred.status === "expired";
 
