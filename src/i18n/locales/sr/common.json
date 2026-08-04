@@ -263,5 +263,20 @@
       "template_rpc_unavailable": "Registar šablona nije dostupan.",
       "missing_template_config": "Ugovor registra šablona nije podešen."
     }
+  },
+  "publicVerify": {
+    "supersededTitle": "Ovaj kredencijal je zamenjen",
+    "supersededBody": "Izdat je obnovljen kredencijal koji zamenjuje ovaj. Ova verzija više nije važeća.",
+    "supersededLink": "Pogledaj zamenski kredencijal"
+  },
+  "events": {
+    "credentialRenewalIssued": {
+      "title": "Izdat obnovljen mikrokredencijal",
+      "body": "{{title}} je obnovljen sa novim rokom važenja."
+    },
+    "credentialRenewed": {
+      "title": "Mikrokredencijal obnovljen",
+      "body": "{{title}} je zamenjen obnovljenim mikrokredencijalom."
+    }
   }
 }
