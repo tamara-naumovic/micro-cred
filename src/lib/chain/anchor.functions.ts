@@ -1918,6 +1918,40 @@ export const processAnchorQueueFn = createServerFn({ method: "POST" })
     for (const job of (credRes.data ?? []) as Record<string, any>[]) {
       if (job.next_attempt_at && new Date(job.next_attempt_at) > new Date()) continue;
 
+      const operation = (job.operation as string | null) ?? "anchor_credential";
+
+      // Supersede jobs are driven by the renewal workflow, never by this loop.
+      if (operation === "supersede_credential") continue;
+
+      // On-chain revocation: separate branch — must never run issuance.
+      if (operation === "revoke_credential") {
+        await (supabaseAdmin as any)
+          .from("credential_anchor_jobs")
+          .update({ status: "running", attempts: (job.attempts ?? 0) + 1, last_attempt_at: nowIso } as never)
+          .eq("id", job.id);
+
+        const { processCredentialRevoke } = await import("@/lib/chain/worker.server");
+        let rres: { ok: boolean; error?: string; txHash?: string };
+        try {
+          rres = await processCredentialRevoke(job.credential_id);
+        } catch (e) {
+          rres = { ok: false, error: (e as Error).message };
+        }
+        const rAttempts = (job.attempts ?? 0) + 1;
+        const rBackoff = Math.min(60_000 * 2 ** rAttempts, 60 * 60_000);
+        await (supabaseAdmin as any)
+          .from("credential_anchor_jobs")
+          .update({
+            status: rres.ok ? "done" : "failed",
+            last_error: rres.ok ? null : (rres.error ?? "unknown error"),
+            transaction_hash: rres.txHash ?? job.transaction_hash ?? null,
+            next_attempt_at: rres.ok ? null : new Date(Date.now() + rBackoff).toISOString(),
+          } as never)
+          .eq("id", job.id);
+        results.push({ jobId: job.id, entity: "credential", ok: rres.ok, error: rres.error });
+        continue;
+      }
+
       const { data: cred } = await supabaseAdmin
         .from("credentials")
         .select("template_id")
@@ -1968,6 +2002,7 @@ export const processAnchorQueueFn = createServerFn({ method: "POST" })
       } catch (e) {
         res = { ok: false, error: (e as Error).message };
       }
+
 
       const attempts = (job.attempts ?? 0) + 1;
       const backoffMs = Math.min(60_000 * 2 ** attempts, 60 * 60_000);
