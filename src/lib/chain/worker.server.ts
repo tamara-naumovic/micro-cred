@@ -455,3 +455,97 @@ export async function processTemplateAnchor(
     return { ok: false, error: msg };
   }
 }
+
+/**
+ * Process a `revoke_credential` job: call CredentialRegistry.revokeCredential
+ * for a credential that is already anchored on chain.
+ *
+ * Safety / idempotency:
+ * - never runs the issuance branch;
+ * - skips (ok) when the record is already Revoked on chain;
+ * - fails with a clear reason when the credential was never anchored.
+ * The plain revocation reason never leaves the database — only its keccak256
+ * hash is submitted.
+ */
+export async function processCredentialRevoke(credentialId: string): Promise<{
+  ok: boolean;
+  skipped?: boolean;
+  txHash?: string;
+  alreadyRevoked?: boolean;
+  error?: string;
+}> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { submitRevokeCredential, RevokeConflictError } = await import("./bloxberg.server");
+  const { keccak256Hex } = await import("./hash");
+
+  const { data: cred, error } = await supabaseAdmin
+    .from("credentials")
+    .select("id, chain_status, chain_tx_hash, revocation_reason, credential_lifecycle")
+    .eq("id", credentialId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!cred) return { ok: false, error: "Credential not found" };
+  const c = cred as Record<string, any>;
+
+  if (!isChainConfigured()) {
+    return { ok: false, skipped: true, error: "Chain not configured" };
+  }
+  if (c.chain_status !== "confirmed") {
+    return {
+      ok: false,
+      error: "Credential is not anchored on chain; nothing to revoke on chain",
+    };
+  }
+
+  const nowIso = new Date().toISOString();
+  await supabaseAdmin
+    .from("credential_blockchain_records" as never)
+    .update({ blockchain_status: "revoking", last_attempt_at: nowIso } as never)
+    .eq("credential_id", credentialId);
+
+  try {
+    const reason = (c.revocation_reason as string | null) ?? null;
+    const res = await submitRevokeCredential(
+      credentialId,
+      reason ? keccak256Hex(reason) : undefined,
+    );
+    const note = res.alreadyRevoked ? "Recovered: credential was already revoked on chain" : null;
+    await supabaseAdmin
+      .from("credential_blockchain_records" as never)
+      .update({ blockchain_status: "revoked", last_error: note } as never)
+      .eq("credential_id", credentialId);
+    await supabaseAdmin
+      .from("credential_anchor_jobs" as never)
+      .update({
+        status: "done",
+        last_attempt_at: res.confirmedAt,
+        last_error: note,
+        transaction_hash: res.txHash ?? null,
+        next_attempt_at: null,
+      } as never)
+      .eq("credential_id", credentialId)
+      .eq("operation", "revoke_credential");
+    return {
+      ok: true,
+      txHash: res.txHash ?? undefined,
+      alreadyRevoked: res.alreadyRevoked === true,
+    };
+  } catch (e) {
+    const msg =
+      e instanceof ChainNotConfiguredError
+        ? "Chain not configured"
+        : e instanceof RevokeConflictError
+          ? `On-chain revocation not applicable: ${e.message}`
+          : (e as Error).message;
+    await supabaseAdmin
+      .from("credential_blockchain_records" as never)
+      .update({ blockchain_status: "revoke_failed", last_error: msg } as never)
+      .eq("credential_id", credentialId);
+    await supabaseAdmin
+      .from("credential_anchor_jobs" as never)
+      .update({ status: "failed", last_attempt_at: new Date().toISOString(), last_error: msg } as never)
+      .eq("credential_id", credentialId)
+      .eq("operation", "revoke_credential");
+    return { ok: false, error: msg };
+  }
+}
