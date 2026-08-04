@@ -142,11 +142,22 @@ export async function getChainAvailability(): Promise<AvailabilityStatus> {
   try {
     const ethers = await import("ethers");
     const provider = new ethers.JsonRpcProvider(base.rpcUrl);
-    const block = await Promise.race([
-      provider.getBlockNumber(),
-      new Promise<number>((_, rej) => setTimeout(() => rej(new Error("RPC timeout")), 4000)),
-    ]);
+    // The public Bloxberg RPC can be slow to answer on a cold connection; a single
+    // short timeout produced false "RPC unreachable" badges. Retry once with a
+    // longer budget before declaring the node unavailable.
+    const probe = async (ms: number) =>
+      Promise.race([
+        provider.getBlockNumber(),
+        new Promise<number>((_, rej) => setTimeout(() => rej(new Error("RPC timeout")), ms)),
+      ]);
+    let block: number;
+    try {
+      block = await probe(8000);
+    } catch {
+      block = await probe(8000);
+    }
     if (typeof block !== "number") throw new Error("RPC unreachable");
+
     const wallet = new ethers.Wallet(base.privateKey, provider);
     const bal = await provider.getBalance(wallet.address);
     if (bal === 0n) {
