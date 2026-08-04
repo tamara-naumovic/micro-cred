@@ -811,15 +811,47 @@ export const revokeCredentialOnChain = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     if (alreadyConfirmed) {
-      await supabaseAdmin
+      // Idempotent job creation (one revoke job per credential).
+      const { data: existingJob } = await supabaseAdmin
         .from("credential_anchor_jobs")
-        .insert({
+        .select("id, status")
+        .eq("credential_id", data.credentialId)
+        .eq("operation", "revoke_credential")
+        .maybeSingle();
+      if (existingJob) {
+        const ej = existingJob as { id: string; status: string };
+        if (ej.status !== "done") {
+          await supabaseAdmin
+            .from("credential_anchor_jobs")
+            .update({ status: "queued", last_error: null, next_attempt_at: null } as never)
+            .eq("id", ej.id);
+        }
+      } else {
+        await supabaseAdmin.from("credential_anchor_jobs").insert({
           credential_id: data.credentialId,
           operation: "revoke_credential",
           status: "queued",
         } as never);
-      return { ok: true, mode: "on_chain_revoke_queued" };
+      }
+
+      // Best-effort inline submission so the issuer sees an immediate result;
+      // on failure the queued job is retried by the worker/cron.
+      try {
+        const { processCredentialRevoke } = await import("./worker.server");
+        const res = await processCredentialRevoke(data.credentialId);
+        if (res.ok) {
+          return {
+            ok: true,
+            mode: res.alreadyRevoked ? "on_chain_already_revoked" : "on_chain_revoked",
+            txHash: res.txHash ?? null,
+          };
+        }
+        return { ok: true, mode: "on_chain_revoke_queued", error: res.error ?? null };
+      } catch (e) {
+        return { ok: true, mode: "on_chain_revoke_queued", error: (e as Error).message };
+      }
     }
+
 
     // Cancel any pending issuance anchor jobs
     await supabaseAdmin
