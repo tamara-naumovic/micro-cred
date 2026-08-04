@@ -177,7 +177,6 @@ function List() {
     }
     setBusy(true);
     try {
-      });
       const res = (await renew({
         data: {
           credentialId: renewTarget.id,
