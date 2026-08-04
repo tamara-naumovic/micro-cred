@@ -75,21 +75,33 @@ export function CredentialBlockchainVerificationCard({ data, audience, compact }
   const contractUrl = explorerAddrUrl(data.contractAddress);
   const issuerUrl = explorerAddrUrl(data.issuerAddress);
 
+  const [open, setOpen] = useState(false);
+
   return (
     <Card>
-      <CardHeader className={compact ? "pb-3" : undefined}>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Link2 className="h-4 w-4 text-primary" />
-          {t("blockchainCard.title")}
-          <Badge
-            variant="outline"
-            className={`ml-2 text-[10px] uppercase tracking-wider ${badgeClass}`}
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger asChild>
+          <CardHeader
+            className={`cursor-pointer select-none ${compact ? "pb-3" : ""}`}
           >
-            {label}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Link2 className="h-4 w-4 text-primary" />
+              {t("blockchainCard.title")}
+              <Badge
+                variant="outline"
+                className={`ml-2 text-[10px] uppercase tracking-wider ${badgeClass}`}
+              >
+                {label}
+              </Badge>
+              <ChevronDown
+                className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+              />
+            </CardTitle>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
       <CardContent className="space-y-3 text-sm">
+
         <p className="text-muted-foreground">{description}</p>
         <p className="text-xs text-muted-foreground italic">{t("blockchainCard.internalVsChain")}</p>
 
