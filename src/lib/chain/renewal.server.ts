@@ -316,17 +316,26 @@ export async function runRenewalWorkflow(
   });
   await audit(supabaseAdmin, actorId, "replacement credential anchored", replacementId);
 
-  // 2) Supersede the original on-chain via a dedicated job.
-  await supabaseAdmin
+  // 2) Supersede the original on-chain via a dedicated job (own operation,
+  // never processed by the regular anchor branch).
+  const { data: existingJob } = await supabaseAdmin
     .from("credential_anchor_jobs")
-    .upsert(
-      {
-        credential_id: originalId,
-        operation: "supersede_credential",
-        status: "running",
-      } as never,
-      { onConflict: "credential_id,operation" } as never,
-    );
+    .select("id")
+    .eq("credential_id", originalId)
+    .eq("operation", "supersede_credential")
+    .maybeSingle();
+  if (existingJob) {
+    await supabaseAdmin
+      .from("credential_anchor_jobs")
+      .update({ status: "running", last_error: null } as never)
+      .eq("id", (existingJob as { id: string }).id);
+  } else {
+    await supabaseAdmin.from("credential_anchor_jobs").insert({
+      credential_id: originalId,
+      operation: "supersede_credential",
+      status: "running",
+    } as never);
+  }
 
   try {
     const { submitSupersedeCredential } = await import("./bloxberg.server");
