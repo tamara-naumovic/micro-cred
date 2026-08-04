@@ -290,5 +290,42 @@
       "title": "Credential renewed",
       "body": "{{title}} has been replaced by a renewed credential."
     }
+  },
+  "blockchainCard": {
+    "title": "Blockchain verification",
+    "desc": {
+      "not_requested": "Blockchain anchoring has not been requested.",
+      "queued": "Credential issued · Blockchain verification pending",
+      "submitting": "Credential issued · Blockchain verification in progress",
+      "submitted": "Credential issued · Awaiting blockchain confirmation",
+      "confirmed": "Credential issued · Blockchain verification confirmed",
+      "failed": "Credential issued · Blockchain verification temporarily unavailable",
+      "cancelled": "Blockchain anchoring was cancelled."
+    },
+    "internalVsChain": "Internal credential issuance and blockchain anchoring are independent. A credential is fully valid once issued internally, even if blockchain anchoring is pending.",
+    "fields": {
+      "credentialId": "Credential ID",
+      "vcId": "VC ID",
+      "templateRef": "Template ref",
+      "network": "Network",
+      "chainId": "Chain ID",
+      "contract": "Contract",
+      "documentHash": "Document hash",
+      "learnerCommitment": "Learner commitment",
+      "transaction": "Transaction",
+      "block": "Block",
+      "anchoredAt": "Anchored at",
+      "issuerWallet": "Issuer wallet"
+    },
+    "copy": "Copy {{label}}",
+    "explorer": "View on Bloxberg explorer",
+    "secret": {
+      "title": "Your proof secret",
+      "desc": "Combined with the on-chain learner commitment, this proves the credential belongs to you. Keep it private — never share publicly.",
+      "reveal": "Reveal",
+      "hide": "Hide",
+      "loading": "Loading…",
+      "none": "No secret available."
+    }
   }
 }

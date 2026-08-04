@@ -290,5 +290,42 @@
       "title": "Mikrokredencijal obnovljen",
       "body": "{{title}} je zamenjen obnovljenim mikrokredencijalom."
     }
+  },
+  "blockchainCard": {
+    "title": "Blockchain verifikacija",
+    "desc": {
+      "not_requested": "Upis na blockchain nije zatražen.",
+      "queued": "Kredencijal izdat · Blockchain verifikacija na čekanju",
+      "submitting": "Kredencijal izdat · Blockchain verifikacija u toku",
+      "submitted": "Kredencijal izdat · Čeka se potvrda na blockchain-u",
+      "confirmed": "Kredencijal izdat · Blockchain verifikacija potvrđena",
+      "failed": "Kredencijal izdat · Blockchain verifikacija privremeno nedostupna",
+      "cancelled": "Upis na blockchain je otkazan."
+    },
+    "internalVsChain": "Interno izdavanje kredencijala i upis na blockchain su nezavisni. Kredencijal je u potpunosti važeći čim je interno izdat, čak i ako je upis na blockchain u toku.",
+    "fields": {
+      "credentialId": "ID kredencijala",
+      "vcId": "VC ID",
+      "templateRef": "Referenca šablona",
+      "network": "Mreža",
+      "chainId": "ID lanca",
+      "contract": "Ugovor",
+      "documentHash": "Heš dokumenta",
+      "learnerCommitment": "Obaveza nosioca",
+      "transaction": "Transakcija",
+      "block": "Blok",
+      "anchoredAt": "Upisano na blockchain",
+      "issuerWallet": "Novčanik izdavaoca"
+    },
+    "copy": "Kopiraj {{label}}",
+    "explorer": "Pogledaj na Bloxberg pregledaču",
+    "secret": {
+      "title": "Vaša tajna za dokazivanje",
+      "desc": "U kombinaciji sa obavezom nosioca upisanom na blockchain-u, ovim se dokazuje da kredencijal pripada vama. Čuvajte je privatno — nikada je ne delite javno.",
+      "reveal": "Prikaži",
+      "hide": "Sakrij",
+      "loading": "Učitavanje…",
+      "none": "Tajna nije dostupna."
+    }
   }
 }
