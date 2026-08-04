@@ -1,0 +1,187 @@
+{
+  "overview": {
+    "title": "Administracija sistema",
+    "description": "Nadzor institucija, korisnika i integriteta platforme.",
+    "head": "Administrator platforme — CredSeal",
+    "metrics": {
+      "users": "Korisnici",
+      "organizations": "Institucije",
+      "pendingRegistrations": "Zahtevi na čekanju",
+      "credentials": "Izdati kredencijali"
+    },
+    "recentActivity": "Nedavne aktivnosti na platformi",
+    "auditLatest": "Revizorski trag (najnovije)",
+    "viewAudit": "Prikaži ceo revizorski trag"
+  },
+  "users": {
+    "head": "Korisnici — CredSeal administracija",
+    "title": "Korisnici",
+    "description": "Svi registrovani korisnici po ulogama.",
+    "search": "Pretraga po imenu, email-u ili ulozi",
+    "table": {
+      "name": "Ime",
+      "email": "Email",
+      "role": "Uloga",
+      "institution": "Institucija / povezano"
+    },
+    "manage": "Upravljaj",
+    "editAria": "Izmeni korisnika",
+    "deleteAria": "Obriši korisnika",
+    "add": {
+      "trigger": "Dodaj korisnika",
+      "title": "Dodaj korisnika",
+      "description": "Kreirajte novi nalog ili pozovite osobu na CredSeal.",
+      "submit": "Kreiraj"
+    },
+    "edit": {
+      "title": "Izmeni korisnika",
+      "description": "Ažurirajte profil i ulogu ovog korisnika.",
+      "displayName": "Ime za prikaz",
+      "email": "Email",
+      "save": "Sačuvaj",
+      "saving": "Čuvanje…"
+    },
+    "delete": {
+      "title": "Obrisati {{name}}?",
+      "description": "Ovo trajno uklanja nalog, profil i dodeljene uloge. Radnja se ne može poništiti.",
+      "cancel": "Otkaži",
+      "confirm": "Obriši",
+      "deleting": "Brisanje…"
+    },
+    "fields": {
+      "role": "Uloga",
+      "institution": "Institucija",
+      "selectInstitution": "Izaberite instituciju",
+      "subRoles": "Podulоge izdavaoca",
+      "subRolesHint": "Korisnik istovremeno može biti i administrator institucije i zaposleni.",
+      "institutionAdmin": "Administrator institucije",
+      "staff": "Zaposleni",
+      "institutionsOptional": "Institucije (opciono)",
+      "institutionsOptionalHint": "Povežite ovog nosioca sa jednom ili više institucija. Ovo možete uraditi i kasnije iz liste korisnika."
+    },
+    "roles": {
+      "earner": "Nosilac (student)",
+      "issuer": "Izdavalac (institucija)",
+      "platform_admin": "Administrator platforme",
+      "admin": "Administrator",
+      "staff": "Zaposleni"
+    },
+    "earnerOrgs": {
+      "title": "Institucije za {{name}}",
+      "description": "Uključite ili isključite institucije sa kojima je student povezan.",
+      "link": "Poveži",
+      "unlink": "Ukloni vezu",
+      "empty": "Još nema institucija."
+    },
+    "toasts": {
+      "pickSubRole": "Izaberite najmanje jednu podulogu izdavaoca (administrator i/ili zaposleni)",
+      "pickInstitution": "Izaberite instituciju za ovu ulogu",
+      "invited": "Pozivnica je poslata",
+      "created": "Korisnik je kreiran",
+      "createFailed": "Kreiranje korisnika nije uspelo",
+      "updated": "Korisnik je ažuriran",
+      "updateFailed": "Ažuriranje nije uspelo",
+      "deleted": "Korisnik je obrisan",
+      "deleteFailed": "Brisanje nije uspelo",
+      "failed": "Radnja nije uspela"
+    }
+  },
+  "organizations": {
+    "head": "Institucije — CredSeal administracija",
+    "title": "Institucije",
+    "description": "Izdavaoci registrovani na platformi.",
+    "since": "od",
+    "empty": "Još nema institucija.",
+    "add": {
+      "trigger": "Dodaj instituciju",
+      "title": "Dodaj instituciju",
+      "description": "Kreirajte instituciju i njen prvi administratorski nalog.",
+      "name": "Naziv",
+      "country": "Država",
+      "website": "Veb sajt",
+      "about": "O instituciji",
+      "accreditation": "Dokument o akreditaciji",
+      "accreditationHint": "Opciono. PDF ili slika kao dokaz akreditacije (do ~10 MB).",
+      "adminSection": "Administrator institucije",
+      "submit": "Kreiraj instituciju",
+      "created": "Institucija je kreirana",
+      "failed": "Kreiranje institucije nije uspelo",
+      "uploadFailed": "Otpremanje nije uspelo: {{message}}"
+    }
+  },
+  "registrations": {
+    "head": "Zahtevi za registraciju — CredSeal administracija",
+    "title": "Zahtevi za registraciju",
+    "description": "Odobrite ili odbijte institucije koje se prijavljuju na platformu.",
+    "table": {
+      "organization": "Institucija",
+      "type": "Tip",
+      "contact": "Kontakt",
+      "submitted": "Podneto",
+      "status": "Status"
+    },
+    "approve": "Odobri",
+    "reject": "Odbij",
+    "approved": "Odobreno",
+    "rejected": "Odbijeno"
+  },
+  "roles": {
+    "head": "Uloge i dozvole — CredSeal administracija",
+    "title": "Uloge i dozvole",
+    "description": "Pregled ovlašćenja za svaku ulogu na platformi.",
+    "items": {
+      "earner": {
+        "name": "Nosilac",
+        "scope": "Prijava za kredencijale, upravljanje novčanikom i deljenjem"
+      },
+      "provider": {
+        "name": "Organizator obuke",
+        "scope": "Provera dokaza i prosleđivanje prijava"
+      },
+      "issuer": {
+        "name": "Izdavalac",
+        "scope": "Potpisivanje kredencijala, upravljanje šablonima i opozivima"
+      },
+      "verifier": {
+        "name": "Verifikator",
+        "scope": "Javna provera kredencijala"
+      },
+      "admin": {
+        "name": "Administrator platforme",
+        "scope": "Upravljanje platformom i nadzor"
+      }
+    }
+  },
+  "activity": {
+    "head": "Aktivnosti — CredSeal administracija",
+    "title": "Aktivnosti na platformi",
+    "description": "Tok događaja na nivou cele platforme."
+  },
+  "audit": {
+    "head": "Revizorski trag — CredSeal administracija",
+    "title": "Revizorski trag",
+    "description": "Zapis radnji po ulogama, otporan na neovlašćene izmene.",
+    "table": {
+      "timestamp": "Vreme",
+      "actor": "Akter",
+      "action": "Radnja",
+      "target": "Cilj"
+    }
+  },
+  "settings": {
+    "head": "Podešavanja platforme — CredSeal administracija",
+    "title": "Podešavanja platforme",
+    "description": "Globalna konfiguracija i kontrole prototipa.",
+    "issuancePolicy": "Politika izdavanja",
+    "toggles": {
+      "providerSignOff": "Zahtevaj potvrdu organizatora obuke pre izdavanja",
+      "directIssuance": "Dozvoli direktno izdavanje izdavaocima",
+      "bulkIssuance": "Dozvoli grupno izdavanje putem CSV-a",
+      "autoAnchor": "Automatski usidri nove kredencijale na Bloxberg"
+    },
+    "prototypeData": "Podaci prototipa",
+    "prototypeHint": "Resetujte sve podatke u pregledaču i ponovo učitajte demo sadržaj.",
+    "resetButton": "Resetuj podatke prototipa",
+    "resetDone": "Demo podaci su resetovani"
+  }
+}

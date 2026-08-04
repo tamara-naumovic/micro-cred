@@ -1,0 +1,187 @@
+{
+  "overview": {
+    "title": "System Administration",
+    "description": "Oversee organisations, users and platform integrity.",
+    "head": "System Admin — CredSeal",
+    "metrics": {
+      "users": "Users",
+      "organizations": "Institutions",
+      "pendingRegistrations": "Pending registrations",
+      "credentials": "Credentials issued"
+    },
+    "recentActivity": "Recent platform activity",
+    "auditLatest": "Audit trail (latest)",
+    "viewAudit": "View full audit trail"
+  },
+  "users": {
+    "head": "Users — CredSeal Admin",
+    "title": "Users",
+    "description": "All registered users across roles.",
+    "search": "Search by name, email or role",
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "institution": "Institution / linked"
+    },
+    "manage": "Manage",
+    "editAria": "Edit user",
+    "deleteAria": "Delete user",
+    "add": {
+      "trigger": "Add user",
+      "title": "Add user",
+      "description": "Create a new account or invite a person to CredSeal.",
+      "submit": "Create"
+    },
+    "edit": {
+      "title": "Edit user",
+      "description": "Update profile and role for this user.",
+      "displayName": "Display name",
+      "email": "Email",
+      "save": "Save",
+      "saving": "Saving…"
+    },
+    "delete": {
+      "title": "Delete {{name}}?",
+      "description": "This permanently removes the account, profile, and role assignments. This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "deleting": "Deleting…"
+    },
+    "fields": {
+      "role": "Role",
+      "institution": "Institution",
+      "selectInstitution": "Select institution",
+      "subRoles": "Issuer sub-roles",
+      "subRolesHint": "A user can be both institution admin and staff at the same time.",
+      "institutionAdmin": "Institution admin",
+      "staff": "Staff",
+      "institutionsOptional": "Institutions (optional)",
+      "institutionsOptionalHint": "Link this earner to one or more institutions. You can also do this later from the user list."
+    },
+    "roles": {
+      "earner": "Earner (student)",
+      "issuer": "Issuer (institution)",
+      "platform_admin": "Platform admin",
+      "admin": "Admin",
+      "staff": "Staff"
+    },
+    "earnerOrgs": {
+      "title": "Institutions for {{name}}",
+      "description": "Toggle the institutions this student is linked to.",
+      "link": "Link",
+      "unlink": "Unlink",
+      "empty": "No institutions yet."
+    },
+    "toasts": {
+      "pickSubRole": "Pick at least one issuer sub-role (admin and/or staff)",
+      "pickInstitution": "Pick an institution for this role",
+      "invited": "Invitation sent",
+      "created": "User created",
+      "createFailed": "Failed to create user",
+      "updated": "User updated",
+      "updateFailed": "Failed to update",
+      "deleted": "User deleted",
+      "deleteFailed": "Failed to delete",
+      "failed": "Action failed"
+    }
+  },
+  "organizations": {
+    "head": "Institutions — CredSeal Admin",
+    "title": "Institutions",
+    "description": "Issuers registered on the platform.",
+    "since": "since",
+    "empty": "No institutions yet.",
+    "add": {
+      "trigger": "Add institution",
+      "title": "Add institution",
+      "description": "Create the institution and provision its first admin account.",
+      "name": "Name",
+      "country": "Country",
+      "website": "Website",
+      "about": "About",
+      "accreditation": "Accreditation document",
+      "accreditationHint": "Optional. PDF or image proof of accreditation (max ~10 MB).",
+      "adminSection": "Institution admin",
+      "submit": "Create institution",
+      "created": "Institution created",
+      "failed": "Failed to create institution",
+      "uploadFailed": "Upload failed: {{message}}"
+    }
+  },
+  "registrations": {
+    "head": "Registrations — CredSeal Admin",
+    "title": "Registration Requests",
+    "description": "Approve or reject organisations applying to join the platform.",
+    "table": {
+      "organization": "Institution",
+      "type": "Type",
+      "contact": "Contact",
+      "submitted": "Submitted",
+      "status": "Status"
+    },
+    "approve": "Approve",
+    "reject": "Reject",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "roles": {
+    "head": "Roles & Permissions — CredSeal Admin",
+    "title": "Roles & Permissions",
+    "description": "Capability mapping for each role on the platform.",
+    "items": {
+      "earner": {
+        "name": "Earner",
+        "scope": "Apply for credentials, manage wallet & sharing"
+      },
+      "provider": {
+        "name": "Course Provider",
+        "scope": "Validate evidence and forward applications"
+      },
+      "issuer": {
+        "name": "Issuer",
+        "scope": "Sign credentials, manage templates and revocations"
+      },
+      "verifier": {
+        "name": "Verifier",
+        "scope": "Look up credentials publicly"
+      },
+      "admin": {
+        "name": "System Admin",
+        "scope": "Platform governance and oversight"
+      }
+    }
+  },
+  "activity": {
+    "head": "Activity — CredSeal Admin",
+    "title": "Platform Activity",
+    "description": "Live stream of platform-wide events."
+  },
+  "audit": {
+    "head": "Audit Trail — CredSeal Admin",
+    "title": "Audit Trail",
+    "description": "Tamper-evident record of role-based actions.",
+    "table": {
+      "timestamp": "Timestamp",
+      "actor": "Actor",
+      "action": "Action",
+      "target": "Target"
+    }
+  },
+  "settings": {
+    "head": "Platform Settings — CredSeal Admin",
+    "title": "Platform Settings",
+    "description": "Global configuration and prototype controls.",
+    "issuancePolicy": "Issuance policy",
+    "toggles": {
+      "providerSignOff": "Require provider sign-off before issuance",
+      "directIssuance": "Allow direct issuance by issuers",
+      "bulkIssuance": "Allow bulk issuance via CSV",
+      "autoAnchor": "Auto-anchor new credentials to Bloxberg"
+    },
+    "prototypeData": "Prototype data",
+    "prototypeHint": "Reset all in-browser data and reload mock content.",
+    "resetButton": "Reset prototype data",
+    "resetDone": "Mock data reset"
+  }
+}
