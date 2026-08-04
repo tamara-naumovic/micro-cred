@@ -177,13 +177,21 @@ function List() {
     }
     setBusy(true);
     try {
-      await renew({
+      const res = (await renew({
         data: {
           credentialId: renewTarget.id,
           newExpiryDate: new Date(renewExpiry).toISOString(),
         },
-      });
-      toast.success(t("credentials.toasts.expiryExtended"));
+      })) as { ok?: boolean; offChainOnly?: boolean; error?: string };
+      if (res?.ok) {
+        toast.success(
+          res.offChainOnly
+            ? t("credentials.toasts.renewedOffChain")
+            : t("credentials.toasts.renewedOnChain"),
+        );
+      } else {
+        toast.warning(res?.error ?? t("credentials.toasts.renewalPending"));
+      }
       await refresh();
       closeRenew();
     } catch (e: any) {

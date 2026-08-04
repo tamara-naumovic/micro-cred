@@ -334,6 +334,91 @@ export type Database = {
           },
         ]
       }
+      credential_renewals: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          issuer_id: string
+          last_error: string | null
+          new_expires_at: string | null
+          original_credential_id: string
+          replacement_anchored_at: string | null
+          replacement_credential_id: string | null
+          requested_at: string
+          requested_by: string | null
+          state: string
+          supersede_block_number: number | null
+          supersede_chain_status: string
+          supersede_confirmed_at: string | null
+          supersede_tx_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          issuer_id: string
+          last_error?: string | null
+          new_expires_at?: string | null
+          original_credential_id: string
+          replacement_anchored_at?: string | null
+          replacement_credential_id?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          state?: string
+          supersede_block_number?: number | null
+          supersede_chain_status?: string
+          supersede_confirmed_at?: string | null
+          supersede_tx_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          issuer_id?: string
+          last_error?: string | null
+          new_expires_at?: string | null
+          original_credential_id?: string
+          replacement_anchored_at?: string | null
+          replacement_credential_id?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          state?: string
+          supersede_block_number?: number | null
+          supersede_chain_status?: string
+          supersede_confirmed_at?: string | null
+          supersede_tx_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credential_renewals_issuer_id_fkey"
+            columns: ["issuer_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credential_renewals_original_credential_id_fkey"
+            columns: ["original_credential_id"]
+            isOneToOne: false
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credential_renewals_replacement_credential_id_fkey"
+            columns: ["replacement_credential_id"]
+            isOneToOne: false
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credential_secrets: {
         Row: {
           created_at: string

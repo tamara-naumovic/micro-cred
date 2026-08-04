@@ -1422,7 +1422,11 @@ export const resendCredential = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Issuer extends the expiry of an already-issued credential. No earner acceptance required. */
+/**
+ * Renew a credential by issuing a REPLACEMENT credential with the new expiry
+ * and superseding the original (off-chain and, when anchored, on-chain).
+ * The original credential's expires_at is never modified.
+ */
 export const renewCredential = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { credentialId: string; newExpiryDate: string }) => d)
@@ -1430,12 +1434,14 @@ export const renewCredential = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: cred } = await supabase
       .from("credentials")
-      .select("id, title, issuer_id, template_id, earner_id, credential_lifecycle, expires_at")
+      .select("*")
       .eq("id", data.credentialId)
       .maybeSingle();
     if (!cred) throw new Error("Credential not found");
     const c = cred as Record<string, any>;
     const lc = c.credential_lifecycle as string;
+    if (lc === "revoked") throw new Error("Revoked credentials cannot be renewed");
+    if (lc === "superseded") throw new Error("This credential has already been superseded");
     if (lc !== "issued" && lc !== "expired") {
       throw new Error("Only issued or expired credentials can be renewed");
     }
@@ -1452,35 +1458,130 @@ export const renewCredential = createServerFn({ method: "POST" })
     if (!isAdmin && !isOrgAdmin && !isAssignee) throw new Error("Forbidden");
 
     const newExpiry = new Date(data.newExpiryDate).toISOString();
-    const nextLifecycle = lc === "expired" ? "issued" : lc;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { error: updErr } = await supabase
-      .from("credentials")
-      .update({
-        expires_at: newExpiry,
-        credential_lifecycle: nextLifecycle,
-      } as never)
-      .eq("id", data.credentialId);
-    if (updErr) throw new Error(updErr.message);
+    // Idempotency: one open renewal per original credential (partial unique index).
+    const { data: openRow } = await supabaseAdmin
+      .from("credential_renewals")
+      .select("id, state, replacement_credential_id")
+      .eq("original_credential_id", c.id)
+      .not("state", "in", '("completed","cancelled")')
+      .maybeSingle();
+
+    let renewalId: string;
+    let replacementId: string | null = null;
+
+    if (openRow) {
+      const o = openRow as Record<string, any>;
+      renewalId = o.id;
+      replacementId = o.replacement_credential_id ?? null;
+      if (o.state !== "supersede_failed" && o.state !== "replacement_pending") {
+        throw new Error("A renewal for this credential is already in progress");
+      }
+    } else {
+      const { data: inserted, error: insErr } = await supabaseAdmin
+        .from("credential_renewals")
+        .insert({
+          original_credential_id: c.id,
+          issuer_id: c.issuer_id,
+          requested_by: userId,
+          new_expires_at: newExpiry,
+          state: "replacement_pending",
+        } as never)
+        .select("id")
+        .single();
+      if (insErr) {
+        if (/duplicate key|unique/i.test(insErr.message)) {
+          throw new Error("A renewal for this credential is already in progress");
+        }
+        throw new Error(insErr.message);
+      }
+      renewalId = (inserted as { id: string }).id;
+      await supabaseAdmin.from("audit_log").insert({
+        actor_id: userId,
+        actor_name: "issuer",
+        action: "renewal requested",
+        target: c.id,
+      } as never);
+    }
+
+    const { createReplacementCredential, runRenewalWorkflow } = await import("./renewal.server");
+
+    if (!replacementId) {
+      const created = await createReplacementCredential(supabaseAdmin, c, newExpiry);
+      replacementId = created.id;
+      await supabaseAdmin
+        .from("credential_renewals")
+        .update({ replacement_credential_id: replacementId } as never)
+        .eq("id", renewalId);
+      await supabaseAdmin.from("audit_log").insert({
+        actor_id: userId,
+        actor_name: "issuer",
+        action: "replacement credential created",
+        target: replacementId,
+      } as never);
+      await supabaseAdmin.from("notifications").insert({
+        for_user_id: c.earner_id,
+        title: "Renewed credential issued",
+        body: `${c.title} has been renewed with a new expiry date.`,
+        link: `/earner/credentials/${replacementId}`,
+        title_key: "events.credentialRenewalIssued.title",
+        body_key: "events.credentialRenewalIssued.body",
+        params: { title: c.title, expiresAt: newExpiry },
+      } as never);
+    }
+
+    const outcome = await runRenewalWorkflow(renewalId, userId);
+    return { ...outcome, expiresAt: newExpiry };
+  });
+
+/** Manual retry of a renewal that failed at anchoring or supersede. */
+export const retryRenewal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { renewalId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row } = await supabase
+      .from("credential_renewals")
+      .select("id, issuer_id, state")
+      .eq("id", data.renewalId)
+      .maybeSingle();
+    if (!row) throw new Error("Renewal not found");
+    const r = row as Record<string, any>;
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin", { _user_id: userId });
+    const { data: isOrgAdmin } = await supabase.rpc("has_role_in_org", {
+      _user_id: userId,
+      _role: "issuer_admin",
+      _org_id: r.issuer_id,
+    });
+    if (!isAdmin && !isOrgAdmin) throw new Error("Forbidden");
+    if (r.state === "completed") return { ok: true, renewalId: r.id, state: "completed" as const };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("notifications").insert({
-      for_user_id: c.earner_id,
-      title: "Credential expiry extended",
-      body: `${c.title} expiry has been extended to ${new Date(newExpiry).toLocaleDateString()}.`,
-      link: `/earner/credentials/${c.id}`,
-      title_key: "events.credentialExpiryExtended.title",
-      body_key: "events.credentialExpiryExtended.body",
-      params: { title: c.title, expiresAt: newExpiry },
-    } as never);
     await supabaseAdmin.from("audit_log").insert({
       actor_id: userId,
       actor_name: "issuer",
-      action: "renewed credential expiry",
-      target: c.id,
+      action: "renewal retry",
+      target: r.id,
     } as never);
+    const { runRenewalWorkflow } = await import("./renewal.server");
+    return runRenewalWorkflow(r.id, userId);
+  });
 
-    return { ok: true, expiresAt: newExpiry };
+/** Renewal state for a set of credentials (issuer UI). */
+export const listCredentialRenewals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { issuerId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: rows } = await supabase
+      .from("credential_renewals")
+      .select(
+        "id, original_credential_id, replacement_credential_id, state, supersede_tx_hash, supersede_block_number, last_error, completed_at",
+      )
+      .eq("issuer_id", data.issuerId)
+      .order("requested_at", { ascending: false });
+    return (rows ?? []) as Record<string, any>[];
   });
 
 

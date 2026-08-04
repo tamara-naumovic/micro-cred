@@ -52,3 +52,37 @@ export const getPublicQaDocumentUrl = createServerFn({ method: "POST" })
     if (signErr) throw signErr;
     return { url: signed.signedUrl, expiresInSec: expiresIn };
   });
+
+/**
+ * Public, share-token-gated lookup of supersede state for a credential.
+ * Returns the replacement's share token ONLY when the replacement is itself
+ * publicly shared; otherwise the link is withheld.
+ */
+export const getPublicSupersedeInfo = createServerFn({ method: "POST" })
+  .inputValidator((d: { shareToken: string }) => {
+    if (!d || typeof d.shareToken !== "string") throw new Error("Invalid input");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: cred } = await supabaseAdmin
+      .from("credentials")
+      .select("share_is_public, credential_lifecycle, superseded_by_id")
+      .eq("share_token", data.shareToken)
+      .maybeSingle();
+    if (!cred || !cred.share_is_public) return { superseded: false as const };
+    if (cred.credential_lifecycle !== "superseded" || !cred.superseded_by_id) {
+      return { superseded: false as const };
+    }
+    const { data: repl } = await supabaseAdmin
+      .from("credentials")
+      .select("share_token, share_is_public, expires_at")
+      .eq("id", cred.superseded_by_id as string)
+      .maybeSingle();
+    return {
+      superseded: true as const,
+      replacementShareToken:
+        repl && repl.share_is_public ? (repl.share_token as string) : null,
+      replacementExpiresAt: repl && repl.share_is_public ? repl.expires_at : null,
+    };
+  });

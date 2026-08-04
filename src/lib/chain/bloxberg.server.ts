@@ -362,3 +362,102 @@ export async function submitRevokeCredential(
     contractAddress: address,
   };
 }
+
+export interface SupersedeResult extends AnchorResult {
+  confirmedAt: string;
+  alreadySuperseded?: boolean;
+}
+
+export class SupersedeConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SupersedeConflictError";
+  }
+}
+
+/**
+ * Mark an on-chain credential as Superseded by a replacement credential.
+ * Read-checks both records first: both must exist, be Active and share the
+ * same on-chain issuer address. Uses the exact same UUID -> bytes32
+ * normalization as submitCredentialAnchor (hex without dashes -> toBytes32Hex).
+ */
+export async function submitSupersedeCredential(
+  originalCredentialId: string,
+  replacementCredentialId: string,
+): Promise<SupersedeResult> {
+  const base = readBase();
+  const address = readCredentialAddress();
+  const ethers = await import("ethers");
+  const provider = new ethers.JsonRpcProvider(base.rpcUrl);
+  const wallet = new ethers.Wallet(base.privateKey, provider);
+  const contract = new ethers.Contract(
+    address,
+    CredentialRegistryAbi as ConstructorParameters<typeof ethers.Contract>[1],
+    wallet,
+  );
+
+  const originalB32 = to0x(toBytes32Hex(originalCredentialId.replace(/-/g, "")));
+  const replacementB32 = to0x(toBytes32Hex(replacementCredentialId.replace(/-/g, "")));
+
+  const readRecord = async (id: string) => {
+    try {
+      const r = await contract.getCredential(id);
+      const documentHash = (r?.[0] ?? r?.documentHash) as string | undefined;
+      const issuer = (r?.[3] ?? r?.issuer) as string | undefined;
+      const status = Number(r?.[6] ?? r?.status ?? 0);
+      const exists = !!documentHash && documentHash !== "0x" + "00".repeat(32) && status !== 0;
+      return { exists, issuer: issuer ?? "", status };
+    } catch {
+      return { exists: false, issuer: "", status: 0 };
+    }
+  };
+
+  const [orig, repl] = await Promise.all([readRecord(originalB32), readRecord(replacementB32)]);
+
+  // Idempotency: already superseded on chain.
+  if (orig.exists && orig.status === 3) {
+    return {
+      txHash: null,
+      blockNumber: 0,
+      issuerAddress: wallet.address,
+      contractAddress: address,
+      confirmedAt: new Date().toISOString(),
+      alreadySuperseded: true,
+    };
+  }
+  if (!orig.exists) {
+    throw new SupersedeConflictError("Original credential is not present on chain");
+  }
+  if (orig.status !== 1) {
+    throw new SupersedeConflictError(
+      `Original credential is not Active on chain (status ${orig.status})`,
+    );
+  }
+  if (!repl.exists) {
+    throw new SupersedeConflictError("Replacement credential is not present on chain");
+  }
+  if (repl.status !== 1) {
+    throw new SupersedeConflictError(
+      `Replacement credential is not Active on chain (status ${repl.status})`,
+    );
+  }
+  if (orig.issuer.toLowerCase() !== repl.issuer.toLowerCase()) {
+    throw new SupersedeConflictError(
+      "Original and replacement credentials have different on-chain issuer addresses",
+    );
+  }
+
+  try {
+    const tx = await contract.supersedeCredential(originalB32, replacementB32);
+    const receipt = await tx.wait(1);
+    return {
+      txHash: tx.hash,
+      blockNumber: Number(receipt?.blockNumber ?? 0),
+      issuerAddress: wallet.address,
+      contractAddress: address,
+      confirmedAt: new Date().toISOString(),
+    };
+  } catch (e) {
+    throw new Error(decodeRevert(e));
+  }
+}

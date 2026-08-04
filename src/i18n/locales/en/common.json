@@ -263,5 +263,20 @@
       "template_rpc_unavailable": "The template registry could not be reached.",
       "missing_template_config": "The template registry contract is not configured."
     }
+  },
+  "publicVerify": {
+    "supersededTitle": "This credential has been superseded",
+    "supersededBody": "A renewed replacement credential was issued. This version is no longer the current one.",
+    "supersededLink": "View the replacement credential"
+  },
+  "events": {
+    "credentialRenewalIssued": {
+      "title": "Renewed credential issued",
+      "body": "{{title}} has been renewed with a new expiry date."
+    },
+    "credentialRenewed": {
+      "title": "Credential renewed",
+      "body": "{{title}} has been replaced by a renewed credential."
+    }
   }
 }
