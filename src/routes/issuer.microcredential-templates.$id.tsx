@@ -177,18 +177,24 @@ function AssigneesCard({
 }) {
   const { t } = useTranslation("issuer");
   const { users, templateAssignees, assignTemplateUsers } = useStore();
-  const staffUsers = useMemo(
-    () =>
-      users.filter(
-        (u) => u.role === "issuer" && u.subRole === "staff" && u.organizationId === orgId,
-      ),
-    [users, orgId],
-  );
   const currentIds = useMemo(
     () =>
       templateAssignees.filter((a) => a.templateId === templateId).map((a) => a.userId),
     [templateAssignees, templateId],
   );
+  const staffUsers = useMemo(
+    () =>
+      users.filter(
+        (u) =>
+          u.role === "issuer" &&
+          u.organizationId === orgId &&
+          (u.subRole === "staff" ||
+            u.subRoles?.includes("staff") ||
+            currentIds.includes(u.id)),
+      ),
+    [users, orgId, currentIds],
+  );
+
   const [selected, setSelected] = useState<string[]>(currentIds);
   useEffect(() => setSelected(currentIds), [currentIds.join(",")]);
   const [busy, setBusy] = useState(false);
