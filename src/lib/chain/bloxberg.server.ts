@@ -330,10 +330,32 @@ export async function submitTemplateAnchor(record: TemplateAnchorRecord): Promis
   }
 }
 
+export interface RevokeResult extends AnchorResult {
+  confirmedAt: string;
+  alreadyRevoked?: boolean;
+}
+
+export class RevokeConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RevokeConflictError";
+  }
+}
+
+/**
+ * Mark an on-chain credential as Revoked.
+ *
+ * Read-checks the record first: it must exist and be Active. Already-revoked
+ * records return idempotently instead of submitting a reverting tx. Uses the
+ * same UUID -> bytes32 normalization as submitCredentialAnchor.
+ *
+ * `reasonHashHex` is the keccak256 hash of the free-text reason — the plain
+ * reason text is never sent on chain.
+ */
 export async function submitRevokeCredential(
   credentialIdHex: string,
   reasonHashHex?: string,
-): Promise<AnchorResult> {
+): Promise<RevokeResult> {
   const base = readBase();
   const address = readCredentialAddress();
   const ethers = await import("ethers");
@@ -344,24 +366,60 @@ export async function submitRevokeCredential(
     CredentialRegistryAbi as ConstructorParameters<typeof ethers.Contract>[1],
     wallet,
   );
-  const reason = reasonHashHex
-    ? to0x(toBytes32Hex(reasonHashHex))
-    : to0x("0".repeat(64));
-  // Contract: revokeCredential(bytes32 credentialId, bytes32 reasonHash)
-  let tx, receipt;
+  const credentialB32 = to0x(toBytes32Hex(credentialIdHex.replace(/-/g, "")));
+  const reason = reasonHashHex ? to0x(toBytes32Hex(reasonHashHex)) : to0x("0".repeat(64));
+
+  // Read-check before writing.
+  let record: { exists: boolean; issuer: string; status: number };
   try {
-    tx = await contract.revokeCredential(to0x(toBytes32Hex(credentialIdHex)), reason);
-    receipt = await tx.wait(1);
+    const r = await contract.getCredential(credentialB32);
+    const documentHash = (r?.[0] ?? r?.documentHash) as string | undefined;
+    const issuer = (r?.[3] ?? r?.issuer) as string | undefined;
+    const status = Number(r?.[6] ?? r?.status ?? 0);
+    record = {
+      exists: !!documentHash && documentHash !== "0x" + "00".repeat(32) && status !== 0,
+      issuer: issuer ?? "",
+      status,
+    };
+  } catch {
+    record = { exists: false, issuer: "", status: 0 };
+  }
+
+  if (record.exists && record.status === 2) {
+    return {
+      txHash: null,
+      blockNumber: 0,
+      issuerAddress: wallet.address,
+      contractAddress: address,
+      confirmedAt: new Date().toISOString(),
+      alreadyRevoked: true,
+    };
+  }
+  if (!record.exists) {
+    throw new RevokeConflictError("Credential is not present on chain");
+  }
+  if (record.status !== 1) {
+    throw new RevokeConflictError(
+      `Credential is not Active on chain (status ${record.status}); revocation not applicable`,
+    );
+  }
+
+  // Contract: revokeCredential(bytes32 credentialId, bytes32 reasonHash)
+  try {
+    const tx = await contract.revokeCredential(credentialB32, reason);
+    const receipt = await tx.wait(1);
+    return {
+      txHash: tx.hash,
+      blockNumber: Number(receipt?.blockNumber ?? 0),
+      issuerAddress: wallet.address,
+      contractAddress: address,
+      confirmedAt: new Date().toISOString(),
+    };
   } catch (e) {
     throw new Error(decodeRevert(e));
   }
-  return {
-    txHash: tx.hash,
-    blockNumber: Number(receipt?.blockNumber ?? 0),
-    issuerAddress: wallet.address,
-    contractAddress: address,
-  };
 }
+
 
 export interface SupersedeResult extends AnchorResult {
   confirmedAt: string;
