@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Check, Copy, ExternalLink, Eye, EyeOff, Link2 } from "lucide-react";
+import { Check, ChevronDown, Copy, ExternalLink, Eye, EyeOff, Link2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -56,6 +61,7 @@ function normaliseStatus(s?: string | null): BlockchainStatus {
 
 export function CredentialBlockchainVerificationCard({ data, audience, compact }: Props) {
   const { t } = useTranslation("common");
+  const [open, setOpen] = useState(false);
   const status = normaliseStatus(data.blockchainStatus);
   const label = t(`blockchain.${status}`);
   const description = t(`blockchainCard.desc.${status}`);
@@ -70,21 +76,32 @@ export function CredentialBlockchainVerificationCard({ data, audience, compact }
   const contractUrl = explorerAddrUrl(data.contractAddress);
   const issuerUrl = explorerAddrUrl(data.issuerAddress);
 
+
   return (
     <Card>
-      <CardHeader className={compact ? "pb-3" : undefined}>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Link2 className="h-4 w-4 text-primary" />
-          {t("blockchainCard.title")}
-          <Badge
-            variant="outline"
-            className={`ml-2 text-[10px] uppercase tracking-wider ${badgeClass}`}
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger asChild>
+          <CardHeader
+            className={`cursor-pointer select-none ${compact ? "pb-3" : ""}`}
           >
-            {label}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Link2 className="h-4 w-4 text-primary" />
+              {t("blockchainCard.title")}
+              <Badge
+                variant="outline"
+                className={`ml-2 text-[10px] uppercase tracking-wider ${badgeClass}`}
+              >
+                {label}
+              </Badge>
+              <ChevronDown
+                className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+              />
+            </CardTitle>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
       <CardContent className="space-y-3 text-sm">
+
         <p className="text-muted-foreground">{description}</p>
         <p className="text-xs text-muted-foreground italic">{t("blockchainCard.internalVsChain")}</p>
 
@@ -121,7 +138,10 @@ export function CredentialBlockchainVerificationCard({ data, audience, compact }
           </Button>
         )}
       </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
+
   );
 }
 
