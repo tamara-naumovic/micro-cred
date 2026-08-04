@@ -46,7 +46,9 @@
     "toasts": {
       "provideReason": "Provide a reason",
       "revokedQueued": "Revocation queued for on-chain anchoring",
-      "revoked": "Credential revoked"
+      "revoked": "Credential revoked",
+      "revokedOnChain": "Credential revoked on the blockchain",
+      "alreadyRevokedOnChain": "Credential was already revoked on the blockchain"
     }
   }
 }

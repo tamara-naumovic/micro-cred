@@ -46,7 +46,9 @@
     "toasts": {
       "provideReason": "Navedite razlog",
       "revokedQueued": "Opoziv je u redu za blockchain sidrenje",
-      "revoked": "Akreditiv je opozvan"
+      "revoked": "Akreditiv je opozvan",
+      "revokedOnChain": "Kredencijal je opozvan na blokčejnu",
+      "alreadyRevokedOnChain": "Kredencijal je već bio opozvan na blokčejnu"
     }
   }
 }
