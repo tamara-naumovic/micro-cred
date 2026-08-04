@@ -5,11 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
-  BLOCKCHAIN_LABEL,
   BLOCKCHAIN_BADGE_CLASS,
-  CREDENTIAL_BLOCKCHAIN_DESCRIPTION,
-  TOOLTIPS,
   explorerTxUrl,
   explorerAddrUrl,
   type BlockchainStatus,
@@ -57,9 +55,10 @@ function normaliseStatus(s?: string | null): BlockchainStatus {
 }
 
 export function CredentialBlockchainVerificationCard({ data, audience, compact }: Props) {
+  const { t } = useTranslation("common");
   const status = normaliseStatus(data.blockchainStatus);
-  const label = BLOCKCHAIN_LABEL[status];
-  const description = CREDENTIAL_BLOCKCHAIN_DESCRIPTION[status];
+  const label = t(`blockchain.${status}`);
+  const description = t(`blockchainCard.desc.${status}`);
   const badgeClass = BLOCKCHAIN_BADGE_CLASS[status];
 
   if (status === "not_requested" && audience === "public") {
@@ -76,7 +75,7 @@ export function CredentialBlockchainVerificationCard({ data, audience, compact }
       <CardHeader className={compact ? "pb-3" : undefined}>
         <CardTitle className="flex items-center gap-2 text-base">
           <Link2 className="h-4 w-4 text-primary" />
-          Blockchain verification
+          {t("blockchainCard.title")}
           <Badge
             variant="outline"
             className={`ml-2 text-[10px] uppercase tracking-wider ${badgeClass}`}
@@ -87,27 +86,27 @@ export function CredentialBlockchainVerificationCard({ data, audience, compact }
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <p className="text-muted-foreground">{description}</p>
-        <p className="text-xs text-muted-foreground italic">{TOOLTIPS.internalVsChain}</p>
+        <p className="text-xs text-muted-foreground italic">{t("blockchainCard.internalVsChain")}</p>
 
         <dl className="grid gap-2 rounded-md bg-muted/40 p-3 font-mono text-xs">
-          <FieldRow label="Credential ID" value={data.credentialId} />
-          <FieldRow label="VC ID" value={data.vcId ?? null} />
-          <FieldRow label="Template ref" value={prefix0x(data.templateRef)} />
-          <FieldRow label="Network" value={data.network ?? "bloxberg"} />
-          <FieldRow label="Chain ID" value={data.chainId != null ? String(data.chainId) : "8995"} />
-          <FieldRow label="Contract" value={data.contractAddress ?? null} href={contractUrl} />
-          <FieldRow label="Document hash" value={prefix0x(data.documentHash)} />
-          <FieldRow label="Learner commitment" value={prefix0x(data.learnerCommitment)} />
-          <FieldRow label="Transaction" value={data.transactionHash ?? null} href={txUrl} />
+          <FieldRow label={t("blockchainCard.fields.credentialId")} value={data.credentialId} />
+          <FieldRow label={t("blockchainCard.fields.vcId")} value={data.vcId ?? null} />
+          <FieldRow label={t("blockchainCard.fields.templateRef")} value={prefix0x(data.templateRef)} />
+          <FieldRow label={t("blockchainCard.fields.network")} value={data.network ?? "bloxberg"} />
+          <FieldRow label={t("blockchainCard.fields.chainId")} value={data.chainId != null ? String(data.chainId) : "8995"} />
+          <FieldRow label={t("blockchainCard.fields.contract")} value={data.contractAddress ?? null} href={contractUrl} />
+          <FieldRow label={t("blockchainCard.fields.documentHash")} value={prefix0x(data.documentHash)} />
+          <FieldRow label={t("blockchainCard.fields.learnerCommitment")} value={prefix0x(data.learnerCommitment)} />
+          <FieldRow label={t("blockchainCard.fields.transaction")} value={data.transactionHash ?? null} href={txUrl} />
           <FieldRow
-            label="Block"
+            label={t("blockchainCard.fields.block")}
             value={data.blockNumber != null ? String(data.blockNumber) : null}
           />
           <FieldRow
-            label="Anchored at"
+            label={t("blockchainCard.fields.anchoredAt")}
             value={data.anchoredAt ? new Date(data.anchoredAt).toLocaleString() : null}
           />
-          <FieldRow label="Issuer wallet" value={data.issuerAddress ?? null} href={issuerUrl} />
+          <FieldRow label={t("blockchainCard.fields.issuerWallet")} value={data.issuerAddress ?? null} href={issuerUrl} />
         </dl>
 
         {audience === "owner" && (
@@ -117,7 +116,7 @@ export function CredentialBlockchainVerificationCard({ data, audience, compact }
         {txUrl && (
           <Button size="sm" variant="outline" asChild>
             <a href={txUrl} target="_blank" rel="noreferrer">
-              <ExternalLink className="mr-1 h-3 w-3" /> View on Bloxberg explorer
+              <ExternalLink className="mr-1 h-3 w-3" /> {t("blockchainCard.explorer")}
             </a>
           </Button>
         )}
@@ -140,6 +139,7 @@ function FieldRow({
   value: string | null;
   href?: string | null;
 }) {
+  const { t } = useTranslation("common");
   const [copied, setCopied] = useState(false);
   const display = value ?? "—";
   return (
@@ -171,7 +171,7 @@ function FieldRow({
                 /* ignore */
               }
             }}
-            aria-label={`Copy ${label}`}
+            aria-label={t("blockchainCard.copy", { label })}
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           </button>
@@ -182,6 +182,7 @@ function FieldRow({
 }
 
 function OwnerSecretReveal({ credentialId }: { credentialId: string }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [secret, setSecret] = useState<string | null>(null);
 
@@ -202,10 +203,9 @@ function OwnerSecretReveal({ credentialId }: { credentialId: string }) {
     <div className="rounded-md border border-dashed border-border p-3">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <div className="text-xs font-medium">Your proof secret</div>
+          <div className="text-xs font-medium">{t("blockchainCard.secret.title")}</div>
           <p className="text-xs text-muted-foreground">
-            Combined with the on-chain learner commitment, this proves the credential belongs to
-            you. Keep it private — never share publicly.
+            {t("blockchainCard.secret.desc")}
           </p>
         </div>
         <Button
@@ -222,7 +222,7 @@ function OwnerSecretReveal({ credentialId }: { credentialId: string }) {
           disabled={mut.isPending}
         >
           {open ? <EyeOff className="mr-1 h-3 w-3" /> : <Eye className="mr-1 h-3 w-3" />}
-          {open ? "Hide" : mut.isPending ? "Loading…" : "Reveal"}
+          {open ? t("blockchainCard.secret.hide") : mut.isPending ? t("blockchainCard.secret.loading") : t("blockchainCard.secret.reveal")}
         </Button>
       </div>
       {open && secret && (
@@ -231,7 +231,7 @@ function OwnerSecretReveal({ credentialId }: { credentialId: string }) {
         </div>
       )}
       {open && !secret && (
-        <div className="mt-2 text-xs text-muted-foreground">No secret available.</div>
+        <div className="mt-2 text-xs text-muted-foreground">{t("blockchainCard.secret.none")}</div>
       )}
     </div>
   );
