@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { UserPlus, Pencil, Trash2 } from "lucide-react";
@@ -60,7 +61,16 @@ function mockUserToAppRole(u: MockUser): AppRole {
 
 
 export const Route = createFileRoute("/admin/users")({
-  head: () => ({ meta: [{ title: "Users — MicroCred Admin" }] }),
+  head: () => ({
+    meta: [
+      { title: "Users — CredSeal Admin" },
+      { name: "description", content: "All registered CredSeal users across roles and institutions." },
+      { property: "og:title", content: "Users — CredSeal Admin" },
+      { property: "og:description", content: "All registered CredSeal users across roles and institutions." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: () => (
     <RoleGuard role="admin">
       <UsersPage />
@@ -70,6 +80,7 @@ export const Route = createFileRoute("/admin/users")({
 
 function UsersPage() {
   const { users, organizations, earnerInstitutions } = useStore();
+  const { t } = useTranslation("admin");
   const [q, setQ] = useState("");
 
   const orgNameById = useMemo(() => new Map(organizations.map((o) => [o.id, o.name])), [organizations]);
@@ -93,12 +104,12 @@ function UsersPage() {
 
   return (
     <PageShell
-      title="Users"
-      description="All registered users across roles."
+      title={t("users.title")}
+      description={t("users.description")}
       actions={
         <div className="flex items-center gap-2">
           <Input
-            placeholder="Search by name, email or role"
+            placeholder={t("users.search")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="w-72"
@@ -112,10 +123,10 @@ function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Institution / linked</TableHead>
+                <TableHead>{t("users.table.name")}</TableHead>
+                <TableHead>{t("users.table.email")}</TableHead>
+                <TableHead>{t("users.table.role")}</TableHead>
+                <TableHead>{t("users.table.institution")}</TableHead>
                 <TableHead className="w-32" />
               </TableRow>
             </TableHeader>
@@ -177,6 +188,7 @@ function rolesFromCategory(
 
 function AddUserDialog() {
   const { organizations, reset: storeReset } = useStore();
+  const { t } = useTranslation("admin");
   const create = useServerFn(adminCreateUser);
   const assign = useServerFn(assignEarnerInstitution);
   const [open, setOpen] = useState(false);
@@ -195,11 +207,11 @@ function AddUserDialog() {
     e.preventDefault();
     const roles = rolesFromCategory(category, issuerAdmin, issuerStaff);
     if (roles.length === 0) {
-      toast.error("Pick at least one issuer sub-role (admin and/or staff)");
+      toast.error(t("users.toasts.pickSubRole"));
       return;
     }
     if (needsOrg && !orgId) {
-      toast.error("Pick an institution for this role");
+      toast.error(t("users.toasts.pickInstitution"));
       return;
     }
     setBusy(true);
@@ -222,14 +234,14 @@ function AddUserDialog() {
           ),
         );
       }
-      toast.success(form.mode === "invite" ? "Invitation sent" : "User created");
+      toast.success(form.mode === "invite" ? t("users.toasts.invited") : t("users.toasts.created"));
       reset();
       setOrgId("");
       setEarnerOrgIds([]);
       setOpen(false);
       storeReset();
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to create user");
+      toast.error(e?.message ?? t("users.toasts.createFailed"));
     } finally {
       setBusy(false);
     }
@@ -243,34 +255,32 @@ function AddUserDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <UserPlus className="mr-2 h-4 w-4" /> Add user
+          <UserPlus className="mr-2 h-4 w-4" /> {t("users.add.trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add user</DialogTitle>
-          <DialogDescription>
-            Create a new account or invite a person to MicroCred.
-          </DialogDescription>
+          <DialogTitle>{t("users.add.title")}</DialogTitle>
+          <DialogDescription>{t("users.add.description")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
-              <Label>Role</Label>
+              <Label>{t("users.fields.role")}</Label>
               <Select value={category} onValueChange={(v) => setCategory(v as RoleCategory)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="earner">Earner (student)</SelectItem>
-                  <SelectItem value="issuer">Issuer (institution)</SelectItem>
-                  <SelectItem value="platform_admin">Platform admin</SelectItem>
+                  <SelectItem value="earner">{t("users.roles.earner")}</SelectItem>
+                  <SelectItem value="issuer">{t("users.roles.issuer")}</SelectItem>
+                  <SelectItem value="platform_admin">{t("users.roles.platform_admin")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {needsOrg && (
               <div>
-                <Label>Institution</Label>
+                <Label>{t("users.fields.institution")}</Label>
                 <Select value={orgId} onValueChange={setOrgId}>
-                  <SelectTrigger><SelectValue placeholder="Select institution" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("users.fields.selectInstitution")} /></SelectTrigger>
                   <SelectContent>
                     {organizations.map((o) => (
                       <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
@@ -282,9 +292,9 @@ function AddUserDialog() {
           </div>
           {needsOrg && (
             <div className="rounded-md border border-border p-3">
-              <Label className="text-sm">Issuer sub-roles</Label>
+              <Label className="text-sm">{t("users.fields.subRoles")}</Label>
               <p className="mb-2 text-xs text-muted-foreground">
-                A user can be both institution admin and staff at the same time.
+                {t("users.fields.subRolesHint")}
               </p>
               <div className="flex flex-col gap-2">
                 <label className="flex cursor-pointer items-center gap-2">
@@ -294,7 +304,7 @@ function AddUserDialog() {
                     onChange={(e) => setIssuerAdmin(e.target.checked)}
                     disabled={busy}
                   />
-                  <span className="text-sm">Institution admin</span>
+                  <span className="text-sm">{t("users.fields.institutionAdmin")}</span>
                 </label>
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
@@ -303,16 +313,16 @@ function AddUserDialog() {
                     onChange={(e) => setIssuerStaff(e.target.checked)}
                     disabled={busy}
                   />
-                  <span className="text-sm">Staff</span>
+                  <span className="text-sm">{t("users.fields.staff")}</span>
                 </label>
               </div>
             </div>
           )}
           {isEarner && organizations.length > 0 && (
             <div>
-              <Label>Institutions (optional)</Label>
+              <Label>{t("users.fields.institutionsOptional")}</Label>
               <p className="mb-2 text-xs text-muted-foreground">
-                Link this earner to one or more institutions. You can also do this later from the user list.
+                {t("users.fields.institutionsOptionalHint")}
               </p>
               <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border border-border p-2">
                 {organizations.map((o) => {
@@ -335,7 +345,7 @@ function AddUserDialog() {
           )}
           <ProvisionFields value={form} onChange={setForm} disabled={busy} />
           <DialogFooter>
-            <SubmitButton busy={busy}>Create</SubmitButton>
+            <SubmitButton busy={busy}>{t("users.add.submit")}</SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -345,6 +355,7 @@ function AddUserDialog() {
 
 function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; earnerName: string }) {
   const { organizations, earnerInstitutions, reset: storeReset } = useStore();
+  const { t } = useTranslation("admin");
   const assign = useServerFn(assignEarnerInstitution);
   const remove = useServerFn(removeEarnerInstitution);
   const [open, setOpen] = useState(false);
@@ -364,7 +375,7 @@ function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; ea
       }
       storeReset();
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed");
+      toast.error(e?.message ?? t("users.toasts.failed"));
     } finally {
       setBusy(false);
     }
@@ -373,14 +384,12 @@ function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; ea
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">Manage</Button>
+        <Button size="sm" variant="outline">{t("users.manage")}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Institutions for {earnerName}</DialogTitle>
-          <DialogDescription>
-            Toggle the institutions this student is linked to.
-          </DialogDescription>
+          <DialogTitle>{t("users.earnerOrgs.title", { name: earnerName })}</DialogTitle>
+          <DialogDescription>{t("users.earnerOrgs.description")}</DialogDescription>
         </DialogHeader>
         <div className="max-h-80 space-y-2 overflow-y-auto">
           {organizations.map((o) => {
@@ -397,13 +406,13 @@ function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; ea
                   disabled={busy}
                   onClick={() => toggle(o.id, isLinked)}
                 >
-                  {isLinked ? "Unlink" : "Link"}
+                  {isLinked ? t("users.earnerOrgs.unlink") : t("users.earnerOrgs.link")}
                 </Button>
               </div>
             );
           })}
           {organizations.length === 0 && (
-            <p className="text-sm text-muted-foreground">No institutions yet.</p>
+            <p className="text-sm text-muted-foreground">{t("users.earnerOrgs.empty")}</p>
           )}
         </div>
       </DialogContent>
@@ -413,6 +422,7 @@ function ManageEarnerOrgsDialog({ earnerId, earnerName }: { earnerId: string; ea
 
 function EditUserDialog({ user }: { user: MockUser }) {
   const { organizations, reset } = useStore();
+  const { t } = useTranslation("admin");
   const update = useServerFn(adminUpdateUser);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -430,11 +440,11 @@ function EditUserDialog({ user }: { user: MockUser }) {
     e.preventDefault();
     const roles = rolesFromCategory(category, issuerAdmin, issuerStaff);
     if (roles.length === 0) {
-      toast.error("Pick at least one issuer sub-role (admin and/or staff)");
+      toast.error(t("users.toasts.pickSubRole"));
       return;
     }
     if (needsOrg && !orgId) {
-      toast.error("Pick an institution for this role");
+      toast.error(t("users.toasts.pickInstitution"));
       return;
     }
     setBusy(true);
@@ -448,11 +458,11 @@ function EditUserDialog({ user }: { user: MockUser }) {
           organizationId: needsOrg ? orgId : null,
         },
       });
-      toast.success("User updated");
+      toast.success(t("users.toasts.updated"));
       setOpen(false);
       reset();
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to update");
+      toast.error(err?.message ?? t("users.toasts.updateFailed"));
     } finally {
       setBusy(false);
     }
@@ -461,41 +471,41 @@ function EditUserDialog({ user }: { user: MockUser }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="icon" variant="ghost" aria-label="Edit user">
+        <Button size="icon" variant="ghost" aria-label={t("users.editAria")}>
           <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit user</DialogTitle>
-          <DialogDescription>Update profile and role for this user.</DialogDescription>
+          <DialogTitle>{t("users.edit.title")}</DialogTitle>
+          <DialogDescription>{t("users.edit.description")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Label>Display name</Label>
+              <Label>{t("users.edit.displayName")}</Label>
               <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
             </div>
             <div className="sm:col-span-2">
-              <Label>Email</Label>
+              <Label>{t("users.edit.email")}</Label>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div>
-              <Label>Role</Label>
+              <Label>{t("users.fields.role")}</Label>
               <Select value={category} onValueChange={(v) => setCategory(v as RoleCategory)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="earner">Earner (student)</SelectItem>
-                  <SelectItem value="issuer">Issuer (institution)</SelectItem>
-                  <SelectItem value="platform_admin">Platform admin</SelectItem>
+                  <SelectItem value="earner">{t("users.roles.earner")}</SelectItem>
+                  <SelectItem value="issuer">{t("users.roles.issuer")}</SelectItem>
+                  <SelectItem value="platform_admin">{t("users.roles.platform_admin")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {needsOrg && (
               <div>
-                <Label>Institution</Label>
+                <Label>{t("users.fields.institution")}</Label>
                 <Select value={orgId} onValueChange={setOrgId}>
-                  <SelectTrigger><SelectValue placeholder="Select institution" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("users.fields.selectInstitution")} /></SelectTrigger>
                   <SelectContent>
                     {organizations.map((o) => (
                       <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
@@ -507,9 +517,9 @@ function EditUserDialog({ user }: { user: MockUser }) {
           </div>
           {needsOrg && (
             <div className="rounded-md border border-border p-3">
-              <Label className="text-sm">Issuer sub-roles</Label>
+              <Label className="text-sm">{t("users.fields.subRoles")}</Label>
               <p className="mb-2 text-xs text-muted-foreground">
-                A user can be both institution admin and staff at the same time.
+                {t("users.fields.subRolesHint")}
               </p>
               <div className="flex flex-col gap-2">
                 <label className="flex cursor-pointer items-center gap-2">
@@ -519,7 +529,7 @@ function EditUserDialog({ user }: { user: MockUser }) {
                     onChange={(e) => setIssuerAdmin(e.target.checked)}
                     disabled={busy}
                   />
-                  <span className="text-sm">Institution admin</span>
+                  <span className="text-sm">{t("users.fields.institutionAdmin")}</span>
                 </label>
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
@@ -528,13 +538,13 @@ function EditUserDialog({ user }: { user: MockUser }) {
                     onChange={(e) => setIssuerStaff(e.target.checked)}
                     disabled={busy}
                   />
-                  <span className="text-sm">Staff</span>
+                  <span className="text-sm">{t("users.fields.staff")}</span>
                 </label>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
+            <Button type="submit" disabled={busy}>{busy ? t("users.edit.saving") : t("users.edit.save")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -544,6 +554,7 @@ function EditUserDialog({ user }: { user: MockUser }) {
 
 function DeleteUserDialog({ user }: { user: MockUser }) {
   const { reset } = useStore();
+  const { t } = useTranslation("admin");
   const del = useServerFn(adminDeleteUser);
   const [busy, setBusy] = useState(false);
 
@@ -551,10 +562,10 @@ function DeleteUserDialog({ user }: { user: MockUser }) {
     setBusy(true);
     try {
       await del({ data: { userId: user.id } });
-      toast.success("User deleted");
+      toast.success(t("users.toasts.deleted"));
       reset();
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to delete");
+      toast.error(err?.message ?? t("users.toasts.deleteFailed"));
     } finally {
       setBusy(false);
     }
@@ -563,19 +574,17 @@ function DeleteUserDialog({ user }: { user: MockUser }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button size="icon" variant="ghost" aria-label="Delete user">
+        <Button size="icon" variant="ghost" aria-label={t("users.deleteAria")}>
           <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete {user.name}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This permanently removes the account, profile, and role assignments. This cannot be undone.
-          </AlertDialogDescription>
+          <AlertDialogTitle>{t("users.delete.title", { name: user.name })}</AlertDialogTitle>
+          <AlertDialogDescription>{t("users.delete.description")}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={busy}>{t("users.delete.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             disabled={busy}
             onClick={(e) => {
@@ -583,7 +592,7 @@ function DeleteUserDialog({ user }: { user: MockUser }) {
               onConfirm();
             }}
           >
-            {busy ? "Deleting…" : "Delete"}
+            {busy ? t("users.delete.deleting") : t("users.delete.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
