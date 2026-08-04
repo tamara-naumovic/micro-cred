@@ -235,11 +235,16 @@ function Revocations() {
       if (UUID_RE.test(id)) {
         const { revokeCredentialOnChain } = await import("@/lib/chain/anchor.functions");
         const res = await revokeCredentialOnChain({ data: { credentialId: id, reason } });
-        if (res.mode === "on_chain_revoke_queued") {
+        if (res.mode === "on_chain_revoked") {
+          toast.success(t("revocations.toasts.revokedOnChain"));
+        } else if (res.mode === "on_chain_already_revoked") {
+          toast.success(t("revocations.toasts.alreadyRevokedOnChain"));
+        } else if (res.mode === "on_chain_revoke_queued") {
           toast.success(t("revocations.toasts.revokedQueued"));
         } else {
           toast.success(t("revocations.toasts.revoked"));
         }
+
         revokeCredential(id, reason);
       } else {
         revokeCredential(id, reason);
