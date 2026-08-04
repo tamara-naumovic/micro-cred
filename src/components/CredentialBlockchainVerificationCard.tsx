@@ -61,6 +61,7 @@ function normaliseStatus(s?: string | null): BlockchainStatus {
 
 export function CredentialBlockchainVerificationCard({ data, audience, compact }: Props) {
   const { t } = useTranslation("common");
+  const [open, setOpen] = useState(false);
   const status = normaliseStatus(data.blockchainStatus);
   const label = t(`blockchain.${status}`);
   const description = t(`blockchainCard.desc.${status}`);
@@ -75,7 +76,6 @@ export function CredentialBlockchainVerificationCard({ data, audience, compact }
   const contractUrl = explorerAddrUrl(data.contractAddress);
   const issuerUrl = explorerAddrUrl(data.issuerAddress);
 
-  const [open, setOpen] = useState(false);
 
   return (
     <Card>
