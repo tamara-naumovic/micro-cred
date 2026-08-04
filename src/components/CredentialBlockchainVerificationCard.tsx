@@ -138,7 +138,10 @@ export function CredentialBlockchainVerificationCard({ data, audience, compact }
           </Button>
         )}
       </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
+
   );
 }
 
