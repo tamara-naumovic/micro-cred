@@ -196,6 +196,13 @@ function RealVerify({
               issuerAddress: (cred as any).chain_issuer_address ?? null,
             }}
           />
+
+          <PublicChainVerificationPanel
+            shareToken={shareToken}
+            storedTxHash={(cred as any).chain_tx_hash ?? null}
+            storedBlockNumber={(cred as any).chain_block_number ?? null}
+          />
+
         </CardContent>
       </Card>
 
