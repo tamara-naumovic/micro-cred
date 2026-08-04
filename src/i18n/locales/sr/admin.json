@@ -52,7 +52,7 @@
       "role": "Uloga",
       "institution": "Institucija",
       "selectInstitution": "Izaberite instituciju",
-      "subRoles": "Podulоge izdavaoca",
+      "subRoles": "Poduloge izdavaoca",
       "subRolesHint": "Korisnik istovremeno može biti i administrator institucije i zaposleni.",
       "institutionAdmin": "Administrator institucije",
       "staff": "Zaposleni",
