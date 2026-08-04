@@ -241,13 +241,6 @@ function RealVerify({
 /* ---------------- Mock fallback ---------------- */
 
 function MockVerify({ cred }: { cred: NonNullable<ReturnType<typeof useStore>["credentials"][number]> }) {
-  const { t } = useTranslation("common");
-  const supersedeQuery = useQuery({
-    queryKey: ["public-supersede", shareToken],
-    queryFn: () => getPublicSupersedeInfo({ data: { shareToken } }),
-    retry: false,
-  });
-  const supersede = supersedeQuery.data;
   const isRevoked = cred.status === "revoked";
   const isExpired = cred.status === "expired";
 
