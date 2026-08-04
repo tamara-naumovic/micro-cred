@@ -37,7 +37,9 @@
       "microcredentials": "Micro-credentials",
       "issuance": "Issuance",
       "account": "Account and settings",
-      "accountShort": "Account"
+      "accountShort": "Account",
+      "peopleOrgs": "People & Orgs",
+      "platform": "Platform"
     },
     "earner": {
       "dashboard": "Dashboard",
@@ -65,6 +67,16 @@
       "profile": "Public Profile",
       "notifications": "Notifications",
       "manual": "Manual",
+      "settings": "Settings"
+    },
+    "admin": {
+      "overview": "Overview",
+      "users": "Users",
+      "organizations": "Institutions",
+      "roles": "Roles & Permissions",
+      "registrations": "Registrations",
+      "activity": "Activity",
+      "audit": "Audit Trail",
       "settings": "Settings"
     }
   },

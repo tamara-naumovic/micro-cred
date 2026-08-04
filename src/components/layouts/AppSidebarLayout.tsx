@@ -151,30 +151,32 @@ function buildIssuerStaffNav(t: (k: string) => string): NavGroups {
   ];
 }
 
-const ADMIN_NAV: NavGroups = [
-  { group: "Overview", items: [{ to: "/admin", label: "Overview", icon: LayoutDashboard }] },
-  {
-    group: "People & Orgs",
-    items: [
-      { to: "/admin/users", label: "Users", icon: Users },
-      { to: "/admin/organizations", label: "Organizations", icon: Building2 },
-      { to: "/admin/roles", label: "Roles & Permissions", icon: ShieldCheck },
-      { to: "/admin/registrations", label: "Registrations", icon: Mail },
-    ],
-  },
-  {
-    group: "Platform",
-    items: [
-      { to: "/admin/activity", label: "Activity", icon: ListChecks },
-      { to: "/admin/audit", label: "Audit Trail", icon: FileCheck2 },
-      { to: "/admin/settings", label: "Settings", icon: Settings },
-    ],
-  },
-];
+function buildAdminNav(t: (k: string) => string): NavGroups {
+  return [
+    { group: t("sidebar.groups.overview"), items: [{ to: "/admin", label: t("sidebar.admin.overview"), icon: LayoutDashboard }] },
+    {
+      group: t("sidebar.groups.peopleOrgs"),
+      items: [
+        { to: "/admin/users", label: t("sidebar.admin.users"), icon: Users },
+        { to: "/admin/organizations", label: t("sidebar.admin.organizations"), icon: Building2 },
+        { to: "/admin/roles", label: t("sidebar.admin.roles"), icon: ShieldCheck },
+        { to: "/admin/registrations", label: t("sidebar.admin.registrations"), icon: Mail },
+      ],
+    },
+    {
+      group: t("sidebar.groups.platform"),
+      items: [
+        { to: "/admin/activity", label: t("sidebar.admin.activity"), icon: ListChecks },
+        { to: "/admin/audit", label: t("sidebar.admin.audit"), icon: FileCheck2 },
+        { to: "/admin/settings", label: t("sidebar.admin.settings"), icon: Settings },
+      ],
+    },
+  ];
+}
 
 function getNav(user: MockUser, t: (k: string) => string): NavGroups {
   if (user.role === "earner") return buildEarnerNav(t);
-  if (user.role === "admin") return ADMIN_NAV;
+  if (user.role === "admin") return buildAdminNav(t);
   if (user.role === "issuer") return user.subRole === "staff" ? buildIssuerStaffNav(t) : buildIssuerAdminNav(t);
   return [];
 }

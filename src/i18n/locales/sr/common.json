@@ -37,7 +37,9 @@
       "microcredentials": "Mikrokredencijali",
       "issuance": "Izdavanje",
       "account": "Nalog i podešavanja",
-      "accountShort": "Nalog"
+      "accountShort": "Nalog",
+      "peopleOrgs": "Korisnici i institucije",
+      "platform": "Platforma"
     },
     "earner": {
       "dashboard": "Početna",
@@ -65,6 +67,16 @@
       "profile": "Javni profil",
       "notifications": "Obaveštenja",
       "manual": "Uputstvo",
+      "settings": "Podešavanja"
+    },
+    "admin": {
+      "overview": "Pregled",
+      "users": "Korisnici",
+      "organizations": "Institucije",
+      "roles": "Uloge i dozvole",
+      "registrations": "Zahtevi za registraciju",
+      "activity": "Aktivnosti",
+      "audit": "Revizorski trag",
       "settings": "Podešavanja"
     }
   },

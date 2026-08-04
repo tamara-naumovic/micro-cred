@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
@@ -11,7 +12,16 @@ import { useStore } from "@/lib/store";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 
 export const Route = createFileRoute("/admin/settings")({
-  head: () => ({ meta: [{ title: "Platform Settings — MicroCred Admin" }] }),
+  head: () => ({
+    meta: [
+      { title: "Platform Settings — CredSeal Admin" },
+      { name: "description", content: "Global configuration and prototype controls for the CredSeal platform." },
+      { property: "og:title", content: "Platform Settings — CredSeal Admin" },
+      { property: "og:description", content: "Global configuration and prototype controls for the CredSeal platform." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: () => (
     <RoleGuard role="admin">
       <Settings />
@@ -21,24 +31,25 @@ export const Route = createFileRoute("/admin/settings")({
 
 function Settings() {
   const { reset } = useStore();
+  const { t } = useTranslation("admin");
   return (
-    <PageShell title="Platform Settings" description="Global configuration and prototype controls.">
+    <PageShell title={t("settings.title")} description={t("settings.description")}>
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="text-base">Issuance policy</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("settings.issuancePolicy")}</CardTitle></CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <Toggle label="Require provider sign-off before issuance" defaultChecked />
-            <Toggle label="Allow direct issuance by issuers" defaultChecked />
-            <Toggle label="Allow bulk issuance via CSV" defaultChecked />
-            <Toggle label="Auto-anchor new credentials to Bloxberg" defaultChecked />
+            <Toggle label={t("settings.toggles.providerSignOff")} defaultChecked />
+            <Toggle label={t("settings.toggles.directIssuance")} defaultChecked />
+            <Toggle label={t("settings.toggles.bulkIssuance")} defaultChecked />
+            <Toggle label={t("settings.toggles.autoAnchor")} defaultChecked />
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-base">Prototype data</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("settings.prototypeData")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">Reset all in-browser data and reload mock content.</p>
-            <Button variant="outline" onClick={() => { reset(); toast.success("Mock data reset"); }}>
-              <RotateCcw className="mr-2 h-4 w-4" />Reset prototype data
+            <p className="text-sm text-muted-foreground">{t("settings.prototypeHint")}</p>
+            <Button variant="outline" onClick={() => { reset(); toast.success(t("settings.resetDone")); }}>
+              <RotateCcw className="mr-2 h-4 w-4" />{t("settings.resetButton")}
             </Button>
           </CardContent>
         </Card>
