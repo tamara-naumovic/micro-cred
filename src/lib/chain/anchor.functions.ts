@@ -1069,8 +1069,32 @@ export const retryAnchorJob = createServerFn({ method: "POST" })
     if (j.status === "cancelled") throw new Error("Job is cancelled");
     if ((j.attempts ?? 0) >= MAX_ATTEMPTS) throw new Error("Maximum retry attempts reached");
 
+    const jobOperation = (j.operation as string | null) ?? (data.entityKind === "template" ? "anchor_template" : "anchor_credential");
+
+    // On-chain revocation retry: dedicated path, never the issuance branch.
+    if (jobOperation === "revoke_credential") {
+      await (supabaseAdmin as any)
+        .from(table)
+        .update({ status: "running", last_error: null } as never)
+        .eq("id", data.jobId);
+      const { processCredentialRevoke } = await import("./worker.server");
+      const rres = await processCredentialRevoke(entityId);
+      await (supabaseAdmin as any)
+        .from(table)
+        .update({
+          status: rres.ok ? "done" : "failed",
+          attempts: (j.attempts ?? 0) + 1,
+          last_error: rres.ok ? null : (rres.error ?? "unknown error"),
+          last_attempt_at: new Date().toISOString(),
+          transaction_hash: rres.txHash ?? j.transaction_hash ?? null,
+        } as never)
+        .eq("id", data.jobId);
+      return { ok: rres.ok, error: rres.error };
+    }
+
     // For credential jobs, refuse to run if the template is not anchored.
     if (data.entityKind === "credential") {
+
       const { data: cred } = await supabaseAdmin
         .from("credentials")
         .select("template_id")
