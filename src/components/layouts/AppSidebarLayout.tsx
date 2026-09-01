@@ -51,6 +51,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { useStore } from "@/lib/store";
+import { useSignOut } from "@/lib/use-sign-out";
+import { useIdleLogout } from "@/lib/use-idle-logout";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { MockUser, Role } from "@/lib/types";
 
@@ -68,18 +70,53 @@ function buildEarnerNav(t: (k: string) => string): NavGroups {
     {
       group: t("sidebar.groups.workspace"),
       items: [
-        { to: "/earner", label: t("sidebar.earner.dashboard"), icon: LayoutDashboard, dataTour: "nav-dashboard" },
-        { to: "/earner/credentials", label: t("sidebar.earner.credentials"), icon: Award, dataTour: "nav-my-credentials" },
-        { to: "/earner/applications", label: t("sidebar.earner.applications"), icon: ClipboardList, dataTour: "nav-applications" },
-        { to: "/earner/apply", label: t("sidebar.earner.apply"), icon: FilePlus2, dataTour: "nav-apply" },
+        {
+          to: "/earner",
+          label: t("sidebar.earner.dashboard"),
+          icon: LayoutDashboard,
+          dataTour: "nav-dashboard",
+        },
+        {
+          to: "/earner/credentials",
+          label: t("sidebar.earner.credentials"),
+          icon: Award,
+          dataTour: "nav-my-credentials",
+        },
+        {
+          to: "/earner/applications",
+          label: t("sidebar.earner.applications"),
+          icon: ClipboardList,
+          dataTour: "nav-applications",
+        },
+        {
+          to: "/earner/apply",
+          label: t("sidebar.earner.apply"),
+          icon: FilePlus2,
+          dataTour: "nav-apply",
+        },
       ],
     },
     {
       group: t("sidebar.groups.sharing"),
       items: [
-        { to: "/earner/profile", label: t("sidebar.earner.profile"), icon: UserCircle, dataTour: "nav-profile" },
-        { to: "/earner/notifications", label: t("sidebar.earner.notifications"), icon: Bell, dataTour: "nav-notifications" },
-        { to: "/earner/manual", label: t("sidebar.earner.manual"), icon: BookOpen, dataTour: "nav-manual" },
+        {
+          to: "/earner/profile",
+          label: t("sidebar.earner.profile"),
+          icon: UserCircle,
+          dataTour: "nav-profile",
+        },
+        {
+          to: "/earner/notifications",
+          label: t("sidebar.earner.notifications"),
+          icon: Bell,
+          dataTour: "nav-notifications",
+        },
+        {
+          to: "/earner/manual",
+          label: t("sidebar.earner.manual"),
+          icon: BookOpen,
+          dataTour: "nav-manual",
+        },
         { to: "/earner/settings", label: t("sidebar.earner.settings"), icon: Settings },
       ],
     },
@@ -88,33 +125,108 @@ function buildEarnerNav(t: (k: string) => string): NavGroups {
 
 function buildIssuerAdminNav(t: (k: string) => string): NavGroups {
   return [
-    { group: t("sidebar.groups.overview"), items: [{ to: "/issuer", label: t("sidebar.issuer.overview"), icon: LayoutDashboard, dataTour: "nav-issuer-overview" }] },
+    {
+      group: t("sidebar.groups.overview"),
+      items: [
+        {
+          to: "/issuer",
+          label: t("sidebar.issuer.overview"),
+          icon: LayoutDashboard,
+          dataTour: "nav-issuer-overview",
+        },
+      ],
+    },
     {
       group: t("sidebar.groups.microcredentials"),
       items: [
-        { to: "/issuer/microcredential-templates", label: t("sidebar.issuer.templates"), icon: BookOpen, dataTour: "nav-issuer-templates" },
-        { to: "/issuer/microcredential-templates/new", label: t("sidebar.issuer.templateNew"), icon: FilePlus2, dataTour: "nav-issuer-template-new" },
-        { to: "/issuer/staff", label: t("sidebar.issuer.staff"), icon: Users, dataTour: "nav-issuer-staff" },
-        { to: "/issuer/earners", label: t("sidebar.issuer.earners"), icon: GraduationCap, dataTour: "nav-issuer-earners" },
+        {
+          to: "/issuer/microcredential-templates",
+          label: t("sidebar.issuer.templates"),
+          icon: BookOpen,
+          dataTour: "nav-issuer-templates",
+        },
+        {
+          to: "/issuer/microcredential-templates/new",
+          label: t("sidebar.issuer.templateNew"),
+          icon: FilePlus2,
+          dataTour: "nav-issuer-template-new",
+        },
+        {
+          to: "/issuer/staff",
+          label: t("sidebar.issuer.staff"),
+          icon: Users,
+          dataTour: "nav-issuer-staff",
+        },
+        {
+          to: "/issuer/earners",
+          label: t("sidebar.issuer.earners"),
+          icon: GraduationCap,
+          dataTour: "nav-issuer-earners",
+        },
       ],
     },
     {
       group: t("sidebar.groups.issuance"),
       items: [
-        { to: "/issuer/requests", label: t("sidebar.issuer.requests"), icon: Inbox, dataTour: "nav-issuer-requests" },
-        { to: "/issuer/issue", label: t("sidebar.issuer.issue"), icon: Send, dataTour: "nav-issuer-issue" },
-        { to: "/issuer/issue/bulk", label: t("sidebar.issuer.bulk"), icon: UploadCloud, dataTour: "nav-issuer-bulk" },
-        { to: "/issuer/credentials", label: t("sidebar.issuer.credentials"), icon: Award, dataTour: "nav-issuer-credentials" },
-        { to: "/issuer/revocations", label: t("sidebar.issuer.revocations"), icon: XOctagon, dataTour: "nav-issuer-revocations" },
-        { to: "/issuer/anchoring-queue", label: t("sidebar.issuer.anchoring"), icon: Link2, dataTour: "nav-issuer-anchoring" },
+        {
+          to: "/issuer/requests",
+          label: t("sidebar.issuer.requests"),
+          icon: Inbox,
+          dataTour: "nav-issuer-requests",
+        },
+        {
+          to: "/issuer/issue",
+          label: t("sidebar.issuer.issue"),
+          icon: Send,
+          dataTour: "nav-issuer-issue",
+        },
+        {
+          to: "/issuer/issue/bulk",
+          label: t("sidebar.issuer.bulk"),
+          icon: UploadCloud,
+          dataTour: "nav-issuer-bulk",
+        },
+        {
+          to: "/issuer/credentials",
+          label: t("sidebar.issuer.credentials"),
+          icon: Award,
+          dataTour: "nav-issuer-credentials",
+        },
+        {
+          to: "/issuer/revocations",
+          label: t("sidebar.issuer.revocations"),
+          icon: XOctagon,
+          dataTour: "nav-issuer-revocations",
+        },
+        {
+          to: "/issuer/anchoring-queue",
+          label: t("sidebar.issuer.anchoring"),
+          icon: Link2,
+          dataTour: "nav-issuer-anchoring",
+        },
       ],
     },
     {
       group: t("sidebar.groups.account"),
       items: [
-        { to: "/issuer/profile", label: t("sidebar.issuer.profile"), icon: BadgeCheck, dataTour: "nav-issuer-profile" },
-        { to: "/issuer/notifications", label: t("sidebar.issuer.notifications"), icon: Bell, dataTour: "nav-issuer-notifications" },
-        { to: "/issuer/manual", label: t("sidebar.issuer.manual"), icon: BookOpen, dataTour: "nav-issuer-manual" },
+        {
+          to: "/issuer/profile",
+          label: t("sidebar.issuer.profile"),
+          icon: BadgeCheck,
+          dataTour: "nav-issuer-profile",
+        },
+        {
+          to: "/issuer/notifications",
+          label: t("sidebar.issuer.notifications"),
+          icon: Bell,
+          dataTour: "nav-issuer-notifications",
+        },
+        {
+          to: "/issuer/manual",
+          label: t("sidebar.issuer.manual"),
+          icon: BookOpen,
+          dataTour: "nav-issuer-manual",
+        },
         { to: "/issuer/settings", label: t("sidebar.issuer.settings"), icon: Settings },
       ],
     },
@@ -123,28 +235,78 @@ function buildIssuerAdminNav(t: (k: string) => string): NavGroups {
 
 function buildIssuerStaffNav(t: (k: string) => string): NavGroups {
   return [
-    { group: t("sidebar.groups.overview"), items: [{ to: "/issuer", label: t("sidebar.issuer.overview"), icon: LayoutDashboard, dataTour: "nav-issuer-overview" }] },
+    {
+      group: t("sidebar.groups.overview"),
+      items: [
+        {
+          to: "/issuer",
+          label: t("sidebar.issuer.overview"),
+          icon: LayoutDashboard,
+          dataTour: "nav-issuer-overview",
+        },
+      ],
+    },
     {
       group: t("sidebar.groups.microcredentials"),
       items: [
-        { to: "/issuer/microcredential-templates", label: t("sidebar.issuer.templatesStaff"), icon: BookOpen, dataTour: "nav-issuer-templates" },
+        {
+          to: "/issuer/microcredential-templates",
+          label: t("sidebar.issuer.templatesStaff"),
+          icon: BookOpen,
+          dataTour: "nav-issuer-templates",
+        },
       ],
     },
     {
       group: t("sidebar.groups.issuance"),
       items: [
-        { to: "/issuer/requests", label: t("sidebar.issuer.requests"), icon: Inbox, dataTour: "nav-issuer-requests" },
-        { to: "/issuer/issue", label: t("sidebar.issuer.issue"), icon: Send, dataTour: "nav-issuer-issue" },
-        { to: "/issuer/issue/bulk", label: t("sidebar.issuer.bulk"), icon: UploadCloud, dataTour: "nav-issuer-bulk" },
-        { to: "/issuer/credentials", label: t("sidebar.issuer.credentials"), icon: Award, dataTour: "nav-issuer-credentials" },
-        { to: "/issuer/anchoring-queue", label: t("sidebar.issuer.anchoring"), icon: Link2, dataTour: "nav-issuer-anchoring" },
+        {
+          to: "/issuer/requests",
+          label: t("sidebar.issuer.requests"),
+          icon: Inbox,
+          dataTour: "nav-issuer-requests",
+        },
+        {
+          to: "/issuer/issue",
+          label: t("sidebar.issuer.issue"),
+          icon: Send,
+          dataTour: "nav-issuer-issue",
+        },
+        {
+          to: "/issuer/issue/bulk",
+          label: t("sidebar.issuer.bulk"),
+          icon: UploadCloud,
+          dataTour: "nav-issuer-bulk",
+        },
+        {
+          to: "/issuer/credentials",
+          label: t("sidebar.issuer.credentials"),
+          icon: Award,
+          dataTour: "nav-issuer-credentials",
+        },
+        {
+          to: "/issuer/anchoring-queue",
+          label: t("sidebar.issuer.anchoring"),
+          icon: Link2,
+          dataTour: "nav-issuer-anchoring",
+        },
       ],
     },
     {
       group: t("sidebar.groups.accountShort"),
       items: [
-        { to: "/issuer/notifications", label: t("sidebar.issuer.notifications"), icon: Bell, dataTour: "nav-issuer-notifications" },
-        { to: "/issuer/manual", label: t("sidebar.issuer.manual"), icon: BookOpen, dataTour: "nav-issuer-manual" },
+        {
+          to: "/issuer/notifications",
+          label: t("sidebar.issuer.notifications"),
+          icon: Bell,
+          dataTour: "nav-issuer-notifications",
+        },
+        {
+          to: "/issuer/manual",
+          label: t("sidebar.issuer.manual"),
+          icon: BookOpen,
+          dataTour: "nav-issuer-manual",
+        },
         { to: "/issuer/settings", label: t("sidebar.issuer.settings"), icon: Settings },
       ],
     },
@@ -153,7 +315,10 @@ function buildIssuerStaffNav(t: (k: string) => string): NavGroups {
 
 function buildAdminNav(t: (k: string) => string): NavGroups {
   return [
-    { group: t("sidebar.groups.overview"), items: [{ to: "/admin", label: t("sidebar.admin.overview"), icon: LayoutDashboard }] },
+    {
+      group: t("sidebar.groups.overview"),
+      items: [{ to: "/admin", label: t("sidebar.admin.overview"), icon: LayoutDashboard }],
+    },
     {
       group: t("sidebar.groups.peopleOrgs"),
       items: [
@@ -177,7 +342,8 @@ function buildAdminNav(t: (k: string) => string): NavGroups {
 function getNav(user: MockUser, t: (k: string) => string): NavGroups {
   if (user.role === "earner") return buildEarnerNav(t);
   if (user.role === "admin") return buildAdminNav(t);
-  if (user.role === "issuer") return user.subRole === "staff" ? buildIssuerStaffNav(t) : buildIssuerAdminNav(t);
+  if (user.role === "issuer")
+    return user.subRole === "staff" ? buildIssuerStaffNav(t) : buildIssuerAdminNav(t);
   return [];
 }
 
@@ -194,9 +360,11 @@ const ROLE_ICON: Record<Role, typeof GraduationCap> = {
 };
 
 export function AppSidebarLayout() {
-  const { activeUser, setActiveUser, notifications } = useStore();
+  const { activeUser, notifications } = useStore();
   const { t } = useTranslation("common");
   const navigate = useNavigate();
+  const signOut = useSignOut();
+  useIdleLogout();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
   if (!activeUser) {
@@ -207,7 +375,8 @@ export function AppSidebarLayout() {
   const RoleIcon = ROLE_ICON[activeUser.role];
   const roleLabel = t(`role.${activeUser.role}`, { defaultValue: ROLE_LABEL[activeUser.role] });
   const unread = notifications.filter(
-    (n) => !n.read && n.forRole === activeUser.role && (!n.forUserId || n.forUserId === activeUser.id),
+    (n) =>
+      !n.read && n.forRole === activeUser.role && (!n.forUserId || n.forUserId === activeUser.id),
   ).length;
 
   return (
@@ -328,10 +497,7 @@ export function AppSidebarLayout() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={async () => {
-                      const { supabase } = await import("@/integrations/supabase/client");
-                      await supabase.auth.signOut().catch(() => {});
-                      setActiveUser(null);
-                      navigate({ to: "/" });
+                      await signOut();
                     }}
                   >
                     <LogOut className="mr-2 h-4 w-4" /> {t("header.signOut")}

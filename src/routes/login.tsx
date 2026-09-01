@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,13 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "react-i18next";
 import type { Role } from "@/lib/types";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => {
+    const result: { reason?: string } = {};
+    if (typeof search.reason === "string") result.reason = search.reason;
+    return result;
+  },
   head: () => ({
     meta: [
-      { title: "Sign in — MicroCred" },
-      { name: "description", content: "Sign in to your MicroCred account." },
+      { title: "Sign in — CredSeal" },
+      { name: "description", content: "Sign in to your CredSeal account." },
     ],
   }),
   component: LoginPage,
@@ -31,6 +37,8 @@ function LoginPage() {
   const { activeUser } = useStore();
   const { user, loading } = useAuth();
   const [submitted, setSubmitted] = useState(false);
+  const search = useSearch({ from: "/login" });
+  const { t } = useTranslation("common");
 
   useEffect(() => {
     if (!loading && user && activeUser) {
@@ -42,20 +50,27 @@ function LoginPage() {
     <main className="mx-auto max-w-md px-4 py-10 md:px-8 md:py-14">
       <div className="mb-8 text-center">
         <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-          Welcome to MicroCred
+          Welcome to CredSeal
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sign in to your account.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Sign in to your account.</p>
       </div>
 
-      <SignInForm onSubmitted={() => setSubmitted(true)} waiting={submitted && !!user && !activeUser} />
+      {search.reason === "idle" && (
+        <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+          {t("idle.expired")}
+        </div>
+      )}
+
+      <SignInForm
+        onSubmitted={() => setSubmitted(true)}
+        waiting={submitted && !!user && !activeUser}
+      />
 
       <Card className="mt-6 p-4 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Need an account?</p>
         <p className="mt-1">
-          Accounts on MicroCred are created by administrators. Contact your institution
-          admin or the platform admin to be added.
+          Accounts on CredSeal are created by administrators. Contact your institution admin or the
+          platform admin to be added.
         </p>
       </Card>
     </main>
@@ -87,11 +102,23 @@ function SignInForm({ onSubmitted, waiting }: { onSubmitted: () => void; waiting
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="si-email">Email</Label>
-          <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input
+            id="si-email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="si-pw">Password</Label>
-          <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input
+            id="si-pw"
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
         <Button type="submit" className="w-full" disabled={disabled}>
           {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
