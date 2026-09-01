@@ -52,9 +52,7 @@ function LoginPage() {
         <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
           Welcome to CredSeal
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sign in to your account.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Sign in to your account.</p>
       </div>
 
       {search.reason === "idle" && (
@@ -63,13 +61,16 @@ function LoginPage() {
         </div>
       )}
 
-      <SignInForm onSubmitted={() => setSubmitted(true)} waiting={submitted && !!user && !activeUser} />
+      <SignInForm
+        onSubmitted={() => setSubmitted(true)}
+        waiting={submitted && !!user && !activeUser}
+      />
 
       <Card className="mt-6 p-4 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Need an account?</p>
         <p className="mt-1">
-          Accounts on CredSeal are created by administrators. Contact your institution
-          admin or the platform admin to be added.
+          Accounts on CredSeal are created by administrators. Contact your institution admin or the
+          platform admin to be added.
         </p>
       </Card>
     </main>
@@ -101,11 +102,23 @@ function SignInForm({ onSubmitted, waiting }: { onSubmitted: () => void; waiting
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="si-email">Email</Label>
-          <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input
+            id="si-email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="si-pw">Password</Label>
-          <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input
+            id="si-pw"
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
         <Button type="submit" className="w-full" disabled={disabled}>
           {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
