@@ -17,6 +17,9 @@
     "updated": "Language updated",
     "selector": "Change language"
   },
+  "idle": {
+    "expired": "You were signed out after 45 minutes of inactivity. Please sign in again."
+  },
   "role": {
     "earner": "Earner",
     "issuer": "Issuer",

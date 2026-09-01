@@ -17,6 +17,9 @@
     "updated": "Jezik je promenjen",
     "selector": "Promeni jezik"
   },
+  "idle": {
+    "expired": "Odjavljeni ste nakon 45 minuta neaktivnosti. Molimo vas da se ponovo prijavite."
+  },
   "role": {
     "earner": "Polaznik",
     "issuer": "Izdavalac",
