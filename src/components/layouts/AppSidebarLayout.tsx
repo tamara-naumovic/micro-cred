@@ -332,10 +332,7 @@ export function AppSidebarLayout() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={async () => {
-                      const { supabase } = await import("@/integrations/supabase/client");
-                      await supabase.auth.signOut().catch(() => {});
-                      setActiveUser(null);
-                      navigate({ to: "/" });
+                      await signOut();
                     }}
                   >
                     <LogOut className="mr-2 h-4 w-4" /> {t("header.signOut")}
