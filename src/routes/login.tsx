@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,13 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "react-i18next";
 import type { Role } from "@/lib/types";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    reason: typeof search.reason === "string" ? search.reason : undefined,
+  }),
   head: () => ({
     meta: [
-      { title: "Sign in — MicroCred" },
-      { name: "description", content: "Sign in to your MicroCred account." },
+      { title: "Sign in — CredSeal" },
+      { name: "description", content: "Sign in to your CredSeal account." },
     ],
   }),
   component: LoginPage,
