@@ -1,4 +1,4 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Award,
   BadgeCheck,
