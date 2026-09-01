@@ -196,9 +196,11 @@ const ROLE_ICON: Record<Role, typeof GraduationCap> = {
 };
 
 export function AppSidebarLayout() {
-  const { activeUser, setActiveUser, notifications } = useStore();
+  const { activeUser, notifications } = useStore();
   const { t } = useTranslation("common");
   const navigate = useNavigate();
+  const signOut = useSignOut();
+  useIdleLogout();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
   if (!activeUser) {
