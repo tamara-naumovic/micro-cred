@@ -12,9 +12,11 @@ import { useTranslation } from "react-i18next";
 import type { Role } from "@/lib/types";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    reason: typeof search.reason === "string" ? search.reason : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>) => {
+    const result: { reason?: string } = {};
+    if (typeof search.reason === "string") result.reason = search.reason;
+    return result;
+  },
   head: () => ({
     meta: [
       { title: "Sign in — CredSeal" },
