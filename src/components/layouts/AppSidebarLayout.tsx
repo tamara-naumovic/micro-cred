@@ -1,4 +1,4 @@
-import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   Award,
   BadgeCheck,
@@ -51,6 +51,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { useStore } from "@/lib/store";
+import { useSignOut } from "@/lib/use-sign-out";
+import { useIdleLogout } from "@/lib/use-idle-logout";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { MockUser, Role } from "@/lib/types";
 
