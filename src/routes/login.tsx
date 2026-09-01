@@ -37,6 +37,8 @@ function LoginPage() {
   const { activeUser } = useStore();
   const { user, loading } = useAuth();
   const [submitted, setSubmitted] = useState(false);
+  const search = useSearch({ from: "/login" });
+  const { t } = useTranslation("common");
 
   useEffect(() => {
     if (!loading && user && activeUser) {
@@ -48,19 +50,25 @@ function LoginPage() {
     <main className="mx-auto max-w-md px-4 py-10 md:px-8 md:py-14">
       <div className="mb-8 text-center">
         <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-          Welcome to MicroCred
+          Welcome to CredSeal
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Sign in to your account.
         </p>
       </div>
 
+      {search.reason === "idle" && (
+        <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+          {t("idle.expired")}
+        </div>
+      )}
+
       <SignInForm onSubmitted={() => setSubmitted(true)} waiting={submitted && !!user && !activeUser} />
 
       <Card className="mt-6 p-4 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Need an account?</p>
         <p className="mt-1">
-          Accounts on MicroCred are created by administrators. Contact your institution
+          Accounts on CredSeal are created by administrators. Contact your institution
           admin or the platform admin to be added.
         </p>
       </Card>
