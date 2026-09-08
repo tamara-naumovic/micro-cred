@@ -364,6 +364,8 @@ function AddUserDialog() {
             <SubmitButton busy={busy}>{t("users.add.submit")}</SubmitButton>
           </DialogFooter>
         </form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
