@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronsUpDown, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -155,7 +155,6 @@ export function BulkUsersCsvUpload({ onDone }: { onDone?: () => void }) {
           onChange={setOrgId}
           disabled={busy}
           placeholder={t("users.fields.selectInstitution")}
-          searchPlaceholder={t("users.fields.searchInstitution")}
         />
         <p className="mt-1 text-xs text-muted-foreground">{t("users.bulk.institutionHint")}</p>
       </div>
@@ -207,7 +206,6 @@ type InstitutionComboboxProps = {
   onChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
-  searchPlaceholder?: string;
 };
 
 function InstitutionCombobox({
@@ -216,52 +214,138 @@ function InstitutionCombobox({
   onChange,
   disabled,
   placeholder,
-  searchPlaceholder,
 }: InstitutionComboboxProps) {
+  const { t } = useTranslation("admin");
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
   const selected = organizations.find((o) => o.id === value);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return organizations;
+    return organizations.filter((o) => o.name.toLowerCase().includes(term));
+  }, [organizations, search]);
+
+  useEffect(() => {
+    if (open) {
+      setHighlightedIndex(0);
+      const id = setTimeout(() => inputRef.current?.focus(), 0);
+      return () => clearTimeout(id);
+    }
+    setSearch("");
+  }, [open]);
+
+  function selectOrg(orgId: string) {
+    onChange(orgId === value ? "" : orgId);
+    setOpen(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!open) {
+        setOpen(true);
+      } else {
+        setHighlightedIndex((i) => (i + 1) % Math.max(filtered.length, 1));
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (open) {
+        setHighlightedIndex(
+          (i) => (i - 1 + Math.max(filtered.length, 1)) % Math.max(filtered.length, 1),
+        );
+      }
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (!open) {
+        setOpen(true);
+      } else {
+        const org = filtered[highlightedIndex];
+        if (org) selectOrg(org.id);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+    }
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+        <div
           role="combobox"
           aria-expanded={open}
-          disabled={disabled}
-          className="w-full justify-between font-normal"
+          aria-disabled={disabled}
+          onClick={() => {
+            if (!disabled && !open) setOpen(true);
+          }}
+          className={cn(
+            "flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors",
+            disabled && "cursor-not-allowed opacity-50",
+            !disabled && "cursor-pointer",
+            open && "ring-1 ring-ring",
+          )}
         >
-          <span className="truncate">{selected?.name ?? placeholder}</span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+          {open ? (
+            <div
+              className="flex flex-1 items-center gap-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setHighlightedIndex(0);
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder}
+                className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+                disabled={disabled}
+              />
+              <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+            </div>
+          ) : (
+            <>
+              <span className="truncate text-foreground">
+                {selected?.name ?? placeholder}
+              </span>
+              <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+            </>
+          )}
+        </div>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder ?? placeholder} />
-          <CommandList>
-            <CommandEmpty>Nema rezultata.</CommandEmpty>
-            <CommandGroup>
-              {organizations.map((o) => (
-                <CommandItem
-                  key={o.id}
-                  value={o.name}
-                  onSelect={() => {
-                    onChange(o.id === value ? "" : o.id);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4 shrink-0",
-                      value === o.id ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  <span className="truncate">{o.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+        <div className="max-h-60 overflow-auto p-1">
+          {filtered.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              {t("users.fields.noResults")}
+            </div>
+          ) : (
+            filtered.map((o, i) => (
+              <div
+                key={o.id}
+                onClick={() => selectOrg(o.id)}
+                onMouseEnter={() => setHighlightedIndex(i)}
+                className={cn(
+                  "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+                  i === highlightedIndex && "bg-accent text-accent-foreground",
+                )}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4 shrink-0",
+                    value === o.id ? "opacity-100" : "opacity-0",
+                  )}
+                />
+                <span className="truncate">{o.name}</span>
+              </div>
+            ))
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );

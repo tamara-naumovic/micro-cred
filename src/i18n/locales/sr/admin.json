@@ -55,6 +55,7 @@
       "institution": "Institucija",
       "selectInstitution": "Izaberite instituciju",
       "searchInstitution": "Pretražite institucije...",
+      "noResults": "Nema rezultata.",
       "subRoles": "Poduloge izdavaoca",
       "subRolesHint": "Korisnik istovremeno može biti i administrator institucije i zaposleni.",
       "institutionAdmin": "Administrator institucije",
