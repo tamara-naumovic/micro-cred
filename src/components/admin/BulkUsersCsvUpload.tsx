@@ -74,7 +74,7 @@ export function BulkUsersCsvUpload({ onDone }: { onDone?: () => void }) {
   const bulkCreate = useServerFn(adminBulkCreateUsers);
   const [text, setText] = useState("");
   const [orgId, setOrgId] = useState("");
-  const [issuerAlsoAdmin, setIssuerAlsoAdmin] = useState(false);
+  
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -96,7 +96,6 @@ export function BulkUsersCsvUpload({ onDone }: { onDone?: () => void }) {
         data: {
           rows: parsed.rows,
           organizationId: orgId || undefined,
-          issuerAlsoAdmin,
         },
       });
       if (res.failed === 0) {
@@ -158,17 +157,6 @@ export function BulkUsersCsvUpload({ onDone }: { onDone?: () => void }) {
         <p className="mt-1 text-xs text-muted-foreground">{t("users.bulk.institutionHint")}</p>
       </div>
 
-      {hasIssuers && (
-        <label className="flex cursor-pointer items-center gap-2">
-          <input
-            type="checkbox"
-            checked={issuerAlsoAdmin}
-            onChange={(e) => setIssuerAlsoAdmin(e.target.checked)}
-            disabled={busy}
-          />
-          <span className="text-sm">{t("users.bulk.issuerAlsoAdmin")}</span>
-        </label>
-      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <input

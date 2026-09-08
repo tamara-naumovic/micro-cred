@@ -148,7 +148,7 @@ export const adminBulkCreateUsers = createServerFn({ method: "POST" })
     (d: {
       rows: { displayName: string; role: "earner" | "issuer"; email: string; password: string }[];
       organizationId?: string;
-      issuerAlsoAdmin?: boolean;
+      
     }) => {
       if (!Array.isArray(d.rows) || d.rows.length === 0) throw new Error("No rows provided");
       if (d.rows.length > 500) throw new Error("Too many rows (max 500)");
@@ -175,12 +175,7 @@ export const adminBulkCreateUsers = createServerFn({ method: "POST" })
 
     for (const row of data.rows) {
       try {
-        const roles: AppRole[] =
-          row.role === "earner"
-            ? ["earner"]
-            : data.issuerAlsoAdmin
-              ? ["issuer_admin", "issuer_staff"]
-              : ["issuer_staff"];
+        const roles: AppRole[] = row.role === "earner" ? ["earner"] : ["issuer_staff"];
 
         const r = await provisionUser({
           email: row.email,
