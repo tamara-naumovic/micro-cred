@@ -54,6 +54,7 @@
       "role": "Role",
       "institution": "Institution",
       "selectInstitution": "Select institution",
+      "searchInstitution": "Search institutions...",
       "subRoles": "Issuer sub-roles",
       "subRolesHint": "A user can be both institution admin and staff at the same time.",
       "institutionAdmin": "Institution admin",

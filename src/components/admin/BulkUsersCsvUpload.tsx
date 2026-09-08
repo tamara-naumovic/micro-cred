@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Loader2, Upload } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
@@ -7,12 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { adminBulkCreateUsers } from "@/lib/admin-users.functions";
 
@@ -142,18 +149,14 @@ export function BulkUsersCsvUpload({ onDone }: { onDone?: () => void }) {
 
       <div>
         <Label>{t("users.bulk.institution")}</Label>
-        <Select value={orgId} onValueChange={setOrgId} disabled={busy}>
-          <SelectTrigger>
-            <SelectValue placeholder={t("users.fields.selectInstitution")} />
-          </SelectTrigger>
-          <SelectContent>
-            {organizations.map((o) => (
-              <SelectItem key={o.id} value={o.id}>
-                {o.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <InstitutionCombobox
+          organizations={organizations}
+          value={orgId}
+          onChange={setOrgId}
+          disabled={busy}
+          placeholder={t("users.fields.selectInstitution")}
+          searchPlaceholder={t("users.fields.searchInstitution")}
+        />
         <p className="mt-1 text-xs text-muted-foreground">{t("users.bulk.institutionHint")}</p>
       </div>
 
@@ -195,5 +198,71 @@ export function BulkUsersCsvUpload({ onDone }: { onDone?: () => void }) {
         </ul>
       )}
     </div>
+  );
+}
+
+type InstitutionComboboxProps = {
+  organizations: { id: string; name: string }[];
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  searchPlaceholder?: string;
+};
+
+function InstitutionCombobox({
+  organizations,
+  value,
+  onChange,
+  disabled,
+  placeholder,
+  searchPlaceholder,
+}: InstitutionComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const selected = organizations.find((o) => o.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled}
+          className="w-full justify-between font-normal"
+        >
+          <span className="truncate">{selected?.name ?? placeholder}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder ?? placeholder} />
+          <CommandList>
+            <CommandEmpty>Nema rezultata.</CommandEmpty>
+            <CommandGroup>
+              {organizations.map((o) => (
+                <CommandItem
+                  key={o.id}
+                  value={o.name}
+                  onSelect={() => {
+                    onChange(o.id === value ? "" : o.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      value === o.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <span className="truncate">{o.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
