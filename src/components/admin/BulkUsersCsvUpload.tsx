@@ -149,18 +149,14 @@ export function BulkUsersCsvUpload({ onDone }: { onDone?: () => void }) {
 
       <div>
         <Label>{t("users.bulk.institution")}</Label>
-        <Select value={orgId} onValueChange={setOrgId} disabled={busy}>
-          <SelectTrigger>
-            <SelectValue placeholder={t("users.fields.selectInstitution")} />
-          </SelectTrigger>
-          <SelectContent>
-            {organizations.map((o) => (
-              <SelectItem key={o.id} value={o.id}>
-                {o.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <InstitutionCombobox
+          organizations={organizations}
+          value={orgId}
+          onChange={setOrgId}
+          disabled={busy}
+          placeholder={t("users.fields.selectInstitution")}
+          searchPlaceholder={t("users.fields.searchInstitution")}
+        />
         <p className="mt-1 text-xs text-muted-foreground">{t("users.bulk.institutionHint")}</p>
       </div>
 
