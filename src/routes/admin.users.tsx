@@ -39,7 +39,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvisionFields, SubmitButton, useProvisionState } from "@/components/admin/ProvisionFields";
+import { BulkUsersCsvUpload } from "@/components/admin/BulkUsersCsvUpload";
 import { useStore } from "@/lib/store";
 import {
   adminCreateUser,
@@ -263,6 +265,20 @@ function AddUserDialog() {
           <DialogTitle>{t("users.add.title")}</DialogTitle>
           <DialogDescription>{t("users.add.description")}</DialogDescription>
         </DialogHeader>
+        <Tabs defaultValue="single">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="single">{t("users.add.tabSingle")}</TabsTrigger>
+            <TabsTrigger value="bulk">{t("users.add.tabBulk")}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="bulk" className="mt-4">
+            <BulkUsersCsvUpload
+              onDone={() => {
+                storeReset();
+                setOpen(false);
+              }}
+            />
+          </TabsContent>
+          <TabsContent value="single" className="mt-4">
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
@@ -348,6 +364,8 @@ function AddUserDialog() {
             <SubmitButton busy={busy}>{t("users.add.submit")}</SubmitButton>
           </DialogFooter>
         </form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

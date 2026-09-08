@@ -140,6 +140,79 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   });
 
 // ============================================================================
+// Platform admin: bulk create users from a CSV upload
+// ============================================================================
+export const adminBulkCreateUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: {
+      rows: { displayName: string; role: "earner" | "issuer"; email: string; password: string }[];
+      organizationId?: string;
+      issuerAlsoAdmin?: boolean;
+    }) => {
+      if (!Array.isArray(d.rows) || d.rows.length === 0) throw new Error("No rows provided");
+      if (d.rows.length > 500) throw new Error("Too many rows (max 500)");
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      for (const r of d.rows) {
+        if (!r.displayName?.trim()) throw new Error("Missing display name");
+        if (r.role !== "earner" && r.role !== "issuer") throw new Error(`Unsupported role: ${r.role}`);
+        if (!emailRe.test((r.email ?? "").trim())) throw new Error(`Invalid email: ${r.email}`);
+        if (!r.password || r.password.length < 6) throw new Error(`Password too short for ${r.email}`);
+      }
+      if (d.rows.some((r) => r.role === "issuer") && !d.organizationId) {
+        throw new Error("organizationId is required for institution roles");
+      }
+      return d;
+    },
+  )
+  .handler(async ({ data, context }) => {
+    await assertPlatformAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let created = 0;
+    let skippedExisting = 0;
+    const errors: string[] = [];
+
+    for (const row of data.rows) {
+      try {
+        const roles: AppRole[] =
+          row.role === "earner"
+            ? ["earner"]
+            : data.issuerAlsoAdmin
+              ? ["issuer_admin", "issuer_staff"]
+              : ["issuer_staff"];
+
+        const r = await provisionUser({
+          email: row.email,
+          displayName: row.displayName.trim(),
+          roles,
+          organizationId: row.role === "issuer" ? data.organizationId : undefined,
+          mode: "password",
+          password: row.password,
+        });
+
+        if (row.role === "earner" && data.organizationId) {
+          const { error } = await supabaseAdmin.from("earner_institutions").insert({
+            earner_id: r.userId,
+            organization_id: data.organizationId,
+            assigned_by: context.userId,
+          });
+          if (error && !String(error.message).toLowerCase().includes("duplicate")) {
+            throw new Error(error.message);
+          }
+        }
+
+        if (r.alreadyExisted) skippedExisting++;
+        else created++;
+      } catch (e: any) {
+        errors.push(`${row.email}: ${e?.message ?? "failed"}`);
+      }
+    }
+
+    return { created, skippedExisting, failed: errors.length, errors };
+  });
+
+// ============================================================================
 // Platform admin: update a user's profile + role
 // ============================================================================
 export const adminUpdateUser = createServerFn({ method: "POST" })

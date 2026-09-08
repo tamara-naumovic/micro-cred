@@ -31,7 +31,9 @@
       "trigger": "Add user",
       "title": "Add user",
       "description": "Create a new account or invite a person to CredSeal.",
-      "submit": "Create"
+      "submit": "Create",
+      "tabSingle": "Single",
+      "tabBulk": "Bulk (CSV)"
     },
     "edit": {
       "title": "Edit user",
@@ -84,6 +86,31 @@
       "deleted": "User deleted",
       "deleteFailed": "Failed to delete",
       "failed": "Action failed"
+    },
+    "bulk": {
+      "title": "Bulk add from CSV",
+      "hint": "Columns: display_name, role, email, password. Header row optional. Role can be earner or issuer.",
+      "example": "display_name,role,email,password\nAna Anić,earner,ana@primer.rs,Lozinka123\nMarko Marković,issuer,marko@fon.rs,Lozinka123",
+      "placeholder": "Ana Anic,earner,ana@example.com,Password123",
+      "institution": "Institution",
+      "institutionHint": "Required for issuer rows; optional for earners (links them to this institution).",
+      "issuerAlsoAdmin": "Issuer users from the file are also institution admins",
+      "uploadCsv": "Upload CSV",
+      "counts": "{{valid}} valid, {{invalid}} invalid",
+      "submit": "Add {{count}} users",
+      "moreErrors": "+{{count}} more issues",
+      "errors": {
+        "expectedColumns": "Row {{row}}: expected 4 columns (display_name, role, email, password)",
+        "missingField": "Row {{row}}: a field is empty",
+        "badRole": "Row {{row}}: unknown role \"{{role}}\" (use earner or issuer)",
+        "invalidEmail": "Row {{row}}: invalid email {{email}}",
+        "shortPassword": "Row {{row}}: password must be at least 6 characters",
+        "noValidRows": "No valid rows to add"
+      },
+      "toasts": {
+        "created": "{{created}} users created, {{existing}} already existed",
+        "partial": "{{created}} created, {{failed}} failed"
+      }
     }
   },
   "organizations": {

@@ -31,7 +31,9 @@
       "trigger": "Dodaj korisnika",
       "title": "Dodaj korisnika",
       "description": "Kreirajte novi nalog ili pozovite osobu na CredSeal.",
-      "submit": "Kreiraj"
+      "submit": "Kreiraj",
+      "tabSingle": "Pojedinačno",
+      "tabBulk": "Grupno (CSV)"
     },
     "edit": {
       "title": "Izmeni korisnika",
@@ -84,6 +86,31 @@
       "deleted": "Korisnik je obrisan",
       "deleteFailed": "Brisanje nije uspelo",
       "failed": "Radnja nije uspela"
+    },
+    "bulk": {
+      "title": "Grupno dodavanje iz CSV fajla",
+      "hint": "Kolone: display_name, role, email, password. Zaglavlje je opciono. Uloga može biti earner ili issuer.",
+      "example": "display_name,role,email,password\nAna Anić,earner,ana@primer.rs,Lozinka123\nMarko Marković,issuer,marko@fon.rs,Lozinka123",
+      "placeholder": "Ana Anić,earner,ana@primer.rs,Lozinka123",
+      "institution": "Institucija",
+      "institutionHint": "Obavezna za issuer redove; za nosioce je opciona (povezuje ih sa institucijom).",
+      "issuerAlsoAdmin": "Issuer korisnici iz fajla su i administratori institucije",
+      "uploadCsv": "Otpremi CSV",
+      "counts": "{{valid}} ispravnih, {{invalid}} sa greškom",
+      "submit": "Dodaj {{count}} korisnika",
+      "moreErrors": "+{{count}} dodatnih problema",
+      "errors": {
+        "expectedColumns": "Red {{row}}: očekuju se 4 kolone (display_name, role, email, password)",
+        "missingField": "Red {{row}}: neko polje je prazno",
+        "badRole": "Red {{row}}: nepoznata uloga „{{role}}“ (koristite earner ili issuer)",
+        "invalidEmail": "Red {{row}}: neispravan email {{email}}",
+        "shortPassword": "Red {{row}}: lozinka mora imati bar 6 znakova",
+        "noValidRows": "Nema ispravnih redova za dodavanje"
+      },
+      "toasts": {
+        "created": "Kreirano {{created}} korisnika, {{existing}} je već postojalo",
+        "partial": "Kreirano {{created}}, neuspešno {{failed}}"
+      }
     }
   },
   "organizations": {
