@@ -200,3 +200,69 @@ export function BulkUsersCsvUpload({ onDone }: { onDone?: () => void }) {
     </div>
   );
 }
+
+type InstitutionComboboxProps = {
+  organizations: { id: string; name: string }[];
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  searchPlaceholder?: string;
+};
+
+function InstitutionCombobox({
+  organizations,
+  value,
+  onChange,
+  disabled,
+  placeholder,
+  searchPlaceholder,
+}: InstitutionComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const selected = organizations.find((o) => o.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled}
+          className="w-full justify-between font-normal"
+        >
+          <span className="truncate">{selected?.name ?? placeholder}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder ?? placeholder} />
+          <CommandList>
+            <CommandEmpty>Nema rezultata.</CommandEmpty>
+            <CommandGroup>
+              {organizations.map((o) => (
+                <CommandItem
+                  key={o.id}
+                  value={o.name}
+                  onSelect={() => {
+                    onChange(o.id === value ? "" : o.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      value === o.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <span className="truncate">{o.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
