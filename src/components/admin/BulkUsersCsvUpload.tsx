@@ -155,7 +155,6 @@ export function BulkUsersCsvUpload({ onDone }: { onDone?: () => void }) {
           onChange={setOrgId}
           disabled={busy}
           placeholder={t("users.fields.selectInstitution")}
-          searchPlaceholder={t("users.fields.searchInstitution")}
         />
         <p className="mt-1 text-xs text-muted-foreground">{t("users.bulk.institutionHint")}</p>
       </div>
