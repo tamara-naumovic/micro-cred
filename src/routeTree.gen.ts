@@ -9,53 +9,54 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SetPasswordRouteImport } from './routes/set-password'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as IssuersIndexRouteImport } from './routes/issuers.index'
-import { Route as IssuerIndexRouteImport } from './routes/issuer.index'
-import { Route as EarnerIndexRouteImport } from './routes/earner.index'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as VerifyIdRouteImport } from './routes/verify.$id'
-import { Route as ProfileTokenRouteImport } from './routes/profile.$token'
-import { Route as IssuersIdRouteImport } from './routes/issuers.$id'
-import { Route as IssuerStaffRouteImport } from './routes/issuer.staff'
-import { Route as IssuerSettingsRouteImport } from './routes/issuer.settings'
-import { Route as IssuerRevocationsRouteImport } from './routes/issuer.revocations'
-import { Route as IssuerRequestsRouteImport } from './routes/issuer.requests'
-import { Route as IssuerProfileRouteImport } from './routes/issuer.profile'
-import { Route as IssuerNotificationsRouteImport } from './routes/issuer.notifications'
-import { Route as IssuerManualRouteImport } from './routes/issuer.manual'
-import { Route as IssuerEarnersRouteImport } from './routes/issuer.earners'
-import { Route as IssuerCredentialsRouteImport } from './routes/issuer.credentials'
-import { Route as IssuerAnchoringQueueRouteImport } from './routes/issuer.anchoring-queue'
-import { Route as EarnerSettingsRouteImport } from './routes/earner.settings'
-import { Route as EarnerProfileRouteImport } from './routes/earner.profile'
-import { Route as EarnerNotificationsRouteImport } from './routes/earner.notifications'
-import { Route as EarnerManualRouteImport } from './routes/earner.manual'
-import { Route as EarnerApplyRouteImport } from './routes/earner.apply'
-import { Route as EarnerApplicationsRouteImport } from './routes/earner.applications'
-import { Route as AdminUsersRouteImport } from './routes/admin.users'
-import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
-import { Route as AdminRolesRouteImport } from './routes/admin.roles'
-import { Route as AdminRegistrationsRouteImport } from './routes/admin.registrations'
-import { Route as AdminOrganizationsRouteImport } from './routes/admin.organizations'
-import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
-import { Route as IssuerMicrocredentialTemplatesIndexRouteImport } from './routes/issuer.microcredential-templates.index'
-import { Route as IssuerIssueIndexRouteImport } from './routes/issuer.issue.index'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as AdminOrganizationsRouteImport } from './routes/admin.organizations'
+import { Route as AdminRegistrationsRouteImport } from './routes/admin.registrations'
+import { Route as AdminRolesRouteImport } from './routes/admin.roles'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as EarnerIndexRouteImport } from './routes/earner.index'
+import { Route as EarnerApplicationsRouteImport } from './routes/earner.applications'
+import { Route as EarnerApplyRouteImport } from './routes/earner.apply'
+import { Route as EarnerManualRouteImport } from './routes/earner.manual'
+import { Route as EarnerNotificationsRouteImport } from './routes/earner.notifications'
+import { Route as EarnerProfileRouteImport } from './routes/earner.profile'
+import { Route as EarnerSettingsRouteImport } from './routes/earner.settings'
+import { Route as IssuerIndexRouteImport } from './routes/issuer.index'
+import { Route as IssuerAnchoringQueueRouteImport } from './routes/issuer.anchoring-queue'
+import { Route as IssuerCredentialsRouteImport } from './routes/issuer.credentials'
+import { Route as IssuerEarnersRouteImport } from './routes/issuer.earners'
+import { Route as IssuerManualRouteImport } from './routes/issuer.manual'
+import { Route as IssuerNotificationsRouteImport } from './routes/issuer.notifications'
+import { Route as IssuerProfileRouteImport } from './routes/issuer.profile'
+import { Route as IssuerRequestsRouteImport } from './routes/issuer.requests'
+import { Route as IssuerRevocationsRouteImport } from './routes/issuer.revocations'
+import { Route as IssuerSettingsRouteImport } from './routes/issuer.settings'
+import { Route as IssuerStaffRouteImport } from './routes/issuer.staff'
+import { Route as IssuersIndexRouteImport } from './routes/issuers.index'
+import { Route as IssuersIdRouteImport } from './routes/issuers.$id'
+import { Route as ProfileTokenRouteImport } from './routes/profile.$token'
+import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 import { Route as EarnerCredentialsIndexRouteImport } from './routes/earner.credentials.index'
-import { Route as IssuerMicrocredentialTemplatesNewRouteImport } from './routes/issuer.microcredential-templates.new'
-import { Route as IssuerMicrocredentialTemplatesIdRouteImport } from './routes/issuer.microcredential-templates.$id'
-import { Route as IssuerIssueBulkRouteImport } from './routes/issuer.issue.bulk'
-import { Route as EarnerMicrocredentialTemplatesIdRouteImport } from './routes/earner.microcredential-templates.$id'
 import { Route as EarnerCredentialsIdRouteImport } from './routes/earner.credentials.$id'
-import { Route as IssuersIdMicrocredentialTemplatesTemplateIdRouteImport } from './routes/issuers.$id_.microcredential-templates.$templateId'
+import { Route as EarnerMicrocredentialTemplatesIdRouteImport } from './routes/earner.microcredential-templates.$id'
+import { Route as IssuerIssueIndexRouteImport } from './routes/issuer.issue.index'
+import { Route as IssuerIssueBulkRouteImport } from './routes/issuer.issue.bulk'
+import { Route as IssuerMicrocredentialTemplatesIndexRouteImport } from './routes/issuer.microcredential-templates.index'
+import { Route as IssuerMicrocredentialTemplatesIdRouteImport } from './routes/issuer.microcredential-templates.$id'
+import { Route as IssuerMicrocredentialTemplatesNewRouteImport } from './routes/issuer.microcredential-templates.new'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
+import { Route as IssuersIdMicrocredentialTemplatesTemplateIdRouteImport } from './routes/issuers.$id_.microcredential-templates.$templateId'
 
-const SetPasswordRoute = SetPasswordRouteImport.update({
-  id: '/set-password',
-  path: '/set-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -63,24 +64,14 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IssuersIndexRoute = IssuersIndexRouteImport.update({
-  id: '/issuers/',
-  path: '/issuers/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerIndexRoute = IssuerIndexRouteImport.update({
-  id: '/issuer/',
-  path: '/issuer/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EarnerIndexRoute = EarnerIndexRouteImport.update({
-  id: '/earner/',
-  path: '/earner/',
+const SetPasswordRoute = SetPasswordRouteImport.update({
+  id: '/set-password',
+  path: '/set-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -88,124 +79,9 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VerifyIdRoute = VerifyIdRouteImport.update({
-  id: '/verify/$id',
-  path: '/verify/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileTokenRoute = ProfileTokenRouteImport.update({
-  id: '/profile/$token',
-  path: '/profile/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuersIdRoute = IssuersIdRouteImport.update({
-  id: '/issuers/$id',
-  path: '/issuers/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerStaffRoute = IssuerStaffRouteImport.update({
-  id: '/issuer/staff',
-  path: '/issuer/staff',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerSettingsRoute = IssuerSettingsRouteImport.update({
-  id: '/issuer/settings',
-  path: '/issuer/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerRevocationsRoute = IssuerRevocationsRouteImport.update({
-  id: '/issuer/revocations',
-  path: '/issuer/revocations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerRequestsRoute = IssuerRequestsRouteImport.update({
-  id: '/issuer/requests',
-  path: '/issuer/requests',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerProfileRoute = IssuerProfileRouteImport.update({
-  id: '/issuer/profile',
-  path: '/issuer/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerNotificationsRoute = IssuerNotificationsRouteImport.update({
-  id: '/issuer/notifications',
-  path: '/issuer/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerManualRoute = IssuerManualRouteImport.update({
-  id: '/issuer/manual',
-  path: '/issuer/manual',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerEarnersRoute = IssuerEarnersRouteImport.update({
-  id: '/issuer/earners',
-  path: '/issuer/earners',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerCredentialsRoute = IssuerCredentialsRouteImport.update({
-  id: '/issuer/credentials',
-  path: '/issuer/credentials',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IssuerAnchoringQueueRoute = IssuerAnchoringQueueRouteImport.update({
-  id: '/issuer/anchoring-queue',
-  path: '/issuer/anchoring-queue',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EarnerSettingsRoute = EarnerSettingsRouteImport.update({
-  id: '/earner/settings',
-  path: '/earner/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EarnerProfileRoute = EarnerProfileRouteImport.update({
-  id: '/earner/profile',
-  path: '/earner/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EarnerNotificationsRoute = EarnerNotificationsRouteImport.update({
-  id: '/earner/notifications',
-  path: '/earner/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EarnerManualRoute = EarnerManualRouteImport.update({
-  id: '/earner/manual',
-  path: '/earner/manual',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EarnerApplyRoute = EarnerApplyRouteImport.update({
-  id: '/earner/apply',
-  path: '/earner/apply',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EarnerApplicationsRoute = EarnerApplicationsRouteImport.update({
-  id: '/earner/applications',
-  path: '/earner/applications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminUsersRoute = AdminUsersRouteImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminSettingsRoute = AdminSettingsRouteImport.update({
-  id: '/admin/settings',
-  path: '/admin/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRolesRoute = AdminRolesRouteImport.update({
-  id: '/admin/roles',
-  path: '/admin/roles',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRegistrationsRoute = AdminRegistrationsRouteImport.update({
-  id: '/admin/registrations',
-  path: '/admin/registrations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminOrganizationsRoute = AdminOrganizationsRouteImport.update({
-  id: '/admin/organizations',
-  path: '/admin/organizations',
+const AdminActivityRoute = AdminActivityRouteImport.update({
+  id: '/admin/activity',
+  path: '/admin/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAuditRoute = AdminAuditRouteImport.update({
@@ -213,20 +89,139 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   path: '/admin/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminActivityRoute = AdminActivityRouteImport.update({
-  id: '/admin/activity',
-  path: '/admin/activity',
+const AdminOrganizationsRoute = AdminOrganizationsRouteImport.update({
+  id: '/admin/organizations',
+  path: '/admin/organizations',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IssuerMicrocredentialTemplatesIndexRoute =
-  IssuerMicrocredentialTemplatesIndexRouteImport.update({
-    id: '/issuer/microcredential-templates/',
-    path: '/issuer/microcredential-templates/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const IssuerIssueIndexRoute = IssuerIssueIndexRouteImport.update({
-  id: '/issuer/issue/',
-  path: '/issuer/issue/',
+const AdminRegistrationsRoute = AdminRegistrationsRouteImport.update({
+  id: '/admin/registrations',
+  path: '/admin/registrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRolesRoute = AdminRolesRouteImport.update({
+  id: '/admin/roles',
+  path: '/admin/roles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/admin/settings',
+  path: '/admin/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnerIndexRoute = EarnerIndexRouteImport.update({
+  id: '/earner/',
+  path: '/earner/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnerApplicationsRoute = EarnerApplicationsRouteImport.update({
+  id: '/earner/applications',
+  path: '/earner/applications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnerApplyRoute = EarnerApplyRouteImport.update({
+  id: '/earner/apply',
+  path: '/earner/apply',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnerManualRoute = EarnerManualRouteImport.update({
+  id: '/earner/manual',
+  path: '/earner/manual',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnerNotificationsRoute = EarnerNotificationsRouteImport.update({
+  id: '/earner/notifications',
+  path: '/earner/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnerProfileRoute = EarnerProfileRouteImport.update({
+  id: '/earner/profile',
+  path: '/earner/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnerSettingsRoute = EarnerSettingsRouteImport.update({
+  id: '/earner/settings',
+  path: '/earner/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerIndexRoute = IssuerIndexRouteImport.update({
+  id: '/issuer/',
+  path: '/issuer/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerAnchoringQueueRoute = IssuerAnchoringQueueRouteImport.update({
+  id: '/issuer/anchoring-queue',
+  path: '/issuer/anchoring-queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerCredentialsRoute = IssuerCredentialsRouteImport.update({
+  id: '/issuer/credentials',
+  path: '/issuer/credentials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerEarnersRoute = IssuerEarnersRouteImport.update({
+  id: '/issuer/earners',
+  path: '/issuer/earners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerManualRoute = IssuerManualRouteImport.update({
+  id: '/issuer/manual',
+  path: '/issuer/manual',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerNotificationsRoute = IssuerNotificationsRouteImport.update({
+  id: '/issuer/notifications',
+  path: '/issuer/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerProfileRoute = IssuerProfileRouteImport.update({
+  id: '/issuer/profile',
+  path: '/issuer/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerRequestsRoute = IssuerRequestsRouteImport.update({
+  id: '/issuer/requests',
+  path: '/issuer/requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerRevocationsRoute = IssuerRevocationsRouteImport.update({
+  id: '/issuer/revocations',
+  path: '/issuer/revocations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerSettingsRoute = IssuerSettingsRouteImport.update({
+  id: '/issuer/settings',
+  path: '/issuer/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerStaffRoute = IssuerStaffRouteImport.update({
+  id: '/issuer/staff',
+  path: '/issuer/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuersIndexRoute = IssuersIndexRouteImport.update({
+  id: '/issuers/',
+  path: '/issuers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuersIdRoute = IssuersIdRouteImport.update({
+  id: '/issuers/$id',
+  path: '/issuers/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileTokenRoute = ProfileTokenRouteImport.update({
+  id: '/profile/$token',
+  path: '/profile/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyIdRoute = VerifyIdRouteImport.update({
+  id: '/verify/$id',
+  path: '/verify/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EarnerCredentialsIndexRoute = EarnerCredentialsIndexRouteImport.update({
@@ -234,21 +229,9 @@ const EarnerCredentialsIndexRoute = EarnerCredentialsIndexRouteImport.update({
   path: '/earner/credentials/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IssuerMicrocredentialTemplatesNewRoute =
-  IssuerMicrocredentialTemplatesNewRouteImport.update({
-    id: '/issuer/microcredential-templates/new',
-    path: '/issuer/microcredential-templates/new',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const IssuerMicrocredentialTemplatesIdRoute =
-  IssuerMicrocredentialTemplatesIdRouteImport.update({
-    id: '/issuer/microcredential-templates/$id',
-    path: '/issuer/microcredential-templates/$id',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const IssuerIssueBulkRoute = IssuerIssueBulkRouteImport.update({
-  id: '/issuer/issue/bulk',
-  path: '/issuer/issue/bulk',
+const EarnerCredentialsIdRoute = EarnerCredentialsIdRouteImport.update({
+  id: '/earner/credentials/$id',
+  path: '/earner/credentials/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EarnerMicrocredentialTemplatesIdRoute =
@@ -257,15 +240,32 @@ const EarnerMicrocredentialTemplatesIdRoute =
     path: '/earner/microcredential-templates/$id',
     getParentRoute: () => rootRouteImport,
   } as any)
-const EarnerCredentialsIdRoute = EarnerCredentialsIdRouteImport.update({
-  id: '/earner/credentials/$id',
-  path: '/earner/credentials/$id',
+const IssuerIssueIndexRoute = IssuerIssueIndexRouteImport.update({
+  id: '/issuer/issue/',
+  path: '/issuer/issue/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IssuersIdMicrocredentialTemplatesTemplateIdRoute =
-  IssuersIdMicrocredentialTemplatesTemplateIdRouteImport.update({
-    id: '/issuers/$id_/microcredential-templates/$templateId',
-    path: '/issuers/$id/microcredential-templates/$templateId',
+const IssuerIssueBulkRoute = IssuerIssueBulkRouteImport.update({
+  id: '/issuer/issue/bulk',
+  path: '/issuer/issue/bulk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IssuerMicrocredentialTemplatesIndexRoute =
+  IssuerMicrocredentialTemplatesIndexRouteImport.update({
+    id: '/issuer/microcredential-templates/',
+    path: '/issuer/microcredential-templates/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const IssuerMicrocredentialTemplatesIdRoute =
+  IssuerMicrocredentialTemplatesIdRouteImport.update({
+    id: '/issuer/microcredential-templates/$id',
+    path: '/issuer/microcredential-templates/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const IssuerMicrocredentialTemplatesNewRoute =
+  IssuerMicrocredentialTemplatesNewRouteImport.update({
+    id: '/issuer/microcredential-templates/new',
+    path: '/issuer/microcredential-templates/new',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksExpiryRemindersRoute =
@@ -274,10 +274,17 @@ const ApiPublicHooksExpiryRemindersRoute =
     path: '/api/public/hooks/expiry-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const IssuersIdMicrocredentialTemplatesTemplateIdRoute =
+  IssuersIdMicrocredentialTemplatesTemplateIdRouteImport.update({
+    id: '/issuers/$id_/microcredential-templates/$templateId',
+    path: '/issuers/$id/microcredential-templates/$templateId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -323,6 +330,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -369,6 +377,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/set-password': typeof SetPasswordRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -416,6 +425,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/reset-password'
     | '/set-password'
     | '/admin/activity'
     | '/admin/audit'
@@ -461,6 +471,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/reset-password'
     | '/set-password'
     | '/admin/activity'
     | '/admin/audit'
@@ -506,6 +517,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/login'
+    | '/reset-password'
     | '/set-password'
     | '/admin/activity'
     | '/admin/audit'
@@ -552,6 +564,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SetPasswordRoute: typeof SetPasswordRoute
   AdminActivityRoute: typeof AdminActivityRoute
   AdminAuditRoute: typeof AdminAuditRoute
@@ -597,11 +610,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/set-password': {
-      id: '/set-password'
-      path: '/set-password'
-      fullPath: '/set-password'
-      preLoaderRoute: typeof SetPasswordRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -611,32 +624,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/issuers/': {
-      id: '/issuers/'
-      path: '/issuers'
-      fullPath: '/issuers/'
-      preLoaderRoute: typeof IssuersIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/': {
-      id: '/issuer/'
-      path: '/issuer'
-      fullPath: '/issuer/'
-      preLoaderRoute: typeof IssuerIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/earner/': {
-      id: '/earner/'
-      path: '/earner'
-      fullPath: '/earner/'
-      preLoaderRoute: typeof EarnerIndexRouteImport
+    '/set-password': {
+      id: '/set-password'
+      path: '/set-password'
+      fullPath: '/set-password'
+      preLoaderRoute: typeof SetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -646,172 +645,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/verify/$id': {
-      id: '/verify/$id'
-      path: '/verify/$id'
-      fullPath: '/verify/$id'
-      preLoaderRoute: typeof VerifyIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile/$token': {
-      id: '/profile/$token'
-      path: '/profile/$token'
-      fullPath: '/profile/$token'
-      preLoaderRoute: typeof ProfileTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuers/$id': {
-      id: '/issuers/$id'
-      path: '/issuers/$id'
-      fullPath: '/issuers/$id'
-      preLoaderRoute: typeof IssuersIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/staff': {
-      id: '/issuer/staff'
-      path: '/issuer/staff'
-      fullPath: '/issuer/staff'
-      preLoaderRoute: typeof IssuerStaffRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/settings': {
-      id: '/issuer/settings'
-      path: '/issuer/settings'
-      fullPath: '/issuer/settings'
-      preLoaderRoute: typeof IssuerSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/revocations': {
-      id: '/issuer/revocations'
-      path: '/issuer/revocations'
-      fullPath: '/issuer/revocations'
-      preLoaderRoute: typeof IssuerRevocationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/requests': {
-      id: '/issuer/requests'
-      path: '/issuer/requests'
-      fullPath: '/issuer/requests'
-      preLoaderRoute: typeof IssuerRequestsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/profile': {
-      id: '/issuer/profile'
-      path: '/issuer/profile'
-      fullPath: '/issuer/profile'
-      preLoaderRoute: typeof IssuerProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/notifications': {
-      id: '/issuer/notifications'
-      path: '/issuer/notifications'
-      fullPath: '/issuer/notifications'
-      preLoaderRoute: typeof IssuerNotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/manual': {
-      id: '/issuer/manual'
-      path: '/issuer/manual'
-      fullPath: '/issuer/manual'
-      preLoaderRoute: typeof IssuerManualRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/earners': {
-      id: '/issuer/earners'
-      path: '/issuer/earners'
-      fullPath: '/issuer/earners'
-      preLoaderRoute: typeof IssuerEarnersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/credentials': {
-      id: '/issuer/credentials'
-      path: '/issuer/credentials'
-      fullPath: '/issuer/credentials'
-      preLoaderRoute: typeof IssuerCredentialsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/anchoring-queue': {
-      id: '/issuer/anchoring-queue'
-      path: '/issuer/anchoring-queue'
-      fullPath: '/issuer/anchoring-queue'
-      preLoaderRoute: typeof IssuerAnchoringQueueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/earner/settings': {
-      id: '/earner/settings'
-      path: '/earner/settings'
-      fullPath: '/earner/settings'
-      preLoaderRoute: typeof EarnerSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/earner/profile': {
-      id: '/earner/profile'
-      path: '/earner/profile'
-      fullPath: '/earner/profile'
-      preLoaderRoute: typeof EarnerProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/earner/notifications': {
-      id: '/earner/notifications'
-      path: '/earner/notifications'
-      fullPath: '/earner/notifications'
-      preLoaderRoute: typeof EarnerNotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/earner/manual': {
-      id: '/earner/manual'
-      path: '/earner/manual'
-      fullPath: '/earner/manual'
-      preLoaderRoute: typeof EarnerManualRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/earner/apply': {
-      id: '/earner/apply'
-      path: '/earner/apply'
-      fullPath: '/earner/apply'
-      preLoaderRoute: typeof EarnerApplyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/earner/applications': {
-      id: '/earner/applications'
-      path: '/earner/applications'
-      fullPath: '/earner/applications'
-      preLoaderRoute: typeof EarnerApplicationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/users': {
-      id: '/admin/users'
-      path: '/admin/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/settings': {
-      id: '/admin/settings'
-      path: '/admin/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AdminSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/roles': {
-      id: '/admin/roles'
-      path: '/admin/roles'
-      fullPath: '/admin/roles'
-      preLoaderRoute: typeof AdminRolesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/registrations': {
-      id: '/admin/registrations'
-      path: '/admin/registrations'
-      fullPath: '/admin/registrations'
-      preLoaderRoute: typeof AdminRegistrationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/organizations': {
-      id: '/admin/organizations'
-      path: '/admin/organizations'
-      fullPath: '/admin/organizations'
-      preLoaderRoute: typeof AdminOrganizationsRouteImport
+    '/admin/activity': {
+      id: '/admin/activity'
+      path: '/admin/activity'
+      fullPath: '/admin/activity'
+      preLoaderRoute: typeof AdminActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/audit': {
@@ -821,25 +659,193 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/activity': {
-      id: '/admin/activity'
-      path: '/admin/activity'
-      fullPath: '/admin/activity'
-      preLoaderRoute: typeof AdminActivityRouteImport
+    '/admin/organizations': {
+      id: '/admin/organizations'
+      path: '/admin/organizations'
+      fullPath: '/admin/organizations'
+      preLoaderRoute: typeof AdminOrganizationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/issuer/microcredential-templates/': {
-      id: '/issuer/microcredential-templates/'
-      path: '/issuer/microcredential-templates'
-      fullPath: '/issuer/microcredential-templates/'
-      preLoaderRoute: typeof IssuerMicrocredentialTemplatesIndexRouteImport
+    '/admin/registrations': {
+      id: '/admin/registrations'
+      path: '/admin/registrations'
+      fullPath: '/admin/registrations'
+      preLoaderRoute: typeof AdminRegistrationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/issuer/issue/': {
-      id: '/issuer/issue/'
-      path: '/issuer/issue'
-      fullPath: '/issuer/issue/'
-      preLoaderRoute: typeof IssuerIssueIndexRouteImport
+    '/admin/roles': {
+      id: '/admin/roles'
+      path: '/admin/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earner/': {
+      id: '/earner/'
+      path: '/earner'
+      fullPath: '/earner/'
+      preLoaderRoute: typeof EarnerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earner/applications': {
+      id: '/earner/applications'
+      path: '/earner/applications'
+      fullPath: '/earner/applications'
+      preLoaderRoute: typeof EarnerApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earner/apply': {
+      id: '/earner/apply'
+      path: '/earner/apply'
+      fullPath: '/earner/apply'
+      preLoaderRoute: typeof EarnerApplyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earner/manual': {
+      id: '/earner/manual'
+      path: '/earner/manual'
+      fullPath: '/earner/manual'
+      preLoaderRoute: typeof EarnerManualRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earner/notifications': {
+      id: '/earner/notifications'
+      path: '/earner/notifications'
+      fullPath: '/earner/notifications'
+      preLoaderRoute: typeof EarnerNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earner/profile': {
+      id: '/earner/profile'
+      path: '/earner/profile'
+      fullPath: '/earner/profile'
+      preLoaderRoute: typeof EarnerProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earner/settings': {
+      id: '/earner/settings'
+      path: '/earner/settings'
+      fullPath: '/earner/settings'
+      preLoaderRoute: typeof EarnerSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/': {
+      id: '/issuer/'
+      path: '/issuer'
+      fullPath: '/issuer/'
+      preLoaderRoute: typeof IssuerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/anchoring-queue': {
+      id: '/issuer/anchoring-queue'
+      path: '/issuer/anchoring-queue'
+      fullPath: '/issuer/anchoring-queue'
+      preLoaderRoute: typeof IssuerAnchoringQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/credentials': {
+      id: '/issuer/credentials'
+      path: '/issuer/credentials'
+      fullPath: '/issuer/credentials'
+      preLoaderRoute: typeof IssuerCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/earners': {
+      id: '/issuer/earners'
+      path: '/issuer/earners'
+      fullPath: '/issuer/earners'
+      preLoaderRoute: typeof IssuerEarnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/manual': {
+      id: '/issuer/manual'
+      path: '/issuer/manual'
+      fullPath: '/issuer/manual'
+      preLoaderRoute: typeof IssuerManualRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/notifications': {
+      id: '/issuer/notifications'
+      path: '/issuer/notifications'
+      fullPath: '/issuer/notifications'
+      preLoaderRoute: typeof IssuerNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/profile': {
+      id: '/issuer/profile'
+      path: '/issuer/profile'
+      fullPath: '/issuer/profile'
+      preLoaderRoute: typeof IssuerProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/requests': {
+      id: '/issuer/requests'
+      path: '/issuer/requests'
+      fullPath: '/issuer/requests'
+      preLoaderRoute: typeof IssuerRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/revocations': {
+      id: '/issuer/revocations'
+      path: '/issuer/revocations'
+      fullPath: '/issuer/revocations'
+      preLoaderRoute: typeof IssuerRevocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/settings': {
+      id: '/issuer/settings'
+      path: '/issuer/settings'
+      fullPath: '/issuer/settings'
+      preLoaderRoute: typeof IssuerSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/staff': {
+      id: '/issuer/staff'
+      path: '/issuer/staff'
+      fullPath: '/issuer/staff'
+      preLoaderRoute: typeof IssuerStaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuers/': {
+      id: '/issuers/'
+      path: '/issuers'
+      fullPath: '/issuers/'
+      preLoaderRoute: typeof IssuersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuers/$id': {
+      id: '/issuers/$id'
+      path: '/issuers/$id'
+      fullPath: '/issuers/$id'
+      preLoaderRoute: typeof IssuersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$token': {
+      id: '/profile/$token'
+      path: '/profile/$token'
+      fullPath: '/profile/$token'
+      preLoaderRoute: typeof ProfileTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify/$id': {
+      id: '/verify/$id'
+      path: '/verify/$id'
+      fullPath: '/verify/$id'
+      preLoaderRoute: typeof VerifyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/earner/credentials/': {
@@ -849,25 +855,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EarnerCredentialsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/issuer/microcredential-templates/new': {
-      id: '/issuer/microcredential-templates/new'
-      path: '/issuer/microcredential-templates/new'
-      fullPath: '/issuer/microcredential-templates/new'
-      preLoaderRoute: typeof IssuerMicrocredentialTemplatesNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/microcredential-templates/$id': {
-      id: '/issuer/microcredential-templates/$id'
-      path: '/issuer/microcredential-templates/$id'
-      fullPath: '/issuer/microcredential-templates/$id'
-      preLoaderRoute: typeof IssuerMicrocredentialTemplatesIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/issuer/issue/bulk': {
-      id: '/issuer/issue/bulk'
-      path: '/issuer/issue/bulk'
-      fullPath: '/issuer/issue/bulk'
-      preLoaderRoute: typeof IssuerIssueBulkRouteImport
+    '/earner/credentials/$id': {
+      id: '/earner/credentials/$id'
+      path: '/earner/credentials/$id'
+      fullPath: '/earner/credentials/$id'
+      preLoaderRoute: typeof EarnerCredentialsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/earner/microcredential-templates/$id': {
@@ -877,18 +869,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EarnerMicrocredentialTemplatesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/earner/credentials/$id': {
-      id: '/earner/credentials/$id'
-      path: '/earner/credentials/$id'
-      fullPath: '/earner/credentials/$id'
-      preLoaderRoute: typeof EarnerCredentialsIdRouteImport
+    '/issuer/issue/': {
+      id: '/issuer/issue/'
+      path: '/issuer/issue'
+      fullPath: '/issuer/issue/'
+      preLoaderRoute: typeof IssuerIssueIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/issuers/$id_/microcredential-templates/$templateId': {
-      id: '/issuers/$id_/microcredential-templates/$templateId'
-      path: '/issuers/$id/microcredential-templates/$templateId'
-      fullPath: '/issuers/$id/microcredential-templates/$templateId'
-      preLoaderRoute: typeof IssuersIdMicrocredentialTemplatesTemplateIdRouteImport
+    '/issuer/issue/bulk': {
+      id: '/issuer/issue/bulk'
+      path: '/issuer/issue/bulk'
+      fullPath: '/issuer/issue/bulk'
+      preLoaderRoute: typeof IssuerIssueBulkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/microcredential-templates/': {
+      id: '/issuer/microcredential-templates/'
+      path: '/issuer/microcredential-templates'
+      fullPath: '/issuer/microcredential-templates/'
+      preLoaderRoute: typeof IssuerMicrocredentialTemplatesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/microcredential-templates/$id': {
+      id: '/issuer/microcredential-templates/$id'
+      path: '/issuer/microcredential-templates/$id'
+      fullPath: '/issuer/microcredential-templates/$id'
+      preLoaderRoute: typeof IssuerMicrocredentialTemplatesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/issuer/microcredential-templates/new': {
+      id: '/issuer/microcredential-templates/new'
+      path: '/issuer/microcredential-templates/new'
+      fullPath: '/issuer/microcredential-templates/new'
+      preLoaderRoute: typeof IssuerMicrocredentialTemplatesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/expiry-reminders': {
@@ -898,12 +911,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksExpiryRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/issuers/$id_/microcredential-templates/$templateId': {
+      id: '/issuers/$id_/microcredential-templates/$templateId'
+      path: '/issuers/$id/microcredential-templates/$templateId'
+      fullPath: '/issuers/$id/microcredential-templates/$templateId'
+      preLoaderRoute: typeof IssuersIdMicrocredentialTemplatesTemplateIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SetPasswordRoute: SetPasswordRoute,
   AdminActivityRoute: AdminActivityRoute,
   AdminAuditRoute: AdminAuditRoute,

@@ -297,6 +297,35 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
   });
 
 // ============================================================================
+// Platform admin: send password reset link to a user
+// ============================================================================
+export const adminSendPasswordReset = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; redirectTo: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertPlatformAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: u, error: uErr } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (uErr || !u?.user?.email) throw new Error(uErr?.message ?? "User has no email");
+    let redirectTo: string | undefined;
+    try {
+      const url = new URL(data.redirectTo);
+      redirectTo = `${url.origin}/reset-password`;
+    } catch {
+      redirectTo = undefined;
+    }
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(u.user.email, { redirectTo });
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_log").insert({
+      actor_id: context.userId,
+      actor_name: "platform_admin",
+      action: "password reset link sent",
+      target: data.userId,
+    } as never);
+    return { ok: true, email: u.user.email };
+  });
+
+// ============================================================================
 // Any signed-in user: update their own profile (about text, etc.)
 // ============================================================================
 export const updateMyProfile = createServerFn({ method: "POST" })

@@ -14,6 +14,15 @@
     "viewAudit": "Prikaži ceo revizorski trag"
   },
   "users": {
+    "resetPassword": {
+      "aria": "Pošalji link za resetovanje lozinke",
+      "title": "Poslati link za resetovanje lozinke?",
+      "description": "Link za resetovanje lozinke biće poslat na {{email}}.",
+      "confirm": "Pošalji link",
+      "sending": "Slanje…",
+      "sent": "Link za resetovanje poslat na {{email}}",
+      "failed": "Slanje linka nije uspelo"
+    },
     "head": "Korisnici — CredSeal administracija",
     "title": "Korisnici",
     "description": "Svi registrovani korisnici po ulogama.",
