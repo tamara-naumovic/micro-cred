@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -79,6 +79,7 @@ function LoginPage() {
 
 function SignInForm({ onSubmitted, waiting }: { onSubmitted: () => void; waiting: boolean }) {
   const { signIn } = useAuth();
+  const { t, i18n } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -119,6 +120,11 @@ function SignInForm({ onSubmitted, waiting }: { onSubmitted: () => void; waiting
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+              {t("forgotPasswordLink", { defaultValue: i18n.language?.startsWith("sr") ? "Zaboravili ste lozinku?" : "Forgot password?" })}
+            </Link>
+          </div>
         </div>
         <Button type="submit" className="w-full" disabled={disabled}>
           {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
