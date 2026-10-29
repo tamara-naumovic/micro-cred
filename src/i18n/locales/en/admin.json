@@ -14,6 +14,15 @@
     "viewAudit": "View full audit trail"
   },
   "users": {
+    "resetPassword": {
+      "aria": "Send password reset link",
+      "title": "Send password reset link?",
+      "description": "A password reset link will be emailed to {{email}}.",
+      "confirm": "Send link",
+      "sending": "Sending…",
+      "sent": "Reset link sent to {{email}}",
+      "failed": "Failed to send reset link"
+    },
     "head": "Users — CredSeal Admin",
     "title": "Users",
     "description": "All registered users across roles.",

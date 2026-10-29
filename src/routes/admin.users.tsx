@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { UserPlus, Pencil, Trash2 } from "lucide-react";
+import { UserPlus, Pencil, Trash2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
@@ -46,6 +46,7 @@ import { useStore } from "@/lib/store";
 import {
   adminCreateUser,
   adminDeleteUser,
+  adminSendPasswordReset,
   adminUpdateUser,
   assignEarnerInstitution,
   removeEarnerInstitution,
@@ -154,6 +155,7 @@ function UsersPage() {
                     <div className="flex items-center justify-end gap-1">
                       {u.role === "earner" && <ManageEarnerOrgsDialog earnerId={u.id} earnerName={u.name} />}
                       <EditUserDialog user={u} />
+                      <ResetPasswordDialog user={u} />
                       <DeleteUserDialog user={u} />
                     </div>
                   </TableCell>
@@ -567,6 +569,54 @@ function EditUserDialog({ user }: { user: MockUser }) {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ResetPasswordDialog({ user }: { user: MockUser }) {
+  const { t } = useTranslation("admin");
+  const send = useServerFn(adminSendPasswordReset);
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  async function onConfirm() {
+    setBusy(true);
+    try {
+      await send({ data: { userId: user.id, redirectTo: window.location.origin } });
+      toast.success(t("users.resetPassword.sent", { email: user.email }));
+      setOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message ?? t("users.resetPassword.failed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button size="icon" variant="ghost" aria-label={t("users.resetPassword.aria")} title={t("users.resetPassword.aria")}>
+          <KeyRound className="h-4 w-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("users.resetPassword.title")}</AlertDialogTitle>
+          <AlertDialogDescription>{t("users.resetPassword.description", { email: user.email })}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>{t("users.delete.cancel")}</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={busy}
+            onClick={(e) => {
+              e.preventDefault();
+              onConfirm();
+            }}
+          >
+            {busy ? t("users.resetPassword.sending") : t("users.resetPassword.confirm")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
