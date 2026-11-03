@@ -37,7 +37,7 @@
   "finish": { "button": "Završi testiranje", "summary": "Rezime vašeg učešća", "confirm": "Završi učešće", "questionnaire": "Otvori USE upitnik" },
   "admin": {
     "title": "Evaluacija", "description": "Vođeno testiranje upotrebljivosti za izabrane naloge nosilaca. Podrazumevano isključeno.",
-    "campaigns": "Kampanje", "newCampaign": "Nova kampanja", "name": "Naziv", "version": "Verzija scenarija",
+    "campaigns": "Kampanje", "newCampaign": "Nova kampanja", "name": "Naziv", "version": "Verzija scenarija", "versionFallback": "Za ovu verziju nema posebnih scenarija – koristiće se v1.",
     "startsAt": "Početak", "endsAt": "Kraj (opciono)", "questionnaire": "Link ka USE upitniku (opciono)",
     "create": "Kreiraj", "active": "Aktivna", "closed": "Zatvorena", "close": "Zatvori kampanju", "reopen": "Ponovo otvori",
     "participants": "Učesnici", "searchEarner": "Pretraži nosioce po imenu ili emailu", "add": "Pozovi",

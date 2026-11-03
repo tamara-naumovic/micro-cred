@@ -37,7 +37,7 @@
   "finish": { "button": "Finish testing", "summary": "Summary of your participation", "confirm": "Finish participation", "questionnaire": "Open the USE questionnaire" },
   "admin": {
     "title": "Evaluation", "description": "Task-based usability testing for selected earner accounts. Off by default.",
-    "campaigns": "Campaigns", "newCampaign": "New campaign", "name": "Name", "version": "Scenario version",
+    "campaigns": "Campaigns", "newCampaign": "New campaign", "name": "Name", "version": "Scenario version", "versionFallback": "No scenarios exist for this version – v1 will be used.",
     "startsAt": "Start", "endsAt": "End (optional)", "questionnaire": "USE questionnaire link (optional)",
     "create": "Create", "active": "Active", "closed": "Closed", "close": "Close campaign", "reopen": "Reopen",
     "participants": "Participants", "searchEarner": "Search earners by name or email", "add": "Invite",
