@@ -106,12 +106,13 @@ export function EvaluationProvider({ children }: { children: ReactNode }) {
     () => scenarios.find((s) => s.id === activeAttempt?.scenario_id) ?? null, [scenarios, activeAttempt]);
 
   const logEvent = useCallback(async (type: string, meta?: Record<string, unknown>, attemptId?: string | null) => {
-    if (!assignment || !accepted || !CLIENT_EVENT_TYPES.has(type)) return;
-    await db.from("evaluation_events").insert({
+    if (!assignment || !accepted || !CLIENT_EVENT_TYPES.has(type)) return false;
+    const { error } = await db.from("evaluation_events").insert({
       client_event_id: crypto.randomUUID(), assignment_id: assignment.id, session_id: sessionId,
       attempt_id: attemptId === undefined ? activeAttempt?.id ?? null : attemptId, event_type: type, source: "client",
       metadata: sanitizeMeta(meta),
     });
+    return !error;
   }, [assignment, accepted, sessionId, activeAttempt]);
 
   const ensureSession = useCallback(async (): Promise<string | null> => {
@@ -210,9 +211,13 @@ export function EvaluationProvider({ children }: { children: ReactNode }) {
   const closeHelp = useCallback(async () => { await resume(); await logEvent("help_closed"); }, [resume, logEvent]);
 
   const instructorHelp = useCallback(async (kind: "requested" | "received") => {
-    if (!activeAttempt) return;
-    if (kind === "received") await patchAttempt(activeAttempt.id, { instructor_help_count: activeAttempt.instructor_help_count + 1 });
-    await logEvent(kind === "requested" ? "instructor_help_requested" : "instructor_help_received", { help_kind: "instructor" });
+    if (!activeAttempt) throw new Error("No active evaluation attempt");
+    const saved = await logEvent(kind === "requested" ? "instructor_help_requested" : "instructor_help_received", { help_kind: "instructor" });
+    if (!saved) throw new Error("Could not record instructor help");
+    if (kind === "received") {
+      const updated = await patchAttempt(activeAttempt.id, { instructor_help_count: activeAttempt.instructor_help_count + 1 });
+      if (!updated) throw new Error("Could not update instructor help count");
+    }
   }, [activeAttempt, patchAttempt, logEvent]);
 
   const consent = useCallback(async (action: string) => {

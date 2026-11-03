@@ -152,8 +152,11 @@ export function EvaluationTaskPanel() {
   const [finishing, setFinishing] = useState(false);
   const [done, setDone] = useState(true);
   const [feedback, setFeedback] = useState("");
+  const [instructorPending, setInstructorPending] = useState(false);
+  const [instructorFeedback, setInstructorFeedback] = useState<"requested" | "received" | "error" | null>(null);
   const [, tick] = useState(0);
   useEffect(() => { const iv = window.setInterval(() => tick((x) => x + 1), 1000); return () => window.clearInterval(iv); }, []);
+  useEffect(() => { setInstructorFeedback(null); }, [ev?.activeAttempt?.id, ev?.helpOpen]);
   if (!ev?.activeAttempt || !ev.activeScenario) return null;
   const a = ev.activeAttempt;
   const s = ev.activeScenario;
@@ -161,6 +164,19 @@ export function EvaluationTaskPanel() {
   const elapsed = accumulateActive(a.active_duration_ms, a.last_resumed_at, a.status, Date.now());
   const paused = a.status === "paused";
   const serverVerified = s.success_rule_key.startsWith("server");
+  const recordInstructorHelp = async (kind: "requested" | "received") => {
+    if (instructorPending) return;
+    setInstructorPending(true);
+    setInstructorFeedback(null);
+    try {
+      await ev.instructorHelp(kind);
+      setInstructorFeedback(kind);
+    } catch {
+      setInstructorFeedback("error");
+    } finally {
+      setInstructorPending(false);
+    }
+  };
 
   return (
     <div className="fixed bottom-4 right-4 z-40 w-[min(22rem,calc(100vw-2rem))] rounded-lg border border-border bg-card text-card-foreground shadow-lg">
@@ -179,10 +195,16 @@ export function EvaluationTaskPanel() {
             <div className="space-y-2">
               <p className="text-muted-foreground">{t("help.opened")}</p>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => void ev.instructorHelp("requested")}>{t("help.needInstructor")}</Button>
-                <Button size="sm" variant="outline" onClick={() => void ev.instructorHelp("received")}>{t("help.instructorHelped")}</Button>
+                <Button size="sm" variant="outline" disabled={instructorPending} onClick={() => void recordInstructorHelp("requested")}>{t("help.needInstructor")}</Button>
+                <Button size="sm" variant="outline" disabled={instructorPending} onClick={() => void recordInstructorHelp("received")}>{t("help.instructorHelped")}</Button>
               </div>
-              <Button size="sm" className="w-full" onClick={() => void ev.closeHelp()}>{t("help.back")}</Button>
+              {instructorPending && <p role="status" className="text-xs text-muted-foreground">{t("help.saving")}</p>}
+              {instructorFeedback && (
+                <p role={instructorFeedback === "error" ? "alert" : "status"} className={instructorFeedback === "error" ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
+                  {t(`help.${instructorFeedback}`)}
+                </p>
+              )}
+              <Button size="sm" className="w-full" disabled={instructorPending} onClick={() => void ev.closeHelp()}>{t("help.back")}</Button>
             </div>
           ) : finishing ? (
             <div className="space-y-2">

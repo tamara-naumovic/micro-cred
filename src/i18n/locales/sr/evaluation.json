@@ -27,6 +27,10 @@
     "verified": "Potvrđeno od strane sistema", "allScenarios": "Prikaži sve scenarije"
   },
   "help": {
+    "saving": "Beležimo pomoć…",
+    "requested": "Potreba za pomoći je zabeležena. Obratite se nastavniku direktno — platforma mu ne šalje poruku. Vreme zadatka ostaje pauzirano.",
+    "received": "Pomoć nastavnika je zabeležena. Kada budete spremni, kliknite „Nazad na zadatak“.",
+    "error": "Pomoć nije uspešno sačuvana. Pokušajte ponovo.",
     "opened": "Uputstvo je otvoreno u novom tabu. Vreme zadatka je pauzirano dok čitate.",
     "needInstructor": "Potrebna mi je pomoć nastavnika", "instructorHelped": "Nastavnik mi je pomogao", "back": "Nazad na zadatak"
   },

@@ -1,3 +1,5 @@
 - [x] Load v1 scenarios when a campaign version has no scenarios, for participants and admin reports.
 - [x] Restrict the new-campaign version selector to available earner scenario versions.
 - [x] Verify fallback tests and the authenticated evaluation page (9 tests passed; live fallback returned all 13 v1 scenarios with identical IDs; dropdown offered v1).
+- [x] Add pending, saved, and error feedback to both instructor-help buttons; evaluation tests passed and build OK.
+- [ ] Verify both clicks on a real earner account — blocked: available browser session belongs to a platform administrator, not the participant shown in the screenshot.
