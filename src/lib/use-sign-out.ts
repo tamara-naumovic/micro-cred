@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
+import { runEvaluationBeforeSignOut } from "@/lib/evaluation/EvaluationProvider";
 
 export function useSignOut() {
   const queryClient = useQueryClient();
@@ -10,6 +11,7 @@ export function useSignOut() {
 
   return useCallback(
     async (opts?: { reason?: "idle"; redirectTo?: string }) => {
+      await runEvaluationBeforeSignOut();
       await queryClient.cancelQueries();
       queryClient.clear();
       const { supabase } = await import("@/integrations/supabase/client");

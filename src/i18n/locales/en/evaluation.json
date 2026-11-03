@@ -1,0 +1,49 @@
+{
+  "header": { "invited": "Evaluation invite", "inProgress": "Testing in progress" },
+  "invite": {
+    "title": "Invitation to a usability study",
+    "intro": "You have been invited to help evaluate this platform as part of a research study. Participation is voluntary.",
+    "data": "We record, only while a task is active: time on task, whether it was completed, use of Help and instructor assistance, and technical errors.",
+    "notCollected": "We do not record your credential contents, evidence, or what you type. Results are exported under a pseudonym.",
+    "voluntary": "You can decline or stop at any time without any effect on your use of the platform.",
+    "skip": "You do not have to finish all tasks; you can skip them and come back later.",
+    "accept": "I accept and start",
+    "later": "Later",
+    "decline": "I don't want to participate"
+  },
+  "drawer": {
+    "title": "Platform testing",
+    "intro": "You don't have to finish all tasks — you can skip them and return later.",
+    "progress": "{{done}}/{{total}} scenarios processed",
+    "branch": "alternative branch"
+  },
+  "status": { "not_started": "Not started", "in_progress": "In progress", "paused": "Paused", "completed": "Completed", "skipped": "Skipped", "abandoned": "Abandoned" },
+  "outcome": { "verified_success": "Verified success", "self_reported_success": "Self-reported", "partial": "Partial", "failed": "Failed", "not_assessed": "Not assessed" },
+  "actions": { "start": "Start", "continue": "Continue", "resume": "Resume", "repeat": "Repeat", "pause": "Pause", "skip": "Skip for now", "help": "Help", "finish": "Finish scenario", "cancel": "Cancel", "save": "Save" },
+  "panel": {
+    "label": "Task", "toggle": "Collapse or expand", "success": "Success criterion",
+    "selfReport": "I believe I completed the task", "feedback": "Optional comment",
+    "serverNote": "This task is verified automatically from what you did on the platform.",
+    "verified": "Verified by the system", "allScenarios": "Show all scenarios"
+  },
+  "help": {
+    "opened": "The manual opened in a new tab. The task timer is paused while you read.",
+    "needInstructor": "I need instructor help", "instructorHelped": "Instructor helped me", "back": "Back to the task"
+  },
+  "finish": { "button": "Finish testing", "summary": "Summary of your participation", "confirm": "Finish participation", "questionnaire": "Open the USE questionnaire" },
+  "admin": {
+    "title": "Evaluation", "description": "Task-based usability testing for selected earner accounts. Off by default.",
+    "campaigns": "Campaigns", "newCampaign": "New campaign", "name": "Name", "version": "Scenario version",
+    "startsAt": "Start", "endsAt": "End (optional)", "questionnaire": "USE questionnaire link (optional)",
+    "create": "Create", "active": "Active", "closed": "Closed", "close": "Close campaign", "reopen": "Reopen",
+    "participants": "Participants", "searchEarner": "Search earners by name or email", "add": "Invite",
+    "enabled": "Tracking", "consent": "Consent", "lastActivity": "Last activity", "pseudonym": "Pseudonym",
+    "consentStatus": { "invited": "Invited", "accepted": "Accepted", "declined": "Declined", "finished": "Finished", "withdrawn": "Withdrawn" },
+    "summary": "Per-scenario summary", "scenario": "Scenario", "started": "Started", "completed": "Completed",
+    "skipped": "Skipped", "verified": "Verified", "selfReported": "Self-reported", "medianTime": "Median active time",
+    "helpRate": "Used Help", "instructorRate": "Instructor help", "attempts": "Attempts", "outcome": "Outcome",
+    "time": "Active time", "helpCount": "Help", "comment": "Comment", "export": "Export CSV",
+    "noCampaign": "Create a campaign to start.", "none": "No data yet.", "detail": "Attempts of participant",
+    "dataNote": "Skipped and not-started scenarios are reported as not assessed, never as failures. Verified and self-reported outcomes are listed separately."
+  }
+}

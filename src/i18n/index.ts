@@ -6,6 +6,7 @@ import enEarner from "./locales/en/earner.json";
 import enTour from "./locales/en/tour.json";
 import enManual from "./locales/en/manual.json";
 import enAdmin from "./locales/en/admin.json";
+import enEvaluation from "./locales/en/evaluation.json";
 import enIssuerCommon from "./locales/en/issuer/common.json";
 import enIssuerOverview from "./locales/en/issuer/overview.json";
 import enIssuerTemplates from "./locales/en/issuer/templates.json";
@@ -26,6 +27,7 @@ import srEarner from "./locales/sr/earner.json";
 import srTour from "./locales/sr/tour.json";
 import srManual from "./locales/sr/manual.json";
 import srAdmin from "./locales/sr/admin.json";
+import srEvaluation from "./locales/sr/evaluation.json";
 import srIssuerCommon from "./locales/sr/issuer/common.json";
 import srIssuerOverview from "./locales/sr/issuer/overview.json";
 import srIssuerTemplates from "./locales/sr/issuer/templates.json";
@@ -98,10 +100,10 @@ if (!i18n.isInitialized) {
       fallbackLng: "en",
       supportedLngs: ["en", "sr"],
       defaultNS: "common",
-      ns: ["common", "earner", "tour", "manual", "issuer", "admin"],
+      ns: ["common", "earner", "tour", "manual", "issuer", "admin", "evaluation"],
       resources: {
-        en: { common: enCommon, earner: enEarner, tour: enTour, manual: enManual, issuer: enIssuer, admin: enAdmin },
-        sr: { common: srCommon, earner: srEarner, tour: srTour, manual: srManual, issuer: srIssuer, admin: srAdmin },
+        en: { common: enCommon, earner: enEarner, tour: enTour, manual: enManual, issuer: enIssuer, admin: enAdmin, evaluation: enEvaluation },
+        sr: { common: srCommon, earner: srEarner, tour: srTour, manual: srManual, issuer: srIssuer, admin: srAdmin, evaluation: srEvaluation },
       },
       interpolation: { escapeValue: false },
       react: { useSuspense: false },

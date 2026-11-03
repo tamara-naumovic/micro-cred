@@ -1,0 +1,1 @@
+- Evaluation Mode (usability study) is isolated in src/lib/evaluation + evaluation_* tables; core tables only get fail-safe AFTER triggers that never block the main operation — why: research tracking must never affect real credential flows.

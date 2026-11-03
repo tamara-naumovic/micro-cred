@@ -53,6 +53,9 @@ import { useTranslation } from "react-i18next";
 import { useStore } from "@/lib/store";
 import { useSignOut } from "@/lib/use-sign-out";
 import { useIdleLogout } from "@/lib/use-idle-logout";
+import { FlaskConical } from "lucide-react";
+import { EvaluationProvider } from "@/lib/evaluation/EvaluationProvider";
+import { EvaluationDrawer, EvaluationHeaderButton, EvaluationInviteDialog, EvaluationTaskPanel } from "@/components/evaluation/EvaluationUI";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { MockUser, Role } from "@/lib/types";
 
@@ -333,6 +336,7 @@ function buildAdminNav(t: (k: string) => string): NavGroups {
       items: [
         { to: "/admin/activity", label: t("sidebar.admin.activity"), icon: ListChecks },
         { to: "/admin/audit", label: t("sidebar.admin.audit"), icon: FileCheck2 },
+        { to: "/admin/evaluation", label: t("sidebar.admin.evaluation"), icon: FlaskConical },
         { to: "/admin/settings", label: t("sidebar.admin.settings"), icon: Settings },
       ],
     },
@@ -380,6 +384,7 @@ export function AppSidebarLayout() {
   ).length;
 
   return (
+    <EvaluationProvider>
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar collapsible="icon">
@@ -432,6 +437,7 @@ export function AppSidebarLayout() {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
+              <EvaluationHeaderButton />
               <LanguageSwitcher />
               <Button
                 variant="ghost"
@@ -510,6 +516,10 @@ export function AppSidebarLayout() {
           </main>
         </div>
       </div>
+      <EvaluationInviteDialog />
+      <EvaluationDrawer />
+      <EvaluationTaskPanel />
     </SidebarProvider>
+    </EvaluationProvider>
   );
 }
