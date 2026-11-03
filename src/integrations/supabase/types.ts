@@ -692,6 +692,374 @@ export type Database = {
           },
         ]
       }
+      evaluation_assignments: {
+        Row: {
+          anonymous_export_id: string
+          campaign_id: string
+          consent_status: string
+          consented_at: string | null
+          declined_at: string | null
+          disabled_at: string | null
+          enabled: boolean
+          finished_at: string | null
+          id: string
+          invited_at: string
+          last_activity_at: string | null
+          postponed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          anonymous_export_id?: string
+          campaign_id: string
+          consent_status?: string
+          consented_at?: string | null
+          declined_at?: string | null
+          disabled_at?: string | null
+          enabled?: boolean
+          finished_at?: string | null
+          id?: string
+          invited_at?: string
+          last_activity_at?: string | null
+          postponed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          anonymous_export_id?: string
+          campaign_id?: string
+          consent_status?: string
+          consented_at?: string | null
+          declined_at?: string | null
+          disabled_at?: string | null
+          enabled?: boolean
+          finished_at?: string | null
+          id?: string
+          invited_at?: string
+          last_activity_at?: string | null
+          postponed_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_assignments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_attempts: {
+        Row: {
+          active_duration_ms: number
+          assignment_id: string
+          attempt_number: number
+          ended_at: string | null
+          error_count: number
+          feedback_text: string | null
+          help_count: number
+          help_duration_ms: number
+          id: string
+          instructor_help_count: number
+          last_resumed_at: string | null
+          outcome: string
+          outcome_source: string | null
+          scenario_id: string
+          session_id: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          active_duration_ms?: number
+          assignment_id: string
+          attempt_number?: number
+          ended_at?: string | null
+          error_count?: number
+          feedback_text?: string | null
+          help_count?: number
+          help_duration_ms?: number
+          id?: string
+          instructor_help_count?: number
+          last_resumed_at?: string | null
+          outcome?: string
+          outcome_source?: string | null
+          scenario_id: string
+          session_id: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          active_duration_ms?: number
+          assignment_id?: string
+          attempt_number?: number
+          ended_at?: string | null
+          error_count?: number
+          feedback_text?: string | null
+          help_count?: number
+          help_duration_ms?: number
+          id?: string
+          instructor_help_count?: number
+          last_resumed_at?: string | null
+          outcome?: string
+          outcome_source?: string | null
+          scenario_id?: string
+          session_id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_attempts_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_attempts_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_scenarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_attempts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string | null
+          id: string
+          name: string
+          role_scope: string
+          starts_at: string
+          status: string
+          use_questionnaire_url: string | null
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          name: string
+          role_scope?: string
+          starts_at?: string
+          status?: string
+          use_questionnaire_url?: string | null
+          version?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          name?: string
+          role_scope?: string
+          starts_at?: string
+          status?: string
+          use_questionnaire_url?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
+      evaluation_consent_audit: {
+        Row: {
+          action: string
+          assignment_id: string
+          id: string
+          occurred_at: string
+          policy_version: string
+        }
+        Insert: {
+          action: string
+          assignment_id: string
+          id?: string
+          occurred_at?: string
+          policy_version?: string
+        }
+        Update: {
+          action?: string
+          assignment_id?: string
+          id?: string
+          occurred_at?: string
+          policy_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_consent_audit_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_events: {
+        Row: {
+          assignment_id: string
+          attempt_id: string | null
+          client_event_id: string | null
+          event_type: string
+          id: string
+          metadata: Json
+          occurred_at: string
+          session_id: string | null
+          source: string
+        }
+        Insert: {
+          assignment_id: string
+          attempt_id?: string | null
+          client_event_id?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          session_id?: string | null
+          source?: string
+        }
+        Update: {
+          assignment_id?: string
+          attempt_id?: string | null
+          client_event_id?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          session_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_events_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_events_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_scenarios: {
+        Row: {
+          branch_group: string | null
+          code: string
+          id: string
+          role: string
+          situation_en: string
+          situation_sr: string
+          sort_order: number
+          start_path: string | null
+          steps_en: string[]
+          steps_sr: string[]
+          success_en: string
+          success_rule_key: string
+          success_sr: string
+          title_en: string
+          title_sr: string
+          version: string
+        }
+        Insert: {
+          branch_group?: string | null
+          code: string
+          id?: string
+          role?: string
+          situation_en: string
+          situation_sr: string
+          sort_order?: number
+          start_path?: string | null
+          steps_en?: string[]
+          steps_sr?: string[]
+          success_en: string
+          success_rule_key?: string
+          success_sr: string
+          title_en: string
+          title_sr: string
+          version?: string
+        }
+        Update: {
+          branch_group?: string | null
+          code?: string
+          id?: string
+          role?: string
+          situation_en?: string
+          situation_sr?: string
+          sort_order?: number
+          start_path?: string | null
+          steps_en?: string[]
+          steps_sr?: string[]
+          success_en?: string
+          success_rule_key?: string
+          success_sr?: string
+          title_en?: string
+          title_sr?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      evaluation_sessions: {
+        Row: {
+          assignment_id: string
+          device_category: string | null
+          finished_at: string | null
+          id: string
+          platform_version: string | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          assignment_id: string
+          device_category?: string | null
+          finished_at?: string | null
+          id?: string
+          platform_version?: string | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          assignment_id?: string
+          device_category?: string | null
+          finished_at?: string | null
+          id?: string
+          platform_version?: string | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_sessions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
@@ -1274,6 +1642,27 @@ export type Database = {
     Functions: {
       can_access_application: { Args: { _app_id: string }; Returns: boolean }
       can_view_profile: { Args: { _profile_id: string }; Returns: boolean }
+      eval_owns_active_assignment: {
+        Args: { _assignment_id: string }
+        Returns: boolean
+      }
+      eval_owns_assignment: {
+        Args: { _assignment_id: string }
+        Returns: boolean
+      }
+      eval_record_verified: {
+        Args: {
+          _code: string
+          _event: string
+          _success: boolean
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      eval_set_consent: {
+        Args: { _action: string; _assignment_id: string }
+        Returns: undefined
+      }
       get_credential_visibility: {
         Args: { _share_token: string }
         Returns: {
