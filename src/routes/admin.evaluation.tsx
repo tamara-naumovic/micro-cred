@@ -109,9 +109,9 @@ function EvaluationAdmin() {
     : [];
 
   const createCampaign = async () => {
-    if (!form.name.trim() || !versions.includes(form.version)) return;
+    if (!form.name.trim() || !form.version.trim()) return;
     const { error } = await db.from("evaluation_campaigns").insert({
-      name: form.name.trim(), version: form.version || "v1",
+      name: form.name.trim(), version: form.version.trim(),
       starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : new Date().toISOString(),
       ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
       use_questionnaire_url: form.use_questionnaire_url.trim() || null, created_by: activeUser?.id,
@@ -201,16 +201,24 @@ function EvaluationAdmin() {
             <div className="space-y-2 border-t border-border pt-3">
               <div className="text-sm font-medium">{t("admin.newCampaign")}</div>
               <Input placeholder={t("admin.name")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <Select value={form.version} onValueChange={(version) => setForm({ ...form, version })} disabled={!versions.length}>
-                <SelectTrigger aria-label={t("admin.version")}><SelectValue placeholder={t("admin.version")} /></SelectTrigger>
-                <SelectContent>{versions.map((version) => <SelectItem key={version} value={version}>{version}</SelectItem>)}</SelectContent>
-              </Select>
+              <Input aria-label={t("admin.version")} placeholder={t("admin.version")} value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} />
+              {versions.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {versions.map((version) => (
+                    <button key={version} type="button" onClick={() => setForm({ ...form, version })}
+                      className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent">{version}</button>
+                  ))}
+                </div>
+              )}
+              {form.version.trim() && !versions.includes(form.version.trim()) && (
+                <p className="text-xs text-muted-foreground">{t("admin.versionFallback")}</p>
+              )}
               <Label className="text-xs">{t("admin.startsAt")}</Label>
               <Input type="date" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
               <Label className="text-xs">{t("admin.endsAt")}</Label>
               <Input type="date" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
               <Input placeholder={t("admin.questionnaire")} value={form.use_questionnaire_url} onChange={(e) => setForm({ ...form, use_questionnaire_url: e.target.value })} />
-              <Button className="w-full" disabled={!versions.includes(form.version)} onClick={() => void createCampaign()}>{t("admin.create")}</Button>
+              <Button className="w-full" disabled={!form.name.trim() || !form.version.trim()} onClick={() => void createCampaign()}>{t("admin.create")}</Button>
             </div>
           </CardContent>
         </Card>
