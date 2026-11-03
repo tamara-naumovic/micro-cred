@@ -1,0 +1,49 @@
+{
+  "header": { "invited": "Poziv za evaluaciju", "inProgress": "Testiranje u toku" },
+  "invite": {
+    "title": "Poziv za učešće u studiji upotrebljivosti",
+    "intro": "Pozvani ste da pomognete u evaluaciji platforme u okviru istraživanja. Učešće je dobrovoljno.",
+    "data": "Beležimo, samo dok je zadatak aktivan: vreme izvršavanja, da li je zadatak završen, korišćenje pomoći i pomoći nastavnika, i tehničke greške.",
+    "notCollected": "Ne beležimo sadržaj vaših kredencijala, dokaze niti ono što kucate. Rezultati se izvoze pod pseudonimom.",
+    "voluntary": "Možete odbiti ili prekinuti u bilo kom trenutku, bez uticaja na korišćenje platforme.",
+    "skip": "Ne morate završiti sve zadatke; možete ih preskočiti i vratiti im se kasnije.",
+    "accept": "Prihvatam i započinjem",
+    "later": "Kasnije",
+    "decline": "Ne želim da učestvujem"
+  },
+  "drawer": {
+    "title": "Testiranje platforme",
+    "intro": "Ne morate završiti sve zadatke — možete ih preskočiti i vratiti im se kasnije.",
+    "progress": "{{done}}/{{total}} scenarija obrađeno",
+    "branch": "alternativna grana"
+  },
+  "status": { "not_started": "Nije započet", "in_progress": "U toku", "paused": "Pauziran", "completed": "Završen", "skipped": "Preskočen", "abandoned": "Prekinut" },
+  "outcome": { "verified_success": "Potvrđen uspeh", "self_reported_success": "Samoprijavljen", "partial": "Delimično", "failed": "Neuspeh", "not_assessed": "Nije procenjeno" },
+  "actions": { "start": "Započni", "continue": "Nastavi", "resume": "Nastavi", "repeat": "Ponovi", "pause": "Pauziraj", "skip": "Preskoči za sada", "help": "Pomoć", "finish": "Završi scenario", "cancel": "Otkaži", "save": "Sačuvaj" },
+  "panel": {
+    "label": "Zadatak", "toggle": "Skupi ili proširi", "success": "Kriterijum uspeha",
+    "selfReport": "Smatram da sam završio/la zadatak", "feedback": "Opcioni komentar",
+    "serverNote": "Ovaj zadatak se automatski proverava na osnovu onoga što ste uradili na platformi.",
+    "verified": "Potvrđeno od strane sistema", "allScenarios": "Prikaži sve scenarije"
+  },
+  "help": {
+    "opened": "Uputstvo je otvoreno u novom tabu. Vreme zadatka je pauzirano dok čitate.",
+    "needInstructor": "Potrebna mi je pomoć nastavnika", "instructorHelped": "Nastavnik mi je pomogao", "back": "Nazad na zadatak"
+  },
+  "finish": { "button": "Završi testiranje", "summary": "Rezime vašeg učešća", "confirm": "Završi učešće", "questionnaire": "Otvori USE upitnik" },
+  "admin": {
+    "title": "Evaluacija", "description": "Vođeno testiranje upotrebljivosti za izabrane naloge nosilaca. Podrazumevano isključeno.",
+    "campaigns": "Kampanje", "newCampaign": "Nova kampanja", "name": "Naziv", "version": "Verzija scenarija",
+    "startsAt": "Početak", "endsAt": "Kraj (opciono)", "questionnaire": "Link ka USE upitniku (opciono)",
+    "create": "Kreiraj", "active": "Aktivna", "closed": "Zatvorena", "close": "Zatvori kampanju", "reopen": "Ponovo otvori",
+    "participants": "Učesnici", "searchEarner": "Pretraži nosioce po imenu ili emailu", "add": "Pozovi",
+    "enabled": "Praćenje", "consent": "Pristanak", "lastActivity": "Poslednja aktivnost", "pseudonym": "Pseudonim",
+    "consentStatus": { "invited": "Pozvan", "accepted": "Prihvatio", "declined": "Odbio", "finished": "Završio", "withdrawn": "Povukao" },
+    "summary": "Pregled po scenarijima", "scenario": "Scenario", "started": "Započeto", "completed": "Završeno",
+    "skipped": "Preskočeno", "verified": "Potvrđeno", "selfReported": "Samoprijavljeno", "medianTime": "Medijana aktivnog vremena",
+    "helpRate": "Koristili pomoć", "instructorRate": "Pomoć nastavnika", "attempts": "Pokušaji", "outcome": "Ishod",
+    "time": "Aktivno vreme", "helpCount": "Pomoć", "comment": "Komentar", "export": "Izvezi CSV",
+    "noCampaign": "Kreirajte kampanju za početak.", "none": "Još nema podataka.", "detail": "Pokušaji učesnika",
+    "dataNote": "Preskočeni i nezapočeti scenariji prikazuju se kao neprocenjeni, nikad kao neuspeh. Potvrđeni i samoprijavljeni ishodi su odvojeni."
+  }
+}
