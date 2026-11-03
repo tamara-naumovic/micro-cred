@@ -11,10 +11,10 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset password — CredSeal" },
-      { name: "description", content: "Set a new password for your CredSeal account." },
-      { property: "og:title", content: "Reset password — CredSeal" },
-      { property: "og:description", content: "Set a new password for your CredSeal account." },
+      { title: "Reset password — ISKRA" },
+      { name: "description", content: "Set a new password for your ISKRA account." },
+      { property: "og:title", content: "Reset password — ISKRA" },
+      { property: "og:description", content: "Set a new password for your ISKRA account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

@@ -19,8 +19,8 @@ export const Route = createFileRoute("/login")({
   },
   head: () => ({
     meta: [
-      { title: "Sign in — CredSeal" },
-      { name: "description", content: "Sign in to your CredSeal account." },
+      { title: "Sign in — ISKRA" },
+      { name: "description", content: "Sign in to your ISKRA account." },
     ],
   }),
   component: LoginPage,
@@ -50,7 +50,7 @@ function LoginPage() {
     <main className="mx-auto max-w-md px-4 py-10 md:px-8 md:py-14">
       <div className="mb-8 text-center">
         <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
-          Welcome to CredSeal
+          Welcome to ISKRA
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">Sign in to your account.</p>
       </div>
@@ -69,7 +69,7 @@ function LoginPage() {
       <Card className="mt-6 p-4 text-xs text-muted-foreground">
         <p className="font-medium text-foreground">Need an account?</p>
         <p className="mt-1">
-          Accounts on CredSeal are created by administrators. Contact your institution admin or the
+          Accounts on ISKRA are created by administrators. Contact your institution admin or the
           platform admin to be added.
         </p>
       </Card>

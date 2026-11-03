@@ -31,7 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type {
   Level,
   LearningSource,
-  MicroCredentialTemplate,
+  ISKRAentialTemplate,
   Participation,
   QaType,
   StackabilityType,
@@ -39,7 +39,7 @@ import type {
 } from "@/lib/types";
 
 export const Route = createFileRoute("/issuer/microcredential-templates/new")({
-  head: () => ({ meta: [{ title: "Create Micro-credential — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Create Micro-credential — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Guarded />
@@ -166,7 +166,7 @@ function Form() {
         qaPaths.push(path);
       }
 
-      const tpl: MicroCredentialTemplate = {
+      const tpl: ISKRAentialTemplate = {
         id,
         title,
         description,

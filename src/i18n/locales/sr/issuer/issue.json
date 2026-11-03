@@ -1,7 +1,7 @@
 {
   "issue": {
     "single": {
-      "headTitle": "Direktno izdavanje — MicroCred",
+      "headTitle": "Direktno izdavanje — ISKRA",
       "title": "Direktno izdavanje",
       "description": "Izdajte mikrokredencijale direktno jednom ili više nosilaca. Većina metapodataka dolazi iz šablona; polja po primaocu unose se ispod.",
       "fields": {
@@ -33,7 +33,7 @@
       }
     },
     "bulk": {
-      "headTitle": "Grupno izdavanje — MicroCred",
+      "headTitle": "Grupno izdavanje — ISKRA",
       "title": "Grupno izdavanje",
       "description": "Nalepite CSV ili otpremite .csv datoteku za grupno izdavanje kredencijala.",
       "fields": {

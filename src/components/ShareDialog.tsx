@@ -56,7 +56,7 @@ export function ShareDialog({ url, title, summary, trigger, qrId = "share-qr", c
       }
       return `https://www.linkedin.com/profile/add?${params.toString()}`;
     }
-    return `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(absoluteUrl)}&title=${encodeURIComponent(title)}${summary ? `&summary=${encodeURIComponent(summary)}` : ""}&source=MicroCred`;
+    return `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(absoluteUrl)}&title=${encodeURIComponent(title)}${summary ? `&summary=${encodeURIComponent(summary)}` : ""}&source=ISKRA`;
   }, [absoluteUrl, certification, title, summary]);
 
 

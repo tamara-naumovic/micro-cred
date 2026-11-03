@@ -1,12 +1,12 @@
 {
   "manual": {
-    "headTitle": "Manual — MicroCred",
+    "headTitle": "Manual — ISKRA",
     "title": "Manual",
     "description": "A guide to the platform — what each section does and how to use it.",
     "restartTour": "Restart guided tour",
     "gettingStarted": {
       "title": "Getting started",
-      "p1": "MicroCred lets your institution design, issue and manage verifiable micro-credentials. Every issued credential is anchored on the blockchain so anyone can independently verify it.",
+      "p1": "ISKRA lets your institution design, issue and manage verifiable micro-credentials. Every issued credential is anchored on the blockchain so anyone can independently verify it.",
       "p2": "Below you'll find more detail on each part of the platform. Use the \"Open …\" links to jump straight to the matching page.",
       "staffNote": " As a staff member you see the sections relevant to the micro-credentials you are assigned to."
     },

@@ -22,7 +22,7 @@ luka@student.fon.bg.ac.rs,Pass with distinction,
 sara@student.fon.bg.ac.rs,Pass,2028-06-30`;
 
 export const Route = createFileRoute("/issuer/issue/bulk")({
-  head: () => ({ meta: [{ title: "Bulk Issuance — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Bulk Issuance — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Bulk />

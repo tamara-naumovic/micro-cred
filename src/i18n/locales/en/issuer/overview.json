@@ -1,6 +1,6 @@
 {
   "overview": {
-    "headTitle": "Institution Dashboard — MicroCred",
+    "headTitle": "Institution Dashboard — ISKRA",
     "title": "Institution Dashboard",
     "descriptionAdmin": "Faculty of organizational sciences — operations, governance and blockchain status for your institution.",
     "descriptionStaff": "Faculty of organizational sciences — your assigned micro-credentials and issuance activity.",
@@ -126,7 +126,7 @@
       "viewAll": "View all activity"
     },
     "filters": {
-      "allMicroCredentials": "All micro-credentials"
+      "allISKRAentials": "All micro-credentials"
     },
     "buttons": {
       "directIssue": "Direct issue",

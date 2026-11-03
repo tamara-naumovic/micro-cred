@@ -5,7 +5,7 @@ import { PageShell } from "@/components/PageShell";
 import { NotificationsList } from "@/components/NotificationsList";
 
 export const Route = createFileRoute("/earner/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Notifications — ISKRA" }] }),
   component: () => (
     <RoleGuard role="earner">
       <Page />

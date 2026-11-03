@@ -2,7 +2,7 @@
   "overview": {
     "title": "Administracija sistema",
     "description": "Nadzor institucija, korisnika i integriteta platforme.",
-    "head": "Administrator platforme — CredSeal",
+    "head": "Administrator platforme — ISKRA",
     "metrics": {
       "users": "Korisnici",
       "organizations": "Institucije",
@@ -23,7 +23,7 @@
       "sent": "Link za resetovanje poslat na {{email}}",
       "failed": "Slanje linka nije uspelo"
     },
-    "head": "Korisnici — CredSeal administracija",
+    "head": "Korisnici — ISKRA administracija",
     "title": "Korisnici",
     "description": "Svi registrovani korisnici po ulogama.",
     "search": "Pretraga po imenu, email-u ili ulozi",
@@ -39,7 +39,7 @@
     "add": {
       "trigger": "Dodaj korisnika",
       "title": "Dodaj korisnika",
-      "description": "Kreirajte novi nalog ili pozovite osobu na CredSeal.",
+      "description": "Kreirajte novi nalog ili pozovite osobu na ISKRA.",
       "submit": "Kreiraj",
       "tabSingle": "Pojedinačno",
       "tabBulk": "Grupno (CSV)"
@@ -125,7 +125,7 @@
     }
   },
   "organizations": {
-    "head": "Institucije — CredSeal administracija",
+    "head": "Institucije — ISKRA administracija",
     "title": "Institucije",
     "description": "Izdavaoci registrovani na platformi.",
     "since": "od",
@@ -148,7 +148,7 @@
     }
   },
   "registrations": {
-    "head": "Zahtevi za registraciju — CredSeal administracija",
+    "head": "Zahtevi za registraciju — ISKRA administracija",
     "title": "Zahtevi za registraciju",
     "description": "Odobrite ili odbijte institucije koje se prijavljuju na platformu.",
     "table": {
@@ -164,7 +164,7 @@
     "rejected": "Odbijeno"
   },
   "roles": {
-    "head": "Uloge i dozvole — CredSeal administracija",
+    "head": "Uloge i dozvole — ISKRA administracija",
     "title": "Uloge i dozvole",
     "description": "Pregled ovlašćenja za svaku ulogu na platformi.",
     "items": {
@@ -191,12 +191,12 @@
     }
   },
   "activity": {
-    "head": "Aktivnosti — CredSeal administracija",
+    "head": "Aktivnosti — ISKRA administracija",
     "title": "Aktivnosti na platformi",
     "description": "Tok događaja na nivou cele platforme."
   },
   "audit": {
-    "head": "Revizorski trag — CredSeal administracija",
+    "head": "Revizorski trag — ISKRA administracija",
     "title": "Revizorski trag",
     "description": "Zapis radnji po ulogama, otporan na neovlašćene izmene.",
     "table": {
@@ -207,7 +207,7 @@
     }
   },
   "settings": {
-    "head": "Podešavanja platforme — CredSeal administracija",
+    "head": "Podešavanja platforme — ISKRA administracija",
     "title": "Podešavanja platforme",
     "description": "Globalna konfiguracija i kontrole prototipa.",
     "issuancePolicy": "Politika izdavanja",

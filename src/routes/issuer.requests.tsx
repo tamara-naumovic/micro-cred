@@ -30,7 +30,7 @@ import { useStore } from "@/lib/store";
 import { LIFECYCLE_STAGES, type RequestStatus } from "@/lib/types";
 
 export const Route = createFileRoute("/issuer/requests")({
-  head: () => ({ meta: [{ title: "Issuance Requests — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Issuance Requests — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Queue />

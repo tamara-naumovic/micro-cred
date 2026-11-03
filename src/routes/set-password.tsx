@@ -11,8 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/set-password")({
   head: () => ({
     meta: [
-      { title: "Set your password — MicroCred" },
-      { name: "description", content: "Choose a password for your new MicroCred account." },
+      { title: "Set your password — ISKRA" },
+      { name: "description", content: "Choose a password for your new ISKRA account." },
     ],
   }),
   component: SetPasswordPage,
@@ -120,7 +120,7 @@ function SetPasswordPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           {flowType === "recovery"
             ? "Choose a new password for your account."
-            : "Welcome! Choose a password to activate your MicroCred account."}
+            : "Welcome! Choose a password to activate your ISKRA account."}
         </p>
       </div>
 

@@ -14,10 +14,10 @@ import { useStore } from "@/lib/store";
 export const Route = createFileRoute("/admin/registrations")({
   head: () => ({
     meta: [
-      { title: "Registration Requests — CredSeal Admin" },
-      { name: "description", content: "Approve or reject institutions applying to join the CredSeal platform." },
-      { property: "og:title", content: "Registration Requests — CredSeal Admin" },
-      { property: "og:description", content: "Approve or reject institutions applying to join the CredSeal platform." },
+      { title: "Registration Requests — ISKRA Admin" },
+      { name: "description", content: "Approve or reject institutions applying to join the ISKRA platform." },
+      { property: "og:title", content: "Registration Requests — ISKRA Admin" },
+      { property: "og:description", content: "Approve or reject institutions applying to join the ISKRA platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

@@ -46,7 +46,7 @@ const RENEWAL_STEPS = [
 ] as const;
 
 export const Route = createFileRoute("/issuer/credentials")({
-  head: () => ({ meta: [{ title: "Issued Credentials — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Issued Credentials — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <List />

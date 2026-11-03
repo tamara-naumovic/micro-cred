@@ -34,7 +34,7 @@ import type { IssuedCredential } from "@/lib/types";
 
 
 export const Route = createFileRoute("/earner/credentials/")({
-  head: () => ({ meta: [{ title: "My credentials — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "My credentials — ISKRA" }] }),
   component: () => (
     <RoleGuard role="earner">
       <List />

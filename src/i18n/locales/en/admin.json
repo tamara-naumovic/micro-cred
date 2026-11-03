@@ -2,7 +2,7 @@
   "overview": {
     "title": "System Administration",
     "description": "Oversee organisations, users and platform integrity.",
-    "head": "System Admin — CredSeal",
+    "head": "System Admin — ISKRA",
     "metrics": {
       "users": "Users",
       "organizations": "Institutions",
@@ -23,7 +23,7 @@
       "sent": "Reset link sent to {{email}}",
       "failed": "Failed to send reset link"
     },
-    "head": "Users — CredSeal Admin",
+    "head": "Users — ISKRA Admin",
     "title": "Users",
     "description": "All registered users across roles.",
     "search": "Search by name, email or role",
@@ -39,7 +39,7 @@
     "add": {
       "trigger": "Add user",
       "title": "Add user",
-      "description": "Create a new account or invite a person to CredSeal.",
+      "description": "Create a new account or invite a person to ISKRA.",
       "submit": "Create",
       "tabSingle": "Single",
       "tabBulk": "Bulk (CSV)"
@@ -125,7 +125,7 @@
     }
   },
   "organizations": {
-    "head": "Institutions — CredSeal Admin",
+    "head": "Institutions — ISKRA Admin",
     "title": "Institutions",
     "description": "Issuers registered on the platform.",
     "since": "since",
@@ -148,7 +148,7 @@
     }
   },
   "registrations": {
-    "head": "Registrations — CredSeal Admin",
+    "head": "Registrations — ISKRA Admin",
     "title": "Registration Requests",
     "description": "Approve or reject organisations applying to join the platform.",
     "table": {
@@ -164,7 +164,7 @@
     "rejected": "Rejected"
   },
   "roles": {
-    "head": "Roles & Permissions — CredSeal Admin",
+    "head": "Roles & Permissions — ISKRA Admin",
     "title": "Roles & Permissions",
     "description": "Capability mapping for each role on the platform.",
     "items": {
@@ -191,12 +191,12 @@
     }
   },
   "activity": {
-    "head": "Activity — CredSeal Admin",
+    "head": "Activity — ISKRA Admin",
     "title": "Platform Activity",
     "description": "Live stream of platform-wide events."
   },
   "audit": {
-    "head": "Audit Trail — CredSeal Admin",
+    "head": "Audit Trail — ISKRA Admin",
     "title": "Audit Trail",
     "description": "Tamper-evident record of role-based actions.",
     "table": {
@@ -207,7 +207,7 @@
     }
   },
   "settings": {
-    "head": "Platform Settings — CredSeal Admin",
+    "head": "Platform Settings — ISKRA Admin",
     "title": "Platform Settings",
     "description": "Global configuration and prototype controls.",
     "issuancePolicy": "Issuance policy",

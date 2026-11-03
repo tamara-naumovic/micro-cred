@@ -1,7 +1,7 @@
 {
   "issue": {
     "single": {
-      "headTitle": "Direct Issuance — MicroCred",
+      "headTitle": "Direct Issuance — ISKRA",
       "title": "Direct Issuance",
       "description": "Issue micro-credentials directly to one or more earners. Most metadata comes from the template; per-recipient fields are entered below.",
       "fields": {
@@ -33,7 +33,7 @@
       }
     },
     "bulk": {
-      "headTitle": "Bulk Issuance — MicroCred",
+      "headTitle": "Bulk Issuance — ISKRA",
       "title": "Bulk Issuance",
       "description": "Paste a CSV or upload a .csv file to issue many credentials at once.",
       "fields": {

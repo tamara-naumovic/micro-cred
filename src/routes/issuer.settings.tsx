@@ -15,7 +15,7 @@ import { useStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/issuer/settings")({
-  head: () => ({ meta: [{ title: "Settings — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Settings — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <SettingsPage />

@@ -38,7 +38,7 @@ export function buildVcJson(input: VcInput): Record<string, unknown> {
       "https://europass.eu/ns/credential/v1",
     ],
     id: input.vcId || `urn:microcred:${input.credentialId}`,
-    type: ["VerifiableCredential", "MicroCredential"],
+    type: ["VerifiableCredential", "ISKRAential"],
     issuer: { id: `urn:issuer:${input.issuerId}`, name: input.issuerName },
     issuanceDate: input.issuedAt,
     expirationDate: input.expiresAt ?? null,
@@ -99,7 +99,7 @@ export interface TemplateInput {
 
 export function buildTemplateCanonicalPayload(input: TemplateInput): Record<string, unknown> {
   return {
-    type: ["MicroCredentialTemplate"],
+    type: ["ISKRAentialTemplate"],
     id: `urn:template:${input.templateId}`,
     version: input.version,
     issuer: { id: `urn:issuer:${input.issuerId}`, name: input.issuerName },

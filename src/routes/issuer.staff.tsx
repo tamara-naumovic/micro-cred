@@ -29,7 +29,7 @@ const PAGE_SIZE = 10;
 
 
 export const Route = createFileRoute("/issuer/staff")({
-  head: () => ({ meta: [{ title: "Staff — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Staff — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <StaffPage />

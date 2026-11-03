@@ -6,7 +6,7 @@
   },
   "earner": {
     "welcome": {
-      "title": "Dobrodošli na MicroCred!",
+      "title": "Dobrodošli na ISKRA!",
       "description": "Kratak vodič kroz ključne delove platforme. Možete ga preskočiti i ponovo pokrenuti kasnije sa stranice <b>Uputstvo</b>."
     },
     "dashboard": {
@@ -48,7 +48,7 @@
   },
   "issuer": {
     "welcome": {
-      "title": "Dobrodošli na MicroCred za institucije!",
+      "title": "Dobrodošli na ISKRA za institucije!",
       "description": "Kratak vodič kroz ključne delove platforme. Možete ga preskočiti i ponovo pokrenuti kasnije sa stranice <b>Uputstvo</b>."
     },
     "overview": {

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/issuer/profile")({
-  head: () => ({ meta: [{ title: "Public Profile — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Public Profile — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Profile />

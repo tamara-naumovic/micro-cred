@@ -19,7 +19,7 @@ import { useStore } from "@/lib/store";
 import { resetEarnerTour, startEarnerTour } from "@/lib/tour/earnerTour";
 
 export const Route = createFileRoute("/earner/manual")({
-  head: () => ({ meta: [{ title: "Manual — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Manual — ISKRA" }] }),
   component: () => (
     <RoleGuard role="earner">
       <Manual />

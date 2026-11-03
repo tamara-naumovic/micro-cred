@@ -18,7 +18,7 @@ import { IssuanceResultDialog, type IssuanceResultRow } from "@/components/Issua
 import { issueCredentialsBatch } from "@/lib/chain/anchor.functions";
 
 export const Route = createFileRoute("/issuer/issue/")({
-  head: () => ({ meta: [{ title: "Direct Issuance — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Direct Issuance — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Direct />

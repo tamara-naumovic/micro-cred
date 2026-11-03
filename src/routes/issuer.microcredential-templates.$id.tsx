@@ -28,7 +28,7 @@ async function openQaDocument(path: string, errorMsg: string) {
 }
 
 export const Route = createFileRoute("/issuer/microcredential-templates/$id")({
-  head: () => ({ meta: [{ title: "Micro-credential — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Micro-credential — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Detail />

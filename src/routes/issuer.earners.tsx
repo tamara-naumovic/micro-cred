@@ -26,7 +26,7 @@ const PAGE_SIZE = 10;
 
 
 export const Route = createFileRoute("/issuer/earners")({
-  head: () => ({ meta: [{ title: "Earners — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Earners — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <EarnersPage />

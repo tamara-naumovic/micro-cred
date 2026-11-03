@@ -67,12 +67,12 @@ import { useStore } from "@/lib/store";
 import type {
   CredentialApplication,
   IssuedCredential,
-  MicroCredentialTemplate,
+  ISKRAentialTemplate,
   MockUser,
 } from "@/lib/types";
 
 export const Route = createFileRoute("/issuer/")({
-  head: () => ({ meta: [{ title: "Institution Dashboard — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Institution Dashboard — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Overview />
@@ -466,7 +466,7 @@ function DashboardFilters({
 }: {
   templateFilter: string;
   onTemplate: (id: string) => void;
-  templates: MicroCredentialTemplate[];
+  templates: ISKRAentialTemplate[];
 }) {
   const { t } = useTranslation("issuer");
   return (
@@ -476,7 +476,7 @@ function DashboardFilters({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">{t("overview.filters.allMicroCredentials")}</SelectItem>
+          <SelectItem value="all">{t("overview.filters.allISKRAentials")}</SelectItem>
           {templates.map((tmpl) => (
             <SelectItem key={tmpl.id} value={tmpl.id}>
               {tmpl.title}
@@ -830,7 +830,7 @@ function TopTemplatesTable({
   templates,
   credentials,
 }: {
-  templates: MicroCredentialTemplate[];
+  templates: ISKRAentialTemplate[];
   credentials: IssuedCredential[];
 }) {
   const { t } = useTranslation("issuer");
@@ -1124,7 +1124,7 @@ function LearnerOverview({
 function TemplateStatusPanel({
   templates,
 }: {
-  templates: MicroCredentialTemplate[];
+  templates: ISKRAentialTemplate[];
   credentials: IssuedCredential[];
 }) {
   const { t } = useTranslation("issuer");

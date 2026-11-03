@@ -14,7 +14,7 @@ function IssuerNotifications() {
 }
 
 export const Route = createFileRoute("/issuer/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Notifications — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <IssuerNotifications />

@@ -188,7 +188,7 @@
     "title": "Javni profil",
     "description": "Jedinstvena stranica koja okuplja sve kredencijale koje ste označili kao javne. Podelite je na LinkedIn-u, putem linka ili QR koda.",
     "shareBtn": "Podeli profil",
-    "shareSummary": "Javni profil mikrokredencijala korisnika {{name}} na MicroCred-u.",
+    "shareSummary": "Javni profil mikrokredencijala korisnika {{name}} na ISKRA-u.",
     "shareTitle": "{{name}} — Verifikovani kredencijali",
     "publicBadge": "{{count}} javnih",
     "totalBadge": "{{count}} ukupno",

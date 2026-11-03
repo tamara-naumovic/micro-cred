@@ -19,7 +19,7 @@
       "stackable": "Stackable towards another credential"
     },
     "index": {
-      "headTitle": "Micro-credentials — MicroCred",
+      "headTitle": "Micro-credentials — ISKRA",
       "title": "Micro-credentials",
       "titleStaff": "My Micro-credentials",
       "description": "Define what credentials your institution can issue and assign them to staff.",
@@ -51,7 +51,7 @@
       }
     },
     "new": {
-      "headTitle": "Create Micro-credential — MicroCred",
+      "headTitle": "Create Micro-credential — ISKRA",
       "title": "Create Micro-credential",
       "description": "Define a new micro-credential offered by your organisation.",
       "noPermission": "You don't have permission to create micro-credentials.",
@@ -115,7 +115,7 @@
       }
     },
     "detail": {
-      "headTitle": "Micro-credential — MicroCred",
+      "headTitle": "Micro-credential — ISKRA",
       "notFoundTitle": "Micro-credential not found",
       "backButton": "Back",
       "allLink": "All micro-credentials",

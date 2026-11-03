@@ -10,7 +10,7 @@ import { DashboardHomeLink } from "@/components/DashboardHomeLink";
 export const Route = createFileRoute("/profile/$token")({
   head: () => ({
     meta: [
-      { title: "Shared earner profile — MicroCred" },
+      { title: "Shared earner profile — ISKRA" },
       { name: "description", content: "Publicly shared earner profile." },
       { name: "robots", content: "noindex" },
     ],

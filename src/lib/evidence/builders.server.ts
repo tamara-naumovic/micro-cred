@@ -185,7 +185,7 @@ export function buildCredentialJson(loaded: LoadedCredential): string {
   const doc: Record<string, unknown> = {
     "@context": ["https://www.w3.org/2018/credentials/v1"],
     id: publicId,
-    type: ["VerifiableCredential", "MicroCredential"],
+    type: ["VerifiableCredential", "ISKRAential"],
     issuer: {
       id: `urn:microcred:issuer:${cred.issuer_id}`,
       name: cred.issuer_name_snapshot ?? cred.issuer_name,
@@ -694,7 +694,7 @@ export async function buildInstructionsPdf(): Promise<Uint8Array> {
 export function buildReadme(loaded: LoadedCredential): string {
   const { cred, verifyUrl, publicId } = loaded;
   const lines: string[] = [];
-  lines.push("MicroCred — Credential Evidence Package");
+  lines.push("ISKRA — Credential Evidence Package");
   lines.push("=".repeat(60));
   lines.push("");
   lines.push(`Title:    ${cred.title}`);

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/earner/applications")({
-  head: () => ({ meta: [{ title: "Applications — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Applications — ISKRA" }] }),
   component: () => (
     <RoleGuard role="earner">
       <Apps />
