@@ -386,9 +386,8 @@ export function AppSidebarLayout() {
           <SidebarContent>
             <div className="px-3 py-4">
               <Link to="/" className="flex items-center gap-2">
-                <BrandMark size={32} />
+                <BrandMark height={36} />
                 <div className="leading-tight">
-                  <div className="text-sm font-semibold">CredSeal</div>
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     {roleLabel}
                   </div>
