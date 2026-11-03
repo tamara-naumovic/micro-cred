@@ -63,12 +63,12 @@ function Home() {
           <h1 className="max-w-3xl font-display text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl">
             A trustworthy home for higher education{" "}
             <span className="bg-gradient-to-r from-primary via-purple to-success bg-clip-text text-transparent">
-              micro-credentials
+              verifiable credentials
             </span>
             .
           </h1>
           <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-            CredSeal lets accredited issuers design, award and revoke micro-credentials, and lets
+            ISKRA lets accredited issuers design, award and revoke verifiable credentials, and lets
             employers and verifiers check them in one click — with controlled visibility set by
             the earner.
           </p>

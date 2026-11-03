@@ -15,9 +15,9 @@ export function PublicLayout() {
           <Link to="/" className="flex items-center gap-2">
             <BrandMark size={36} />
             <div className="leading-tight">
-              <div className="font-display text-base font-semibold">CredSeal</div>
+              <div className="font-display text-base font-semibold">ISKRA</div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Verified skills · Trusted credentials
+                INTEGRATED SYSTEM FOR KNOWLEDGE RECOGNITION AND ADVANCEMENT
               </div>
             </div>
           </Link>
