@@ -213,7 +213,11 @@ export function EvaluationTaskPanel() {
                   <Button size="sm" variant="outline" onClick={() => void ev.pause()}><Pause className="mr-1 h-3.5 w-3.5" />{t("actions.pause")}</Button>
                 )}
                 <Button size="sm" variant="outline" onClick={() => void ev.skip()}><SkipForward className="mr-1 h-3.5 w-3.5" />{t("actions.skip")}</Button>
-                <Button size="sm" variant="outline" onClick={() => { void ev.openHelp(); window.open("/earner/manual", "_blank", "noopener"); }}><LifeBuoy className="mr-1 h-3.5 w-3.5" />{t("actions.help")}</Button>
+                <Button size="sm" variant="outline" asChild>
+                  <a href="/earner/manual" target="_blank" rel="noopener noreferrer" onClick={() => { void ev.openHelp(); }}>
+                    <LifeBuoy className="mr-1 h-3.5 w-3.5" />{t("actions.help")}
+                  </a>
+                </Button>
                 <Button size="sm" onClick={() => setFinishing(true)}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />{t("actions.finish")}</Button>
               </div>
               <button className="flex w-full items-center justify-center gap-1 text-xs text-muted-foreground underline" onClick={() => ev.setPanelOpen(true)}>

@@ -180,6 +180,7 @@ export function EvaluationProvider({ children }: { children: ReactNode }) {
     const id = activeAttempt.id;
     await logEvent("scenario_skipped");
     await patchAttempt(id, { ...freeze(activeAttempt), status: "skipped", outcome: outcomeOnSkip(activeAttempt.outcome as Outcome), ended_at: new Date().toISOString() });
+    setPanelOpen(true);
   }, [activeAttempt, patchAttempt, logEvent]);
 
   const complete = useCallback(async (selfReportedDone: boolean, feedback: string) => {
@@ -191,6 +192,7 @@ export function EvaluationProvider({ children }: { children: ReactNode }) {
       feedback_text: feedback.trim() ? feedback.trim().slice(0, 2000) : null,
       ...(outcome === "self_reported_success" ? { outcome_source: "self_report" } as any : {}),
     });
+    setPanelOpen(true);
   }, [activeAttempt, patchAttempt, logEvent]);
 
   const openHelp = useCallback(async () => {
