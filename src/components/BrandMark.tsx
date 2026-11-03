@@ -1,18 +1,20 @@
+import logoAsset from "@/assets/iskra-fon-logo.png.asset.json";
+
 interface BrandMarkProps {
-  size?: number;
+  height?: number;
   className?: string;
 }
 
 /**
- * CredSeal brand mark — rendered from the uploaded PNG asset.
+ * ISKRA FON brand logo — rendered from the CDN-hosted asset.
  */
-export function BrandMark({ size = 36, className }: BrandMarkProps) {
+export function BrandMark({ height = 36, className }: BrandMarkProps) {
   return (
     <img
-      src="/brand-mark.png"
-      width={size}
-      height={size}
-      alt="CredSeal"
+      src={logoAsset.url}
+      width={Math.round((height * 1920) / 737)}
+      height={height}
+      alt="ISKRA FON"
       className={className}
       style={{ display: "inline-block", objectFit: "contain" }}
     />
