@@ -17,6 +17,7 @@ import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as AdminEvaluationRouteImport } from './routes/admin.evaluation'
 import { Route as AdminOrganizationsRouteImport } from './routes/admin.organizations'
 import { Route as AdminRegistrationsRouteImport } from './routes/admin.registrations'
 import { Route as AdminRolesRouteImport } from './routes/admin.roles'
@@ -93,6 +94,11 @@ const AdminActivityRoute = AdminActivityRouteImport.update({
 const AdminAuditRoute = AdminAuditRouteImport.update({
   id: '/admin/audit',
   path: '/admin/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEvaluationRoute = AdminEvaluationRouteImport.update({
+  id: '/admin/evaluation',
+  path: '/admin/evaluation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminOrganizationsRoute = AdminOrganizationsRouteImport.update({
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/set-password': typeof SetPasswordRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/evaluation': typeof AdminEvaluationRoute
   '/admin/organizations': typeof AdminOrganizationsRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/roles': typeof AdminRolesRoute
@@ -342,6 +349,7 @@ export interface FileRoutesByTo {
   '/set-password': typeof SetPasswordRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/evaluation': typeof AdminEvaluationRoute
   '/admin/organizations': typeof AdminOrganizationsRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/roles': typeof AdminRolesRoute
@@ -390,6 +398,7 @@ export interface FileRoutesById {
   '/set-password': typeof SetPasswordRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/evaluation': typeof AdminEvaluationRoute
   '/admin/organizations': typeof AdminOrganizationsRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/roles': typeof AdminRolesRoute
@@ -439,6 +448,7 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/admin/activity'
     | '/admin/audit'
+    | '/admin/evaluation'
     | '/admin/organizations'
     | '/admin/registrations'
     | '/admin/roles'
@@ -486,6 +496,7 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/admin/activity'
     | '/admin/audit'
+    | '/admin/evaluation'
     | '/admin/organizations'
     | '/admin/registrations'
     | '/admin/roles'
@@ -533,6 +544,7 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/admin/activity'
     | '/admin/audit'
+    | '/admin/evaluation'
     | '/admin/organizations'
     | '/admin/registrations'
     | '/admin/roles'
@@ -581,6 +593,7 @@ export interface RootRouteChildren {
   SetPasswordRoute: typeof SetPasswordRoute
   AdminActivityRoute: typeof AdminActivityRoute
   AdminAuditRoute: typeof AdminAuditRoute
+  AdminEvaluationRoute: typeof AdminEvaluationRoute
   AdminOrganizationsRoute: typeof AdminOrganizationsRoute
   AdminRegistrationsRoute: typeof AdminRegistrationsRoute
   AdminRolesRoute: typeof AdminRolesRoute
@@ -677,6 +690,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/audit'
       fullPath: '/admin/audit'
       preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/evaluation': {
+      id: '/admin/evaluation'
+      path: '/admin/evaluation'
+      fullPath: '/admin/evaluation'
+      preLoaderRoute: typeof AdminEvaluationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/organizations': {
@@ -949,6 +969,7 @@ const rootRouteChildren: RootRouteChildren = {
   SetPasswordRoute: SetPasswordRoute,
   AdminActivityRoute: AdminActivityRoute,
   AdminAuditRoute: AdminAuditRoute,
+  AdminEvaluationRoute: AdminEvaluationRoute,
   AdminOrganizationsRoute: AdminOrganizationsRoute,
   AdminRegistrationsRoute: AdminRegistrationsRoute,
   AdminRolesRoute: AdminRolesRoute,

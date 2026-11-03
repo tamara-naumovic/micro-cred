@@ -79,6 +79,7 @@
       "roles": "Roles & Permissions",
       "registrations": "Registrations",
       "activity": "Activity",
+      "evaluation": "Evaluation",
       "audit": "Audit Trail",
       "settings": "Settings"
     }

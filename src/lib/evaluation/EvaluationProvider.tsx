@@ -125,7 +125,6 @@ export function EvaluationProvider({ children }: { children: ReactNode }) {
   const patchAttempt = useCallback(async (id: string, patch: Partial<EvalAttempt>) => {
     const { data } = await db.from("evaluation_attempts").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id).select("*").single();
     if (data) setAttempts((xs) => xs.map((x) => (x.id === id ? data : x)));
-    if (assignment) void db.from("evaluation_assignments").select("id").eq("id", assignment.id); // keep-alive no-op
     return data as EvalAttempt | null;
   }, [assignment]);
 
