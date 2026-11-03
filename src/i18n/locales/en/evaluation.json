@@ -27,6 +27,10 @@
     "verified": "Verified by the system", "allScenarios": "Show all scenarios"
   },
   "help": {
+    "saving": "Recording help…",
+    "requested": "Your need for help has been recorded. Contact your instructor directly — the platform does not send them a message. The task timer remains paused.",
+    "received": "Instructor assistance has been recorded. When ready, select “Back to the task”.",
+    "error": "Help could not be saved successfully. Please try again.",
     "opened": "The manual opened in a new tab. The task timer is paused while you read.",
     "needInstructor": "I need instructor help", "instructorHelped": "Instructor helped me", "back": "Back to the task"
   },
