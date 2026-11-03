@@ -1,0 +1,3 @@
+- [x] Load v1 scenarios when a campaign version has no scenarios, for participants and admin reports.
+- [x] Restrict the new-campaign version selector to available earner scenario versions.
+- [ ] Verify fallback tests and the authenticated evaluation page.
