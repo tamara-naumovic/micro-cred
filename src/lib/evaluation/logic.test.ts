@@ -1,7 +1,34 @@
 import { describe, it, expect } from "vitest";
-import { accumulateActive, outcomeOnSkip, outcomeOnComplete, nextAttemptNumber, sanitizeMeta, scenarioStatus } from "./logic";
+import { accumulateActive, outcomeOnSkip, outcomeOnComplete, nextAttemptNumber, sanitizeMeta, scenarioStatus, loadScenarioVersion, availableScenarioVersions } from "./logic";
 
 describe("evaluation rules", () => {
+  it("falls back from an empty v2 to the default v1 scenarios", async () => {
+    const calls: string[] = [];
+    const result = await loadScenarioVersion("v2", async (version) => {
+      calls.push(version);
+      return version === "v1" ? [{ id: "v1-e1", code: "E1" }] : [];
+    });
+    expect(calls).toEqual(["v2", "v1"]);
+    expect(result).toEqual([{ id: "v1-e1", code: "E1" }]);
+  });
+  it("keeps existing version-specific scenarios without loading v1", async () => {
+    const calls: string[] = [];
+    expect(await loadScenarioVersion("v2", async (version) => {
+      calls.push(version);
+      return [{ id: "v2-e1" }];
+    })).toEqual([{ id: "v2-e1" }]);
+    expect(calls).toEqual(["v2"]);
+  });
+  it("does not retry an empty v1 or hide a failed query", async () => {
+    const calls: string[] = [];
+    expect(await loadScenarioVersion("v1", async (version) => { calls.push(version); return []; })).toEqual([]);
+    expect(calls).toEqual(["v1"]);
+    await expect(loadScenarioVersion("v2", async () => { throw new Error("Denied"); })).rejects.toThrow("Denied");
+  });
+  it("offers only distinct versions present in the scenario data", () => {
+    expect(availableScenarioVersions([{ version: "v1" }, { version: "v1" }, { version: "v10" }, { version: "v2" }])).toEqual(["v1", "v2", "v10"]);
+    expect(availableScenarioVersions([])).toEqual([]);
+  });
   it("skipped scenario is not_assessed, never failed", () => {
     expect(outcomeOnSkip("not_assessed")).toBe("not_assessed");
     expect(outcomeOnSkip("failed")).toBe("not_assessed");

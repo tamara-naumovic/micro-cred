@@ -11,10 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/lib/store";
 import { median, toCsv } from "@/lib/evaluation/logic";
+import { loadEarnerScenarios, loadEarnerScenarioVersions } from "@/lib/evaluation/scenarios";
 
 export const Route = createFileRoute("/admin/evaluation")({
   head: () => ({
@@ -58,6 +60,7 @@ function EvaluationAdmin() {
   const [earners, setEarners] = useState<Row[]>([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [versions, setVersions] = useState<string[]>([]);
   const [form, setForm] = useState({ name: "", version: "v1", starts_at: "", ends_at: "", use_questionnaire_url: "" });
 
   const loadCampaigns = useCallback(async () => {
@@ -68,12 +71,12 @@ function EvaluationAdmin() {
 
   const loadCampaign = useCallback(async (id: string) => {
     const camp = campaigns.find((c) => c.id === id);
-    const [{ data: a }, { data: sc }] = await Promise.all([
+    const [{ data: a }, sc] = await Promise.all([
       db.from("evaluation_assignments").select("*").eq("campaign_id", id).order("invited_at"),
-      db.from("evaluation_scenarios").select("*").eq("role", "earner").eq("version", camp?.version ?? "v1").order("sort_order"),
+      loadEarnerScenarios<Row>(camp?.version),
     ]);
     setAssignments(a ?? []);
-    setScenarios(sc ?? []);
+    setScenarios(sc);
     const ids = (a ?? []).map((x: Row) => x.id);
     if (ids.length) {
       const { data: at } = await db.from("evaluation_attempts").select("*").in("assignment_id", ids).order("started_at");
@@ -82,6 +85,12 @@ function EvaluationAdmin() {
   }, [campaigns]);
 
   useEffect(() => { void loadCampaigns(); }, [loadCampaigns]);
+  useEffect(() => {
+    void loadEarnerScenarioVersions().then((available) => {
+      setVersions(available);
+      setForm((current) => ({ ...current, version: available.includes(current.version) ? current.version : available[0] ?? "" }));
+    }).catch((error) => toast.error(error.message));
+  }, []);
   useEffect(() => { if (campaignId) void loadCampaign(campaignId); }, [campaignId, loadCampaign]);
   useEffect(() => {
     (async () => {
@@ -100,7 +109,7 @@ function EvaluationAdmin() {
     : [];
 
   const createCampaign = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim() || !versions.includes(form.version)) return;
     const { error } = await db.from("evaluation_campaigns").insert({
       name: form.name.trim(), version: form.version || "v1",
       starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : new Date().toISOString(),
@@ -108,7 +117,7 @@ function EvaluationAdmin() {
       use_questionnaire_url: form.use_questionnaire_url.trim() || null, created_by: activeUser?.id,
     });
     if (error) return toast.error(error.message);
-    setForm({ name: "", version: "v1", starts_at: "", ends_at: "", use_questionnaire_url: "" });
+    setForm({ name: "", version: versions.includes("v1") ? "v1" : versions[0] ?? "", starts_at: "", ends_at: "", use_questionnaire_url: "" });
     setCampaignId(null);
     await loadCampaigns();
   };
@@ -192,13 +201,16 @@ function EvaluationAdmin() {
             <div className="space-y-2 border-t border-border pt-3">
               <div className="text-sm font-medium">{t("admin.newCampaign")}</div>
               <Input placeholder={t("admin.name")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <Input placeholder={t("admin.version")} value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} />
+              <Select value={form.version} onValueChange={(version) => setForm({ ...form, version })} disabled={!versions.length}>
+                <SelectTrigger aria-label={t("admin.version")}><SelectValue placeholder={t("admin.version")} /></SelectTrigger>
+                <SelectContent>{versions.map((version) => <SelectItem key={version} value={version}>{version}</SelectItem>)}</SelectContent>
+              </Select>
               <Label className="text-xs">{t("admin.startsAt")}</Label>
               <Input type="date" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
               <Label className="text-xs">{t("admin.endsAt")}</Label>
               <Input type="date" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
               <Input placeholder={t("admin.questionnaire")} value={form.use_questionnaire_url} onChange={(e) => setForm({ ...form, use_questionnaire_url: e.target.value })} />
-              <Button className="w-full" onClick={() => void createCampaign()}>{t("admin.create")}</Button>
+              <Button className="w-full" disabled={!versions.includes(form.version)} onClick={() => void createCampaign()}>{t("admin.create")}</Button>
             </div>
           </CardContent>
         </Card>

@@ -5,6 +5,24 @@ export type Outcome = "verified_success" | "self_reported_success" | "partial" |
 
 export const IDLE_PAUSE_MS = 60_000;
 
+export const DEFAULT_SCENARIO_VERSION = "v1";
+
+/** Only an empty successful read falls back; errors must remain errors. */
+export async function loadScenarioVersion<T>(
+  version: string | null | undefined,
+  fetchVersion: (version: string) => Promise<T[]>,
+): Promise<T[]> {
+  const requested = version || DEFAULT_SCENARIO_VERSION;
+  const scenarios = await fetchVersion(requested);
+  if (scenarios.length || requested === DEFAULT_SCENARIO_VERSION) return scenarios;
+  return fetchVersion(DEFAULT_SCENARIO_VERSION);
+}
+
+export function availableScenarioVersions(rows: { version: string }[]): string[] {
+  return [...new Set(rows.map((row) => row.version).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true }));
+}
+
 /** Active time accumulated so far, including the currently running interval. */
 export function accumulateActive(activeMs: number, lastResumedAt: string | null, status: string, now: number): number {
   if (status !== "in_progress" || !lastResumedAt) return activeMs;

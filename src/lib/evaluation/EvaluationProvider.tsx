@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/lib/store";
+import { loadEarnerScenarios } from "./scenarios";
 import {
   CLIENT_EVENT_TYPES, IDLE_PAUSE_MS, accumulateActive, nextAttemptNumber, outcomeOnComplete,
   outcomeOnSkip, pageEventFor, sanitizeMeta, type Outcome,
@@ -81,12 +82,12 @@ export function EvaluationProvider({ children }: { children: ReactNode }) {
     setQuestionnaireUrl(a.evaluation_campaigns?.use_questionnaire_url ?? null);
     try { setPostponed(sessionStorage.getItem(POSTPONE_KEY(a.id)) === "1"); } catch { /* ignore */ }
     if (a.consent_status !== "accepted") return;
-    const [{ data: sc }, { data: at }, { data: ses }] = await Promise.all([
-      db.from("evaluation_scenarios").select("*").eq("role", "earner").eq("version", a.evaluation_campaigns?.version ?? "v1").order("sort_order"),
+    const [sc, { data: at }, { data: ses }] = await Promise.all([
+      loadEarnerScenarios<EvalScenario>(a.evaluation_campaigns?.version),
       db.from("evaluation_attempts").select("*").eq("assignment_id", a.id).order("started_at"),
       db.from("evaluation_sessions").select("id").eq("assignment_id", a.id).eq("status", "active").order("started_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
-    setScenarios(sc ?? []);
+    setScenarios(sc);
     setAttempts(at ?? []);
     setSessionId(ses?.id ?? null);
   }, [isEarner, userId]);
