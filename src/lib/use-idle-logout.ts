@@ -4,7 +4,7 @@ import { useSignOut } from "@/lib/use-sign-out";
 
 const IDLE_MS = 45 * 60 * 1000;
 const CHECK_MS = 15 * 1000;
-const STORAGE_KEY = "credseal:lastActivity";
+const STORAGE_KEY = "iskra:lastActivity";
 
 export function useIdleLogout() {
   const { activeUser } = useStore();
