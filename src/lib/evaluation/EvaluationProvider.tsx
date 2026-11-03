@@ -224,7 +224,7 @@ export function EvaluationProvider({ children }: { children: ReactNode }) {
   }, [consent]);
   useEffect(() => {
     // create the session right after consent is first loaded
-    if (accepted && !sessionId && assignment) void ensureSession().then((sid) => sid && logEvent("session_started", {}, null));
+    if (accepted && !sessionId && assignment) void ensureSession().then((sid) => { if (sid) void logEvent("session_started", {}, null); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accepted, sessionId, assignment?.id]);
 
