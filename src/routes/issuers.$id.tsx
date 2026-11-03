@@ -6,12 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/lib/store";
-import type { MicroCredentialTemplate } from "@/lib/types";
+import type { ISKRAentialTemplate } from "@/lib/types";
 
 export const Route = createFileRoute("/issuers/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `Issuer profile — MicroCred` },
+      { title: `Issuer profile — ISKRA` },
       { name: "description", content: `Public issuer profile ${params.id}` },
     ],
   }),
@@ -129,7 +129,7 @@ function TemplateSection({
   issuerId,
 }: {
   title: string;
-  items: MicroCredentialTemplate[];
+  items: ISKRAentialTemplate[];
   issuerId: string;
 }) {
   if (items.length === 0) return null;

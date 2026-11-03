@@ -9,10 +9,10 @@ import { useStore } from "@/lib/store";
 export const Route = createFileRoute("/admin/activity")({
   head: () => ({
     meta: [
-      { title: "Platform Activity — CredSeal Admin" },
-      { name: "description", content: "Live stream of platform-wide events on CredSeal." },
-      { property: "og:title", content: "Platform Activity — CredSeal Admin" },
-      { property: "og:description", content: "Live stream of platform-wide events on CredSeal." },
+      { title: "Platform Activity — ISKRA Admin" },
+      { name: "description", content: "Live stream of platform-wide events on ISKRA." },
+      { property: "og:title", content: "Platform Activity — ISKRA Admin" },
+      { property: "og:description", content: "Live stream of platform-wide events on ISKRA." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

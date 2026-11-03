@@ -13,7 +13,7 @@ import { useStore } from "@/lib/store";
 import { resetIssuerTour, startIssuerTour, resetIssuerCredentialsTour } from "@/lib/tour/issuerTour";
 
 export const Route = createFileRoute("/issuer/manual")({
-  head: () => ({ meta: [{ title: "Manual — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Manual — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Manual />

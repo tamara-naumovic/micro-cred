@@ -101,7 +101,7 @@ export interface Organization {
   registeredAt: string;
 }
 
-export interface MicroCredentialTemplate {
+export interface ISKRAentialTemplate {
   id: string;
   title: string;
   description: string;

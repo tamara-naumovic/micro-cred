@@ -19,7 +19,7 @@ import { useStore } from "@/lib/store";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/earner/apply")({
-  head: () => ({ meta: [{ title: "Apply for credential — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Apply for credential — ISKRA" }] }),
   component: () => (
     <RoleGuard role="earner">
       <Apply />

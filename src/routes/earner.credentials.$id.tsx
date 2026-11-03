@@ -37,7 +37,7 @@ import { acceptCredential, rejectCredential } from "@/lib/chain/anchor.functions
 import type { SharingSettings, IssuedCredential } from "@/lib/types";
 
 export const Route = createFileRoute("/earner/credentials/$id")({
-  head: () => ({ meta: [{ title: "Credential — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Credential — ISKRA" }] }),
   component: () => (
     <RoleGuard role="earner">
       <Detail />

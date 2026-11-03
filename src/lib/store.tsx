@@ -22,7 +22,7 @@ import {
   type IssuedCredential,
   type Level,
   type LearningSource,
-  type MicroCredentialTemplate,
+  type ISKRAentialTemplate,
   type MockUser,
   type NonFormalSubcategory,
   type Organization,
@@ -40,7 +40,7 @@ import {
 const ROLE_KEY = "mc-active-user-v4";
 
 interface State {
-  templates: MicroCredentialTemplate[];
+  templates: ISKRAentialTemplate[];
   credentials: IssuedCredential[];
   applications: CredentialApplication[];
   notifications: AppNotification[];
@@ -101,7 +101,7 @@ interface StoreCtx extends State {
   ) => IssuedCredential[];
   bulkIssue: (templateId: string, rows: BulkRow[]) => IssuedCredential[];
   revokeCredential: (credentialId: string, reason: string) => void;
-  upsertTemplate: (t: MicroCredentialTemplate) => void;
+  upsertTemplate: (t: ISKRAentialTemplate) => void;
   archiveTemplate: (id: string) => void;
   assignTemplateUsers: (templateId: string, userIds: string[]) => Promise<void>;
 
@@ -149,7 +149,7 @@ const ROLE_PRIORITY: Record<string, number> = {
 // ============ Row mappers ============
 type Row = Record<string, unknown>;
 
-function mapTemplate(r: Row, orgName: Map<string, string>): MicroCredentialTemplate {
+function mapTemplate(r: Row, orgName: Map<string, string>): ISKRAentialTemplate {
   return {
     id: r.id as string,
     title: r.title as string,
@@ -166,21 +166,21 @@ function mapTemplate(r: Row, orgName: Map<string, string>): MicroCredentialTempl
     assessment: (r.assessment as string) ?? "",
     participation: (r.participation as Participation) ?? "online",
     qualityAssurance: (r.quality_assurance as string) ?? "",
-    qaType: ((r.qa_type as string) ?? "not_specified") as MicroCredentialTemplate["qaType"],
+    qaType: ((r.qa_type as string) ?? "not_specified") as ISKRAentialTemplate["qaType"],
     qaDocumentPath: (r.qa_document_path as string | null) ?? undefined,
     qaDocumentPaths: ((r.qa_document_paths as string[] | null) ?? []),
     prerequisites: (r.prerequisites as string) ?? "",
     prerequisitesNone: (r.prerequisites_none as boolean | null) ?? true,
     supervision: (r.supervision as string) ?? "",
-    supervisionType: (r.supervision_type as MicroCredentialTemplate["supervisionType"] | null) ?? undefined,
+    supervisionType: (r.supervision_type as ISKRAentialTemplate["supervisionType"] | null) ?? undefined,
     stackability: (r.stackability as string) ?? "",
-    stackabilityType: (r.stackability_type as MicroCredentialTemplate["stackabilityType"] | null) ?? undefined,
+    stackabilityType: (r.stackability_type as ISKRAentialTemplate["stackabilityType"] | null) ?? undefined,
     furtherInfo: (r.further_info as string | null) ?? undefined,
     expiryMode: ((r.expiry_mode as string | null) === "fixed_date" ? "fixed_date" : "never"),
     expiryDate: (r.expiry_date as string | null) ?? undefined,
     status: (r.status as TemplateStatus) ?? "draft",
     version: (r.version as string) ?? "1.0",
-    blockchainStatus: (r.blockchain_status as MicroCredentialTemplate["blockchainStatus"] | null) ?? "not_requested",
+    blockchainStatus: (r.blockchain_status as ISKRAentialTemplate["blockchainStatus"] | null) ?? "not_requested",
   };
 }
 

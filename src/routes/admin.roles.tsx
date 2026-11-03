@@ -17,10 +17,10 @@ const ROLES = [
 export const Route = createFileRoute("/admin/roles")({
   head: () => ({
     meta: [
-      { title: "Roles & Permissions — CredSeal Admin" },
-      { name: "description", content: "Capability mapping for each role on the CredSeal platform." },
-      { property: "og:title", content: "Roles & Permissions — CredSeal Admin" },
-      { property: "og:description", content: "Capability mapping for each role on the CredSeal platform." },
+      { title: "Roles & Permissions — ISKRA Admin" },
+      { name: "description", content: "Capability mapping for each role on the ISKRA platform." },
+      { property: "og:title", content: "Roles & Permissions — ISKRA Admin" },
+      { property: "og:description", content: "Capability mapping for each role on the ISKRA platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

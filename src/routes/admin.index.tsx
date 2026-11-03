@@ -10,10 +10,10 @@ import { useStore } from "@/lib/store";
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "System Administration — CredSeal" },
-      { name: "description", content: "Oversee institutions, users and platform integrity on CredSeal." },
-      { property: "og:title", content: "System Administration — CredSeal" },
-      { property: "og:description", content: "Oversee institutions, users and platform integrity on CredSeal." },
+      { title: "System Administration — ISKRA" },
+      { name: "description", content: "Oversee institutions, users and platform integrity on ISKRA." },
+      { property: "og:title", content: "System Administration — ISKRA" },
+      { property: "og:description", content: "Oversee institutions, users and platform integrity on ISKRA." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

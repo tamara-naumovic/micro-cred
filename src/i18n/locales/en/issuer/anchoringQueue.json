@@ -1,6 +1,6 @@
 {
   "anchoringQueue": {
-    "headTitle": "Blockchain Anchoring Queue — MicroCred",
+    "headTitle": "Blockchain Anchoring Queue — ISKRA",
     "title": "Blockchain Anchoring Queue",
     "description": "Independent of credential issuance. Templates and credentials are fully valid once published or issued — anchoring only adds an external integrity proof on Bloxberg.",
     "actions": {

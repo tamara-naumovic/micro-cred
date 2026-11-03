@@ -19,7 +19,7 @@
       "stackable": "Može se slagati ka drugom kredencijalu"
     },
     "index": {
-      "headTitle": "Mikrokredencijali — MicroCred",
+      "headTitle": "Mikrokredencijali — ISKRA",
       "title": "Mikrokredencijali",
       "titleStaff": "Moji mikrokredencijali",
       "description": "Definišite koje kredencijale vaša institucija može da izdaje i dodelite ih zaposlenima.",
@@ -51,7 +51,7 @@
       }
     },
     "new": {
-      "headTitle": "Kreiranje mikrokredencijala — MicroCred",
+      "headTitle": "Kreiranje mikrokredencijala — ISKRA",
       "title": "Kreiranje mikrokredencijala",
       "description": "Definišite novi mikrokredencijal koji vaša organizacija nudi.",
       "noPermission": "Nemate dozvolu za kreiranje mikrokredencijala.",
@@ -115,7 +115,7 @@
       }
     },
     "detail": {
-      "headTitle": "Mikrokredencijal — MicroCred",
+      "headTitle": "Mikrokredencijal — ISKRA",
       "notFoundTitle": "Mikrokredencijal nije pronađen",
       "backButton": "Nazad",
       "allLink": "Svi mikrokredencijali",

@@ -1,6 +1,6 @@
 {
   "requests": {
-    "headTitle": "Issuance Requests — MicroCred",
+    "headTitle": "Issuance Requests — ISKRA",
     "title": "Issuance Requests",
     "description": "Move each application through the lifecycle. The final step issues and signs the credential.",
     "filters": {

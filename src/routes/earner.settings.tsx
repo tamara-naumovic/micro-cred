@@ -22,7 +22,7 @@ import { getMyProfile, updateMyProfile, updateMyLanguage } from "@/lib/admin-use
 import { setAppLanguage, type AppLanguage } from "@/i18n";
 
 export const Route = createFileRoute("/earner/settings")({
-  head: () => ({ meta: [{ title: "Settings — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Settings — ISKRA" }] }),
   component: () => (
     <RoleGuard role="earner">
       <SettingsPage />

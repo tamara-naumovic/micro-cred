@@ -6,7 +6,7 @@
   },
   "earner": {
     "welcome": {
-      "title": "Welcome to MicroCred!",
+      "title": "Welcome to ISKRA!",
       "description": "A quick tour of the key parts of the platform. You can skip it and re-launch it later from the <b>Manual</b> page."
     },
     "dashboard": {
@@ -48,7 +48,7 @@
   },
   "issuer": {
     "welcome": {
-      "title": "Welcome to MicroCred for institutions!",
+      "title": "Welcome to ISKRA for institutions!",
       "description": "A quick tour of the key parts of the platform. You can skip it and re-launch it later from the <b>Manual</b> page."
     },
     "overview": {

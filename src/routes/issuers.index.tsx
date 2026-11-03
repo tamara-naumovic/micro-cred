@@ -9,7 +9,7 @@ import { useStore } from "@/lib/store";
 export const Route = createFileRoute("/issuers/")({
   head: () => ({
     meta: [
-      { title: "Issuer directory — MicroCred" },
+      { title: "Issuer directory — ISKRA" },
       { name: "description", content: "Browse all accredited issuers on the platform." },
     ],
   }),
@@ -39,7 +39,7 @@ function IssuerDirectory() {
           Issuer directory
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Accredited bodies that can issue micro-credentials on MicroCred.
+          Accredited bodies that can issue micro-credentials on ISKRA.
         </p>
       </div>
 

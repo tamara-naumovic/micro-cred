@@ -28,7 +28,7 @@ import { useTranslation } from "react-i18next";
 export const Route = createFileRoute("/verify/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `Verify ${params.id} — MicroCred` },
+      { title: `Verify ${params.id} — ISKRA` },
       { name: "description", content: "Public verification of a micro-credential." },
       { name: "robots", content: "noindex" },
     ],

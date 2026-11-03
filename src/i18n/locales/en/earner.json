@@ -188,7 +188,7 @@
     "title": "Public profile",
     "description": "A single shareable page that aggregates all credentials you've made public. Share it on LinkedIn, by link, or via QR.",
     "shareBtn": "Share profile",
-    "shareSummary": "{{name}}'s public micro-credential profile on MicroCred.",
+    "shareSummary": "{{name}}'s public micro-credential profile on ISKRA.",
     "shareTitle": "{{name}} — Verified credentials",
     "publicBadge": "{{count}} public",
     "totalBadge": "{{count}} total",

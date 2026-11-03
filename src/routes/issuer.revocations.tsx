@@ -35,7 +35,7 @@ import {
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/issuer/revocations")({
-  head: () => ({ meta: [{ title: "Revocations — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Revocations — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <Revocations />

@@ -14,10 +14,10 @@ import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({
     meta: [
-      { title: "Platform Settings — CredSeal Admin" },
-      { name: "description", content: "Global configuration and prototype controls for the CredSeal platform." },
-      { property: "og:title", content: "Platform Settings — CredSeal Admin" },
-      { property: "og:description", content: "Global configuration and prototype controls for the CredSeal platform." },
+      { title: "Platform Settings — ISKRA Admin" },
+      { name: "description", content: "Global configuration and prototype controls for the ISKRA platform." },
+      { property: "og:title", content: "Platform Settings — ISKRA Admin" },
+      { property: "og:description", content: "Global configuration and prototype controls for the ISKRA platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

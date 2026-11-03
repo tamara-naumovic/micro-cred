@@ -66,10 +66,10 @@ function mockUserToAppRole(u: MockUser): AppRole {
 export const Route = createFileRoute("/admin/users")({
   head: () => ({
     meta: [
-      { title: "Users — CredSeal Admin" },
-      { name: "description", content: "All registered CredSeal users across roles and institutions." },
-      { property: "og:title", content: "Users — CredSeal Admin" },
-      { property: "og:description", content: "All registered CredSeal users across roles and institutions." },
+      { title: "Users — ISKRA Admin" },
+      { name: "description", content: "All registered ISKRA users across roles and institutions." },
+      { property: "og:title", content: "Users — ISKRA Admin" },
+      { property: "og:description", content: "All registered ISKRA users across roles and institutions." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

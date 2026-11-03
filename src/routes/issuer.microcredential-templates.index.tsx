@@ -15,10 +15,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
-import type { MicroCredentialTemplate } from "@/lib/types";
+import type { ISKRAentialTemplate } from "@/lib/types";
 
 export const Route = createFileRoute("/issuer/microcredential-templates/")({
-  head: () => ({ meta: [{ title: "Micro-credentials — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Micro-credentials — ISKRA" }] }),
   component: () => (
     <RoleGuard role="issuer">
       <List />
@@ -100,7 +100,7 @@ function List() {
   };
 
 
-  const renderGrid = (list: MicroCredentialTemplate[]) => {
+  const renderGrid = (list: ISKRAentialTemplate[]) => {
     if (mine.length === 0) {
       return (
         <Card>

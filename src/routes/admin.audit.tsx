@@ -9,10 +9,10 @@ import { useStore } from "@/lib/store";
 export const Route = createFileRoute("/admin/audit")({
   head: () => ({
     meta: [
-      { title: "Audit Trail — CredSeal Admin" },
-      { name: "description", content: "Tamper-evident record of role-based actions across CredSeal." },
-      { property: "og:title", content: "Audit Trail — CredSeal Admin" },
-      { property: "og:description", content: "Tamper-evident record of role-based actions across CredSeal." },
+      { title: "Audit Trail — ISKRA Admin" },
+      { name: "description", content: "Tamper-evident record of role-based actions across ISKRA." },
+      { property: "og:title", content: "Audit Trail — ISKRA Admin" },
+      { property: "og:description", content: "Tamper-evident record of role-based actions across ISKRA." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

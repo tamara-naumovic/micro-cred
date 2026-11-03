@@ -30,10 +30,10 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/admin/organizations")({
   head: () => ({
     meta: [
-      { title: "Institutions — CredSeal Admin" },
-      { name: "description", content: "Issuer institutions registered on the CredSeal platform." },
-      { property: "og:title", content: "Institutions — CredSeal Admin" },
-      { property: "og:description", content: "Issuer institutions registered on the CredSeal platform." },
+      { title: "Institutions — ISKRA Admin" },
+      { name: "description", content: "Issuer institutions registered on the ISKRA platform." },
+      { property: "og:title", content: "Institutions — ISKRA Admin" },
+      { property: "og:description", content: "Issuer institutions registered on the ISKRA platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

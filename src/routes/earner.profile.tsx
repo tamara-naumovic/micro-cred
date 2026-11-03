@@ -13,7 +13,7 @@ import { useStore } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/earner/profile")({
-  head: () => ({ meta: [{ title: "Public profile — MicroCred" }] }),
+  head: () => ({ meta: [{ title: "Public profile — ISKRA" }] }),
   component: () => (
     <RoleGuard role="earner">
       <Profile />

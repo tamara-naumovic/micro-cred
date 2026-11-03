@@ -47,7 +47,7 @@ export function PublicLayout() {
         <Outlet />
       </main>
       <footer className="border-t border-border bg-muted/30 py-8 text-center text-xs text-muted-foreground whitespace-pre-wrap">
-        CredSeal · Research prototype for the doctoral micro-credential platform&nbsp;
+        ISKRA · Research prototype for the doctoral micro-credential platform&nbsp;
       </footer>
     </div>
   );

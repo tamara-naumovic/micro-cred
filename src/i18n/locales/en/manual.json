@@ -4,7 +4,7 @@
   "restartTour": "Restart guided tour",
   "gettingStarted": {
     "title": "Getting started",
-    "p1": "MicroCred lets you collect and share verifiable micro-credentials. Every issued credential is anchored on the blockchain and can be independently verified.",
+    "p1": "ISKRA lets you collect and share verifiable micro-credentials. Every issued credential is anchored on the blockchain and can be independently verified.",
     "p2": "Below you'll find more detail on each part of the platform. Use the \"Open …\" links to jump straight to the matching page."
   },
   "sections": {

@@ -1,12 +1,12 @@
 {
   "manual": {
-    "headTitle": "Uputstvo — MicroCred",
+    "headTitle": "Uputstvo — ISKRA",
     "title": "Uputstvo",
     "description": "Vodič kroz platformu — šta svaki deo radi i kako ga koristiti.",
     "restartTour": "Ponovo pokrenite obilazak",
     "gettingStarted": {
       "title": "Početak rada",
-      "p1": "MicroCred omogućava vašoj instituciji da osmišlja, izdaje i upravlja verljivim mikrokredencijalima. Svaki izdati kredencijal je usidren na blokčejnu kako bi ga svako mogao nezavisno da verifikuje.",
+      "p1": "ISKRA omogućava vašoj instituciji da osmišlja, izdaje i upravlja verljivim mikrokredencijalima. Svaki izdati kredencijal je usidren na blokčejnu kako bi ga svako mogao nezavisno da verifikuje.",
       "p2": "U nastavku ćete pronaći više detalja o svakom delu platforme. Koristite linkove „Otvori …“ da biste direktno prešli na odgovarajuću stranicu.",
       "staffNote": " Kao zaposleni, vidite odeljke relevantne za mikrokredencijale kojima ste dodeljeni."
     },
