@@ -8,6 +8,13 @@
       "when": 1793713371490,
       "tag": "0000_evaluation_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793714771585,
+      "tag": "0001_fix_eval_campaign_participant_read",
+      "breakpoints": true
     }
   ]
 }
