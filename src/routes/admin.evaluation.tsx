@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/lib/store";
-import { median, toCsv } from "@/lib/evaluation/logic";
+import { median } from "@/lib/evaluation/logic";
 import { loadEarnerScenarios, loadEarnerScenarioVersions } from "@/lib/evaluation/scenarios";
 
 export const Route = createFileRoute("/admin/evaluation")({
@@ -39,13 +39,6 @@ export const Route = createFileRoute("/admin/evaluation")({
 const db = supabase as any;
 type Row = Record<string, any>;
 
-function download(name: string, csv: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = name; a.click();
-  URL.revokeObjectURL(url);
-}
 const secs = (ms: number | null) => (ms == null ? "—" : `${Math.round(ms / 1000)} s`);
 
 function EvaluationAdmin() {
@@ -60,6 +53,8 @@ function EvaluationAdmin() {
   const [earners, setEarners] = useState<Row[]>([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportFile, setExportFile] = useState<{ blob: Blob; name: string; campaignId: string; language: string } | null>(null);
   const [versions, setVersions] = useState<string[]>([]);
   const [form, setForm] = useState({ name: "", version: "v1", starts_at: "", ends_at: "", use_questionnaire_url: "" });
 
@@ -160,33 +155,55 @@ function EvaluationAdmin() {
   const code = (scenarioId: string) => scenarios.find((s) => s.id === scenarioId)?.code ?? "";
 
   const exportAll = async () => {
-    const tag = (camp?.name ?? "campaign").replace(/\W+/g, "_");
-    download(`${tag}_participants.csv`, toCsv(assignments.map((a) => ({
-      participant: a.anonymous_export_id, consent_status: a.consent_status, enabled: a.enabled,
-      invited_at: a.invited_at, consented_at: a.consented_at, declined_at: a.declined_at, finished_at: a.finished_at,
-    }))));
-    download(`${tag}_scenario_attempts.csv`, toCsv(attempts.map((a) => ({
-      participant: pseudo(a.assignment_id), scenario: code(a.scenario_id), attempt_number: a.attempt_number,
-      status: a.status, outcome: a.outcome, outcome_source: a.outcome_source, started_at: a.started_at, ended_at: a.ended_at,
-      active_duration_ms: a.active_duration_ms, help_duration_ms: a.help_duration_ms, help_count: a.help_count,
-      instructor_help_count: a.instructor_help_count, feedback: a.feedback_text,
-    }))));
-    const ids = assignments.map((a) => a.id);
-    const { data: evs } = ids.length ? await db.from("evaluation_events").select("*").in("assignment_id", ids).order("occurred_at").limit(20000) : { data: [] };
-    const attemptMap = new Map(attempts.map((a) => [a.id, a]));
-    download(`${tag}_events.csv`, toCsv((evs ?? []).map((e: Row) => ({
-      participant: pseudo(e.assignment_id), scenario: e.attempt_id ? code(attemptMap.get(e.attempt_id)?.scenario_id) : "",
-      attempt_number: e.attempt_id ? attemptMap.get(e.attempt_id)?.attempt_number : "", event_type: e.event_type,
-      source: e.source, occurred_at: e.occurred_at, metadata: e.metadata,
-    }))));
-    download(`${tag}_summary.csv`, toCsv(summary.map(({ title: _t, ...r }) => r)));
+    if (!camp || exporting) return;
+    setExporting(true);
+    setExportFile(null);
+    try {
+      // Browser-only loading keeps ExcelJS out of the server and initial page bundle.
+      const { readExportPages, evaluationWorkbookBlob } = await import("@/lib/evaluation/workbook");
+      const readRelated = (table: string) => readExportPages<Row>((from, to) => db.from(table)
+        .select("*, evaluation_assignments!inner(campaign_id)").eq("evaluation_assignments.campaign_id", camp.id)
+        .order("id").range(from, to));
+      const [participants, allAttempts, events, sessions, currentScenarios] = await Promise.all([
+        readExportPages<Row>((from, to) => db.from("evaluation_assignments").select("*").eq("campaign_id", camp.id).order("invited_at").order("id").range(from, to)),
+        readRelated("evaluation_attempts"), readRelated("evaluation_events"), readRelated("evaluation_sessions"),
+        loadEarnerScenarios<Row>(camp.version),
+      ]);
+      const known = new Set(currentScenarios.map((s) => s.id));
+      const missing = [...new Set(allAttempts.map((a) => a.scenario_id))].filter((id) => !known.has(id));
+      for (let i = 0; i < missing.length; i += 100) {
+        currentScenarios.push(...await readExportPages<Row>((from, to) => db.from("evaluation_scenarios").select("*").in("id", missing.slice(i, i + 100)).order("id").range(from, to)));
+      }
+      events.sort((a, b) => String(a.occurred_at).localeCompare(String(b.occurred_at)));
+      const blob = await evaluationWorkbookBlob({ campaign: camp, assignments: participants, attempts: allAttempts, events, sessions, scenarios: currentScenarios }, Boolean(sr));
+      const tag = String(camp.name).replace(/[^\p{L}\p{N}_-]+/gu, "_").slice(0, 80) || "campaign";
+      setExportFile({ blob, name: `${tag}_evaluation.xlsx`, campaignId: camp.id, language: i18n.language });
+    } catch (error) {
+      toast.error(t("admin.exportError"), { description: error instanceof Error ? error.message : undefined });
+    } finally { setExporting(false); }
+  };
+  const readyExport = exportFile?.campaignId === camp?.id && exportFile?.language === i18n.language ? exportFile : null;
+  const downloadExport = async () => {
+    if (!readyExport) return;
+    // The file is already prepared; the click retains user activation on Safari/iOS.
+    const file = new File([readyExport.blob], readyExport.name, { type: readyExport.blob.type });
+    if (matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: file.name }); return; }
+      catch (error) { if ((error as DOMException).name === "AbortError") return; }
+    }
+    const url = URL.createObjectURL(readyExport.blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = readyExport.name;
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    setExportFile(null);
   };
 
   const selectedAttempts = attempts.filter((a) => a.assignment_id === selected);
 
   return (
     <PageShell title={t("admin.title")} description={t("admin.description")}
-      actions={camp && <Button onClick={() => void exportAll()}><Download className="mr-2 h-4 w-4" />{t("admin.export")}</Button>}>
+      actions={camp && <Button disabled={exporting} onClick={() => void (readyExport ? downloadExport() : exportAll())}><Download className="mr-2 h-4 w-4" />{t(exporting ? "admin.exporting" : readyExport ? "admin.downloadXlsx" : "admin.export")}</Button>}>
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader><CardTitle className="text-base">{t("admin.campaigns")}</CardTitle></CardHeader>

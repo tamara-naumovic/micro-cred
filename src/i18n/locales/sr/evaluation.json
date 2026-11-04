@@ -46,7 +46,7 @@
     "summary": "Pregled po scenarijima", "scenario": "Scenario", "started": "Započeto", "completed": "Završeno",
     "skipped": "Preskočeno", "verified": "Potvrđeno", "selfReported": "Samoprijavljeno", "medianTime": "Medijana aktivnog vremena",
     "helpRate": "Koristili pomoć", "instructorRate": "Pomoć nastavnika", "attempts": "Pokušaji", "outcome": "Ishod",
-    "time": "Aktivno vreme", "helpCount": "Pomoć", "comment": "Komentar", "export": "Izvezi CSV",
+    "time": "Aktivno vreme", "helpCount": "Pomoć", "comment": "Komentar", "export": "Pripremi XLSX", "exporting": "Priprema XLSX…", "downloadXlsx": "Preuzmi XLSX", "exportError": "Izveštaj nije pripremljen. Pokušajte ponovo.",
     "noCampaign": "Kreirajte kampanju za početak.", "none": "Još nema podataka.", "detail": "Pokušaji učesnika",
     "dataNote": "Preskočeni i nezapočeti scenariji prikazuju se kao neprocenjeni, nikad kao neuspeh. Potvrđeni i samoprijavljeni ishodi su odvojeni."
   }
