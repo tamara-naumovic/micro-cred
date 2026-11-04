@@ -36,7 +36,7 @@ export function scenarioMetrics(attempts: Row[]) {
     verified: count("outcome", "verified_success"), selfReported: count("outcome", "self_reported_success"),
     partial: count("outcome", "partial"), failed: count("outcome", "failed"), notAssessed: count("outcome", "not_assessed"),
     activeSeconds: sum("active_duration_ms") / 1000, helpSeconds: sum("help_duration_ms") / 1000,
-    medianSeconds: median(completed.map((a) => n(a.active_duration_ms) / 1000)),
+    medianSeconds: completed.length ? n(median(completed.map((a) => n(a.active_duration_ms)))) / 1000 : null,
     helpCount: sum("help_count"), instructorCount: sum("instructor_help_count"), errors: sum("error_count"),
   };
 }
@@ -95,7 +95,7 @@ export async function buildEvaluationWorkbook(data: EvaluationExportData, sr = f
     const sessionHeader = sheet.addRow(sr ? ["Sesija", "Početak (UTC)", "Kraj (UTC)", "Status"] : ["Session", "Started (UTC)", "Ended (UTC)", "Status"]);
     data.sessions.filter((s) => s.assignment_id === participant.id).forEach((s, i) => sheet.addRow([i + 1, s.started_at, s.finished_at, s.status]));
     sheet.addRow([]);
-    const eventHeader = sheet.addRow(sr ? ["Události (UTC)", "Scenario", "Pokušaj", "Tip događaja", "Izvor", "Metapodaci"] : ["Event time (UTC)", "Scenario", "Attempt", "Event type", "Source", "Metadata"]);
+    const eventHeader = sheet.addRow(sr ? ["Vreme događaja (UTC)", "Scenario", "Pokušaj", "Tip događaja", "Izvor", "Metapodaci"] : ["Event time (UTC)", "Scenario", "Attempt", "Event type", "Source", "Metadata"]);
     for (const e of data.events.filter((e) => e.assignment_id === participant.id)) {
       const a = data.attempts.find((a) => a.id === e.attempt_id);
       sheet.addRow([e.occurred_at, data.scenarios.find((s) => s.id === a?.scenario_id)?.code ?? null, a?.attempt_number ?? null, e.event_type, e.source, JSON.stringify(sanitizeMeta(e.metadata))]);
@@ -114,7 +114,7 @@ export async function buildEvaluationWorkbook(data: EvaluationExportData, sr = f
     const ref = (r: typeof rs[number], col: string) => `'${r.sheet}'!${col}${r.start}:${col}${r.end}`;
     const aggregate = (fn: string, col: string, criterion?: string) => rs.map((r) => `${fn}(${ref(r, col)}${criterion ? `,"${criterion}"` : ""})`).join("+") || "0";
     const formula = (f: string, result: number | null) => ({ formula: f, result: result ?? "" });
-    const row = summary.addRow([s.code, title(s), formula(aggregate("COUNT", "C"), m.attempts), m.participants,
+    const row = summary.addRow([s.code, title(s), formula(aggregate("COUNT", "C"), m.attempts), formula(rs.map((r) => `IF(COUNT(${ref(r, "C")})>0,1,0)`).join("+") || "0", m.participants),
       ...[["completed", m.completed], ["skipped", m.skipped], ["abandoned", m.abandoned]].map(([status, result]) => formula(aggregate("COUNTIF", "D", String(status)), Number(result))),
       ...[["verified_success", m.verified], ["self_reported_success", m.selfReported], ["partial", m.partial], ["failed", m.failed]].map(([outcome, result]) => formula(aggregate("COUNTIF", "E", String(outcome)), Number(result))),
       formula(rs.map((r) => `COUNTIFS(${ref(r, "E")},"not_assessed",${ref(r, "C")},">0")`).join("+") || "0", m.notAssessed),
@@ -151,7 +151,8 @@ function formatSheet(sheet: ExcelJS.Worksheet, headers: number[], columns: numbe
   }
   sheet.eachRow((row, index) => {
     if (index > 10 && index % 2 === 0 && !headers.includes(index)) row.eachCell((c) => { c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: palette.band } }; });
-    const maxLength = Math.max(...row.values.filter((v) => typeof v === "string").map((v) => String(v).length), 0);
+    const values = Array.isArray(row.values) ? row.values : Object.values(row.values);
+    const maxLength = Math.max(...values.filter((v) => typeof v === "string").map((v) => String(v).length), 0);
     if (index > 10) row.height = Math.min(409, Math.max(row.height ?? 32, Math.ceil(maxLength / 48) * 14));
   });
 }
@@ -160,17 +161,4 @@ export async function evaluationWorkbookBlob(data: EvaluationExportData, sr: boo
   const workbook = await buildEvaluationWorkbook(data, sr);
   const buffer = await workbook.xlsx.writeBuffer();
   return new Blob([new Uint8Array(buffer)], { type: MIME });
-}
-
-export async function deliverEvaluationWorkbook(blob: Blob, filename: string) {
-  const file = new File([blob], filename, { type: MIME });
-  if (matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: filename }); return; }
-    catch (error) { if ((error as DOMException).name === "AbortError") return; }
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
