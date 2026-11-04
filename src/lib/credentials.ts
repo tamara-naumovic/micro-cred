@@ -130,13 +130,21 @@ export async function updateCredentialSharing(
 }
 
 export async function fetchPublicCredential(shareToken: string) {
+  void recordShareVisit("credential", shareToken);
   const { data, error } = await supabase.rpc("get_public_credential", { _share_token: shareToken });
   if (error) throw error;
   return data?.[0] ?? null;
 }
 
 export async function fetchPublicProfile(shareToken: string) {
+  void recordShareVisit("profile", shareToken);
   const { data, error } = await supabase.rpc("get_public_profile", { _share_token: shareToken });
   if (error) throw error;
   return data?.[0] ?? null;
+}
+
+/** Evaluation E8/E9: tells the server a share link was opened. Sends nothing about the visitor; never blocks the page. */
+async function recordShareVisit(kind: "credential" | "profile", token: string) {
+  if (typeof window === "undefined") return;
+  try { await (supabase.rpc as any)("eval_record_share_visit", { _kind: kind, _token: token }); } catch { /* ignore */ }
 }
