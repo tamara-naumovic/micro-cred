@@ -153,7 +153,7 @@ function EvaluationAdmin() {
   // Same formulas as the XLSX export (computeScenarioMetrics over deduplicated events).
   const summary = useMemo(() => scenarios.map((s) => {
     const list = attempts.filter((a) => a.scenario_id === s.id);
-    return { code: s.code, title: sr ? s.title_sr : s.title_en, ...computeScenarioMetrics(list, events) };
+    return { code: s.code, title: sr ? s.title_sr : s.title_en, ...computeScenarioMetrics(list as any, events as any) };
   }), [scenarios, attempts, events, sr]);
 
   const pseudo = (assignmentId: string) => assignments.find((a) => a.id === assignmentId)?.anonymous_export_id ?? "";
