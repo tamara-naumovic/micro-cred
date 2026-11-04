@@ -20,7 +20,30 @@
 7. **USE**: pseudonim se ne prikazuje učesniku, nema „Kopiraj ID".
 8. **Dashboard**: nedostaju Not assessed, stope sa imeniteljem, N uz medijanu; medijana i dalje računa sve završene pokušaje bez jasne napomene.
 
-## 2. Predloženi redosled (iterativno)
+## 2. Predlog serverskog kriterijuma uspeha po scenariju
+
+Opšte pravilo: dokaz se računa samo ako nastane **tokom aktivnog pokušaja** (između početka i kraja) tog učesnika u aktivnoj kampanji. Klik „Završi" nikad sam ne daje potvrđen uspeh. Za scenarije gde je cilj razumevanje, server potvrđuje da je korisnik **stigao do prave informacije**, a tačan odgovor na kratko pitanje (opciono, uključuje se po kampanji) daje pun uspeh.
+
+| Scenario | Serverska provera (uslov za „verified_success") | Delimično („partial") | Inače |
+|---|---|---|---|
+| E1 Početna | Učesnik je tokom pokušaja otvorio najmanje 3 od 5 glavnih sekcija (kredencijali, prijave, profil, obaveštenja, podešavanja) | 1–2 sekcije | not_assessed |
+| E2 Katalog | Otvoren detalj bar jednog šablona + tačan odgovor na pitanje „Ko je izdavalac?" (izbor sa liste) | Otvoren detalj, bez pitanja / netačno | not_assessed |
+| E3 Prijava | U bazi nastala nova prijava ovog učesnika tokom pokušaja (već postoji, ispravlja se prepisivanje) | — | not_assessed; „failed" samo uz zabeleženu grešku pri slanju |
+| E4 Status prijave | Otvorena stranica prijave koja zaista postoji + tačan odgovor „Koji je status?" (server poredi sa stvarnim statusom te prijave) | Otvorena prijava bez tačnog odgovora | blokirano ako učesnik nema prijavu |
+| E5 Pregled kredencijala | Otvoren detalj sopstvenog kredencijala + tačan izbor izdavaoca i statusa (server poredi sa stvarnim) | Otvoren detalj | blokirano ako nema kredencijal |
+| E6A Prihvatanje | Ponuda prešla u prihvaćeno stanje (već postoji) | — | blokirano ako nema ponude |
+| E6B Odbijanje | Ponuda odbijena uz sačuvan razlog, različita od one iz E6A (već postoji + provera razlike) | Odbijena bez razloga | blokirano ako nema druge ponude |
+| E7A Sakrivanje atributa | Isti kredencijal: jedan prikazni atribut isključen, pa ponovo uključen tokom pokušaja | Samo isključen | not_assessed |
+| E7B Sakrivanje kredencijala | Javnost isključena, pa ponovo uključena (već postoji) | Samo isključena | not_assessed |
+| E8 Deljenje i provera | Kopiran link sopstvenog javnog kredencijala + taj kredencijal otvoren na javnoj stranici provere iz iste prijavljene sesije (bez praćenja drugih posetilaca) | Samo kopiran link | not_assessed |
+| E9 Javni profil | Otvoren sopstveni javni profil + tačan odgovor „Koliko je kredencijala javno vidljivo?" (server poredi) | Otvoren profil | not_assessed |
+| E10 Obaveštenja i podešavanja | Otvorena oba dela + bar jedno obaveštenje označeno kao pročitano ili promenjeno podešavanje (npr. jezik) | Otvoren samo jedan deo | not_assessed |
+| E11 Odjava | Server zabeleži odjavu pre gašenja sesije, a sledeći zahtev ka zaštićenim podacima bez prijave je odbijen | Samo zabeležena odjava | not_assessed |
+
+Napomene: „Blokirano" = nedostaje preduslov, nije neuspeh i ne ulazi u imenilac stope uspeha. Pitanja razumevanja (E2, E4, E5, E9) su opciona po kampanji i uključuju se samo pri kreiranju nove kampanje, ne usred aktivne. E1 i E10 nemaju pitanje, pa njihov uspeh znači „pronašao", ne „razumeo" — tako se i označava u izvozu.
+
+## 3. Predloženi redosled (iterativno)
+
 
 **Korak 1 — P0 ispravke ishoda (najvažnije)**
 - Klik na „Završi" nikad ne može da sruši serverski potvrđen uspeh; ishod se ponovo pročita iz baze pre upisa.
