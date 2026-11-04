@@ -31,7 +31,7 @@ describe("evaluation XLSX export", () => {
     expect(sheet.getCell("J12").value).toBe(2.5);
     expect(sheet.getCell("K12").value).toBe(2);
     expect(sheet.getCell("L12").value).toBe(1);
-    expect(sheet.getCell("M12").value).toBe(3);
+    expect(sheet.getCell("M12").value).toBeNull(); // errors are not measured -> empty, never 0
     expect(sheet.getCell("P12").value).toBe(1);
     expect(sheet.getCell("H12").value).toBeNull();
   });

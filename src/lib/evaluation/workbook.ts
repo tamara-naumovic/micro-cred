@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { median, sanitizeMeta } from "./logic";
+import { computeScenarioMetrics, dedupeEvents, median, sanitizeMeta, TIMER_DEFINITION_VERSION } from "./logic";
 
 type Row = Record<string, any>;
 export interface EvaluationExportData {
@@ -47,16 +47,19 @@ export async function buildEvaluationWorkbook(data: EvaluationExportData, sr = f
   workbook.creator = "ISKRA";
   workbook.created = new Date();
   workbook.calcProperties.fullCalcOnLoad = true;
+  // Double clicks are collapsed once here so dashboard and workbook count the same events.
+  data = { ...data, events: dedupeEvents(data.events as any) as Row[] };
   const summary = workbook.addWorksheet(sr ? "Sumarni rezultati" : "Scenario summary");
   const title = (s: Row) => String((sr ? s.title_sr : s.title_en) ?? s.code);
   const note = sr
-    ? "Vreme: sekunde; datumi: UTC. Medijana: samo završeni pokušaji. Preskočeno nije neuspeh. Ocene težine i odgovori iz eksternog upitnika trenutno se ne prikupljaju. Komentari su slobodan tekst i mogu sadržati lične podatke. Aktivni pokušaji prikazuju poslednje sačuvano vreme."
-    : "Time: seconds; dates: UTC. Median: completed attempts only. Skipped is not failure. Difficulty ratings and external questionnaire answers are not currently collected. Free-text comments may contain personal information. Active attempts show last saved durations.";
+    ? "Vreme: sekunde; datumi: UTC. Aktivno vreme ne uključuje pauze, skriven tab i pomoć (tajmer t2; bez automatske pauze zbog neaktivnosti). Proteklo = od početka do kraja, sa pauzama. timer_quality=uncertain: osvežavanje/zatvaranje pretraživača, interval se računa samo do poslednjeg signala. Ponovljeni isti klikovi u roku od 3 s broje se jednom. Greške se ne mere (prazno). Medijana: samo završeni pokušaji. Preskočeno nije neuspeh. Ocene težine i odgovori iz eksternog upitnika trenutno se ne prikupljaju. Komentari su slobodan tekst i mogu sadržati lične podatke. Aktivni pokušaji prikazuju poslednje sačuvano vreme."
+    : "Time: seconds; dates: UTC. Active time excludes pauses, hidden tab and Help (timer t2; no idle auto-pause). Elapsed = start to end incl. pauses. timer_quality=uncertain: reload/closed browser, interval credited only up to the last heartbeat. Repeated identical clicks within 3 s count once. Errors are not measured (empty). Median: completed attempts only. Skipped is not failure. Difficulty ratings and external questionnaire answers are not currently collected. Free-text comments may contain personal information. Active attempts show last saved durations.";
   const intro = (sheet: ExcelJS.Worksheet, participant?: Row) => {
     sheet.addRow(["ISKRA", data.campaign.name]);
     sheet.addRow([sr ? "Verzija kampanje" : "Campaign version", data.campaign.version]);
     sheet.addRow([sr ? "Verzije scenarija" : "Scenario versions", [...new Set(data.scenarios.map((s) => s.version))].join(", ")]);
     sheet.addRow([sr ? "Izvoz (UTC)" : "Exported (UTC)", new Date().toISOString()]);
+    sheet.addRow([sr ? "Definicija tajmera" : "Timer definition", [...new Set(data.attempts.map((a) => a.timer_definition_version ?? "t1"))].join(", ") || TIMER_DEFINITION_VERSION]);
     if (participant) {
       sheet.addRow([sr ? "Pseudonim / Pristanak / Praćenje" : "Pseudonym / Consent / Tracking", participant.anonymous_export_id, participant.consent_status, participant.enabled]);
       sheet.addRow([sr ? "Pozvan / Prihvatio / Završio (UTC)" : "Invited / Consented / Finished (UTC)", participant.invited_at, participant.consented_at, participant.finished_at]);
@@ -72,8 +75,8 @@ export async function buildEvaluationWorkbook(data: EvaluationExportData, sr = f
   intro(summary);
   const ranges = new Map<string, { sheet: string; start: number; end: number }[]>();
   const attemptHeaders = sr
-    ? ["Scenario", "Naslov", "Pokušaj", "Status", "Ishod", "Izvor ishoda", "Početak (UTC)", "Kraj (UTC)", "Aktivno vreme (s)", "Vreme pomoći (s)", "Broj pomoći", "Pomoć nastavnika", "Broj grešaka", "Komentar", "Završeno aktivno vreme (s)", "Zahtevi nastavniku"]
-    : ["Scenario", "Title", "Attempt", "Status", "Outcome", "Outcome source", "Started (UTC)", "Ended (UTC)", "Active time (s)", "Help time (s)", "Help count", "Instructor help count", "Error count", "Feedback", "Completed active time (s)", "Instructor requests"];
+    ? ["Scenario", "Naslov", "Pokušaj", "Status", "Ishod", "Izvor ishoda", "Početak (UTC)", "Kraj (UTC)", "Aktivno vreme (s)", "Vreme pomoći (s)", "Broj pomoći", "Pomoć nastavnika", "Broj grešaka", "Komentar", "Završeno aktivno vreme (s)", "Zahtevi nastavniku", "Dobijena pomoć nastavnika (događaji)", "Ukupno proteklo vreme (s)", "Kvalitet tajmera", "Verzija tajmera", "Pravilo provere", "Razlog neprocenjenosti"]
+    : ["Scenario", "Title", "Attempt", "Status", "Outcome", "Outcome source", "Started (UTC)", "Ended (UTC)", "Active time (s)", "Help time (s)", "Help count", "Instructor help count", "Error count", "Feedback", "Completed active time (s)", "Instructor requests", "Instructor help received (events)", "Elapsed time (s)", "Timer quality", "Timer definition", "Verification rule", "Not assessed reason"];
   data.assignments.forEach((participant, index) => {
     const sheet = workbook.addWorksheet(`P${index + 1}-${String(participant.anonymous_export_id).replace(/[^a-zA-Z0-9-]/g, "").slice(0, 18)}`);
     intro(sheet, participant);
@@ -84,8 +87,11 @@ export async function buildEvaluationWorkbook(data: EvaluationExportData, sr = f
       if (!attempts.length) sheet.addRow([scenario.code, title(scenario), null, "not_started", "not_assessed"]);
       for (const a of attempts) {
         const requests = data.events.filter((e) => e.attempt_id === a.id && e.event_type === "instructor_help_requested").length;
-        const row = sheet.addRow([scenario.code, title(scenario), a.attempt_number, a.status, a.outcome, a.outcome_source, a.started_at, a.ended_at, n(a.active_duration_ms) / 1000, n(a.help_duration_ms) / 1000, n(a.help_count), n(a.instructor_help_count), n(a.error_count), a.feedback_text ?? null, a.status === "completed" ? n(a.active_duration_ms) / 1000 : null, requests]);
-        for (const col of [9, 10, 15]) row.getCell(col).numFmt = '0.000;[Red](0.000);"-"';
+        const received = data.events.filter((e) => e.attempt_id === a.id && e.event_type === "instructor_help_received").length;
+        const elapsed = a.ended_at ? (new Date(a.ended_at).getTime() - new Date(a.started_at).getTime()) / 1000 : null;
+        const row = sheet.addRow([scenario.code, title(scenario), a.attempt_number, a.status, a.outcome, a.outcome_source, a.started_at, a.ended_at, n(a.active_duration_ms) / 1000, n(a.help_duration_ms) / 1000, n(a.help_count), n(a.instructor_help_count), null, a.feedback_text ?? null, a.status === "completed" ? n(a.active_duration_ms) / 1000 : null, requests,
+          received, elapsed, a.timer_quality ?? (a.timer_definition_version === "t2" ? "ok" : "legacy"), a.timer_definition_version ?? "t1", a.verification_rule ?? null, a.outcome === "not_assessed" ? a.not_assessed_reason ?? null : null]);
+        for (const col of [9, 10, 15, 18]) row.getCell(col).numFmt = '0.000;[Red](0.000);"-"';
       }
       const existing = ranges.get(scenario.id) ?? [];
       existing.push({ sheet: sheet.name, start, end: sheet.rowCount });
@@ -100,16 +106,17 @@ export async function buildEvaluationWorkbook(data: EvaluationExportData, sr = f
       const a = data.attempts.find((a) => a.id === e.attempt_id);
       sheet.addRow([e.occurred_at, data.scenarios.find((s) => s.id === a?.scenario_id)?.code ?? null, a?.attempt_number ?? null, e.event_type, e.source, JSON.stringify(sanitizeMeta(e.metadata))]);
     }
-    formatSheet(sheet, [10, sessionHeader.number, eventHeader.number], 16);
+    formatSheet(sheet, [10, sessionHeader.number, eventHeader.number], 22);
     const end = ranges.get(data.scenarios.at(-1)?.id)?.find((r) => r.sheet === sheet.name)?.end ?? 10;
-    sheet.autoFilter = { from: "A10", to: `P${end}` };
+    sheet.autoFilter = { from: "A10", to: `V${end}` };
   });
   summary.addRow(sr
-    ? ["Scenario", "Naslov", "Pokušaji", "Učesnici", "Završeno", "Preskočeno", "Prekinuto", "Potvrđen uspeh", "Samoprijavljen uspeh", "Delimično", "Neuspeh", "Neprocenjeno", "Aktivno ukupno (s)", "Pomoć ukupno (s)", "Medijana završenih (s)", "Broj pomoći", "Pomoć nastavnika", "Greške", "Zahtevi nastavniku"]
-    : ["Scenario", "Title", "Attempts", "Participants", "Completed", "Skipped", "Abandoned", "Verified success", "Self-reported success", "Partial", "Failed", "Not assessed", "Total active (s)", "Total help (s)", "Median completed (s)", "Help count", "Instructor help", "Errors", "Instructor requests"]);
+    ? ["Scenario", "Naslov", "Pokušaji", "Učesnici", "Završeno", "Preskočeno", "Prekinuto", "Potvrđen uspeh", "Samoprijavljen uspeh", "Delimično", "Neuspeh", "Neprocenjeno", "Aktivno ukupno (s)", "Pomoć ukupno (s)", "Medijana završenih (s)", "Broj pomoći", "Pomoć nastavnika", "Greške (ne meri se)", "Zahtevi nastavniku", "Stopa potvrđenog uspeha", "Stopa korišćenja pomoći", "Stopa pomoći nastavnika", "N za medijanu", "Nedostaje preduslov"]
+    : ["Scenario", "Title", "Attempts", "Participants", "Completed", "Skipped", "Abandoned", "Verified success", "Self-reported success", "Partial", "Failed", "Not assessed", "Total active (s)", "Total help (s)", "Median completed (s)", "Help count", "Instructor help", "Errors (not measured)", "Instructor requests", "Verified success rate", "Help rate", "Instructor assistance rate", "Median N", "Prerequisite missing"]);
   for (const s of data.scenarios) {
     const list = data.attempts.filter((a) => a.scenario_id === s.id);
     const m = scenarioMetrics(list);
+    const shared = computeScenarioMetrics(list as any, data.events as any);
     const rs = ranges.get(s.id) ?? [];
     const ref = (r: typeof rs[number], col: string) => `'${r.sheet}'!${col}${r.start}:${col}${r.end}`;
     const aggregate = (fn: string, col: string, criterion?: string) => rs.map((r) => `${fn}(${ref(r, col)}${criterion ? `,"${criterion}"` : ""})`).join("+") || "0";
@@ -120,13 +127,18 @@ export async function buildEvaluationWorkbook(data: EvaluationExportData, sr = f
       formula(rs.map((r) => `COUNTIFS(${ref(r, "E")},"not_assessed",${ref(r, "C")},">0")`).join("+") || "0", m.notAssessed),
       formula(aggregate("SUM", "I"), m.activeSeconds), formula(aggregate("SUM", "J"), m.helpSeconds),
       formula(rs.length ? `IF(COUNT(${rs.map((r) => ref(r, "O")).join(",")})=0,"",MEDIAN(${rs.map((r) => ref(r, "O")).join(",")}))` : '""', m.medianSeconds),
-      formula(aggregate("SUM", "K"), m.helpCount), formula(aggregate("SUM", "L"), m.instructorCount), formula(aggregate("SUM", "M"), m.errors),
-      formula(aggregate("SUM", "P"), data.events.filter((e) => e.event_type === "instructor_help_requested" && list.some((a) => a.id === e.attempt_id)).length)]);
+      formula(aggregate("SUM", "K"), m.helpCount), formula(aggregate("SUM", "L"), m.instructorCount), null,
+      formula(aggregate("SUM", "P"), data.events.filter((e) => e.event_type === "instructor_help_requested" && list.some((a) => a.id === e.attempt_id)).length),
+      shared.verifiedRate, shared.helpRate, shared.instructorRate, shared.medianN, shared.blocked]);
     for (const col of [13, 14, 15]) row.getCell(col).numFmt = '0.000;[Red](0.000);"-"';
+    for (const col of [20, 21, 22]) row.getCell(col).numFmt = "0.0%";
+    row.getCell(20).note = sr ? "Potvrđeni / (potvrđeni + delimični + neuspešni). Prazno = nema procenjivih pokušaja." : "Verified / (verified + partial + failed). Empty = no evaluable attempts.";
+    row.getCell(21).note = sr ? "Pokušaji sa ≥1 otvaranjem uputstva / svi započeti pokušaji." : "Attempts with ≥1 help_opened / all started attempts.";
+    row.getCell(22).note = sr ? "Pokušaji sa ≥1 dobijenom pomoći nastavnika / svi započeti pokušaji." : "Attempts with ≥1 instructor_help_received / all started attempts.";
     row.getCell(4).note = sr ? "Različiti učesnici sa najmanje jednim pokušajem." : "Distinct participants with at least one attempt.";
   }
-  formatSheet(summary, [10], 19);
-  summary.autoFilter = { from: "A10", to: `S${Math.max(10, summary.rowCount)}` };
+  formatSheet(summary, [10], 24);
+  summary.autoFilter = { from: "A10", to: `X${Math.max(10, summary.rowCount)}` };
   return workbook;
 }
 

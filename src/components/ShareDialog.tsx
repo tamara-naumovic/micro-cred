@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Copy, Download, Linkedin } from "lucide-react";
 import { toast } from "sonner";
+import { trackEvaluationEvent } from "@/lib/evaluation/EvaluationProvider";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +64,7 @@ export function ShareDialog({ url, title, summary, trigger, qrId = "share-qr", c
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(absoluteUrl);
+      trackEvaluationEvent("share_link_copied");
       toast.success("Link copied to clipboard");
     } catch {
       toast.error("Copy not allowed in this preview — select the link manually.");

@@ -3,7 +3,12 @@
 export type AttemptStatus = "not_started" | "in_progress" | "paused" | "completed" | "skipped" | "abandoned";
 export type Outcome = "verified_success" | "self_reported_success" | "partial" | "failed" | "not_assessed";
 
-export const IDLE_PAUSE_MS = 60_000;
+/** Timer definition t2: active time = in-progress intervals only; explicit pause, hidden tab and Help stop it.
+ *  No idle auto-pause (reading is activity). Intervals after the last heartbeat are not counted. */
+export const TIMER_DEFINITION_VERSION = "t2";
+export const HEARTBEAT_MS = 30_000;
+/** Repeated clicks of the same instructor button within this window count once. */
+export const INSTRUCTOR_DEDUPE_MS = 3_000;
 
 export const DEFAULT_SCENARIO_VERSION = "v1";
 
@@ -106,4 +111,63 @@ export function pageEventFor(pathname: string): string | null {
   if (pathname.startsWith("/earner/settings")) return "settings_viewed";
   if (pathname.startsWith("/earner")) return "page_viewed";
   return null;
+}
+
+/** After a reload/closed browser: credit the running interval only up to the last heartbeat. */
+export function recoverActive(activeMs: number, lastResumedAt: string | null, lastHeartbeatAt: string | null): number {
+  if (!lastResumedAt) return activeMs;
+  const from = new Date(lastResumedAt).getTime();
+  const to = lastHeartbeatAt ? new Date(lastHeartbeatAt).getTime() : from;
+  return activeMs + Math.max(0, to - from);
+}
+
+/** Drop same-type events on the same attempt that repeat within windowMs (double clicks). */
+export function dedupeEvents<T extends { attempt_id: string | null; event_type: string; occurred_at: string }>(events: T[], windowMs = INSTRUCTOR_DEDUPE_MS): T[] {
+  const last = new Map<string, number>();
+  return [...events].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at)).filter((e) => {
+    const key = `${e.attempt_id}|${e.event_type}`;
+    const t = new Date(e.occurred_at).getTime();
+    const prev = last.get(key);
+    last.set(key, t);
+    return prev === undefined || t - prev > windowMs;
+  });
+}
+
+type MetricAttempt = { assignment_id: string; status: string; outcome: string; active_duration_ms: number | string | null;
+  help_count: number | null; not_assessed_reason?: string | null; id?: string };
+type MetricEvent = { attempt_id: string | null; event_type: string };
+
+const rate = (num: number, den: number) => (den ? num / den : null);
+
+/** Shared per-scenario metrics for the admin dashboard and the XLSX export (same formulas). */
+export function computeScenarioMetrics(attempts: MetricAttempt[], events: MetricEvent[] = []) {
+  const started = attempts;
+  const by = (k: "status" | "outcome", v: string) => started.filter((a) => a[k] === v).length;
+  const blocked = started.filter((a) => (a.not_assessed_reason ?? "").startsWith("prerequisite_missing")).length;
+  const verified = by("outcome", "verified_success");
+  const partial = by("outcome", "partial");
+  const failed = by("outcome", "failed");
+  const evaluable = verified + partial + failed;
+  const ids = new Set(started.map((a) => a.id));
+  const withEvent = (type: string) => new Set(events.filter((e) => e.event_type === type && e.attempt_id && ids.has(e.attempt_id)).map((e) => e.attempt_id)).size;
+  const helped = events.length ? withEvent("help_opened") : started.filter((a) => (a.help_count ?? 0) > 0).length;
+  const completed = started.filter((a) => a.status === "completed");
+  const times = completed.map((a) => Number(a.active_duration_ms ?? 0));
+  return {
+    attempts: started.length,
+    participants: new Set(started.map((a) => a.assignment_id)).size,
+    completed: completed.length, skipped: by("status", "skipped"), abandoned: by("status", "abandoned"),
+    verified, selfReported: by("outcome", "self_reported_success"), partial, failed,
+    notAssessed: by("outcome", "not_assessed"), blocked, evaluable,
+    /** verified / attempts with an objectively evaluated outcome (verified + partial + failed). */
+    verifiedRate: rate(verified, evaluable),
+    /** attempts with ≥1 help_opened / all started attempts. */
+    helpRate: rate(helped, started.length), helpedAttempts: helped,
+    instructorRequestedAttempts: withEvent("instructor_help_requested"),
+    instructorReceivedAttempts: withEvent("instructor_help_received"),
+    /** attempts with ≥1 instructor_help_received / all started attempts. */
+    instructorRate: rate(withEvent("instructor_help_received"), started.length),
+    /** median active time over all completed attempts; N = number of completed attempts. */
+    medianActiveMs: median(times), medianN: times.length,
+  };
 }

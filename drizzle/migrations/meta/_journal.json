@@ -15,6 +15,13 @@
       "when": 1793714771585,
       "tag": "0001_fix_eval_campaign_participant_read",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793799543673,
+      "tag": "0002_evaluation_v2_outcomes_timer",
+      "breakpoints": true
     }
   ]
 }

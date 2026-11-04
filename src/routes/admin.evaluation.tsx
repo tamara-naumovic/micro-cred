@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/lib/store";
-import { median } from "@/lib/evaluation/logic";
+import { computeScenarioMetrics, dedupeEvents } from "@/lib/evaluation/logic";
 import { loadEarnerScenarios, loadEarnerScenarioVersions } from "@/lib/evaluation/scenarios";
 
 export const Route = createFileRoute("/admin/evaluation")({
@@ -39,6 +39,17 @@ export const Route = createFileRoute("/admin/evaluation")({
 const db = supabase as any;
 type Row = Record<string, any>;
 
+const pct = (v: number | null) => (v == null ? "—" : `${Math.round(v * 100)}%`);
+async function readAllEvents(assignmentIds: string[]) {
+  const out: Row[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from("evaluation_events").select("attempt_id, event_type, occurred_at")
+      .in("assignment_id", assignmentIds).order("occurred_at").order("id").range(from, from + 999);
+    if (error) throw new Error(error.message);
+    out.push(...(data ?? []));
+    if (!data || data.length < 1000) return out;
+  }
+}
 const secs = (ms: number | null) => (ms == null ? "—" : `${Math.round(ms / 1000)} s`);
 
 function EvaluationAdmin() {
@@ -49,6 +60,7 @@ function EvaluationAdmin() {
   const [campaignId, setCampaignId] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Row[]>([]);
   const [attempts, setAttempts] = useState<Row[]>([]);
+  const [events, setEvents] = useState<Row[]>([]);
   const [scenarios, setScenarios] = useState<Row[]>([]);
   const [earners, setEarners] = useState<Row[]>([]);
   const [search, setSearch] = useState("");
@@ -74,9 +86,13 @@ function EvaluationAdmin() {
     setScenarios(sc);
     const ids = (a ?? []).map((x: Row) => x.id);
     if (ids.length) {
-      const { data: at } = await db.from("evaluation_attempts").select("*").in("assignment_id", ids).order("started_at");
+      const [{ data: at }, ev] = await Promise.all([
+        db.from("evaluation_attempts").select("*").in("assignment_id", ids).order("started_at"),
+        readAllEvents(ids),
+      ]);
       setAttempts(at ?? []);
-    } else setAttempts([]);
+      setEvents(dedupeEvents(ev as any));
+    } else { setAttempts([]); setEvents([]); }
   }, [campaigns]);
 
   useEffect(() => { void loadCampaigns(); }, [loadCampaigns]);
@@ -134,22 +150,11 @@ function EvaluationAdmin() {
     await loadCampaign(campaignId!);
   };
 
+  // Same formulas as the XLSX export (computeScenarioMetrics over deduplicated events).
   const summary = useMemo(() => scenarios.map((s) => {
     const list = attempts.filter((a) => a.scenario_id === s.id);
-    const participants = new Set(list.map((a) => a.assignment_id));
-    const helped = new Set(list.filter((a) => a.help_count > 0).map((a) => a.assignment_id));
-    const instr = new Set(list.filter((a) => a.instructor_help_count > 0).map((a) => a.assignment_id));
-    const completed = list.filter((a) => a.status === "completed");
-    return {
-      code: s.code, title: sr ? s.title_sr : s.title_en,
-      attempts: list.length, participants: participants.size,
-      completed: completed.length, skipped: list.filter((a) => a.status === "skipped").length,
-      verified: list.filter((a) => a.outcome === "verified_success").length,
-      self_reported: list.filter((a) => a.outcome === "self_reported_success").length,
-      median_active_ms: median(completed.map((a) => Number(a.active_duration_ms))),
-      help_participants: helped.size, instructor_participants: instr.size,
-    };
-  }), [scenarios, attempts, sr]);
+    return { code: s.code, title: sr ? s.title_sr : s.title_en, ...computeScenarioMetrics(list as any, events as any) };
+  }), [scenarios, attempts, events, sr]);
 
   const pseudo = (assignmentId: string) => assignments.find((a) => a.id === assignmentId)?.anonymous_export_id ?? "";
   const code = (scenarioId: string) => scenarios.find((s) => s.id === scenarioId)?.code ?? "";
@@ -326,18 +331,27 @@ function EvaluationAdmin() {
             <Table>
               <TableHeader><TableRow>
                 <TableHead>{t("admin.scenario")}</TableHead><TableHead>{t("admin.attempts")}</TableHead>
-                <TableHead>{t("admin.completed")}</TableHead><TableHead>{t("admin.skipped")}</TableHead>
-                <TableHead>{t("admin.verified")}</TableHead><TableHead>{t("admin.selfReported")}</TableHead>
-                <TableHead>{t("admin.medianTime")}</TableHead><TableHead>{t("admin.helpRate")}</TableHead><TableHead>{t("admin.instructorRate")}</TableHead>
+                <TableHead>{t("admin.completed")}</TableHead><TableHead>{t("admin.skipped")}</TableHead><TableHead>{t("admin.abandoned")}</TableHead>
+                <TableHead title={t("admin.verifiedRateTip")}>{t("admin.verified")}</TableHead><TableHead>{t("admin.partial")}</TableHead>
+                <TableHead>{t("admin.selfReported")}</TableHead><TableHead title={t("admin.notAssessedTip")}>{t("admin.notAssessed")}</TableHead>
+                <TableHead title={t("admin.medianTip")}>{t("admin.medianTime")}</TableHead>
+                <TableHead title={t("admin.helpRateTip")}>{t("admin.helpRate")}</TableHead>
+                <TableHead title={t("admin.instructorRateTip")}>{t("admin.instructorRate")}</TableHead>
+                <TableHead>{t("admin.errorCount")}</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {summary.map((r) => (
                   <TableRow key={r.code}>
                     <TableCell><span className="font-mono text-xs">{r.code}</span> <span className="text-sm">{r.title}</span></TableCell>
-                    <TableCell>{r.attempts}</TableCell><TableCell>{r.completed}</TableCell><TableCell>{r.skipped}</TableCell>
-                    <TableCell>{r.verified}</TableCell><TableCell>{r.self_reported}</TableCell>
-                    <TableCell>{secs(r.median_active_ms)}</TableCell>
-                    <TableCell>{r.help_participants}/{r.participants}</TableCell><TableCell>{r.instructor_participants}/{r.participants}</TableCell>
+                    <TableCell>{r.attempts} <span className="text-xs text-muted-foreground">({r.participants})</span></TableCell>
+                    <TableCell>{r.completed}</TableCell><TableCell>{r.skipped}</TableCell><TableCell>{r.abandoned}</TableCell>
+                    <TableCell>{r.verified} <span className="text-xs text-muted-foreground">{pct(r.verifiedRate)}</span></TableCell>
+                    <TableCell>{r.partial}</TableCell><TableCell>{r.selfReported}</TableCell>
+                    <TableCell>{r.notAssessed}{r.blocked ? <span className="text-xs text-muted-foreground"> ({t("admin.blocked")}: {r.blocked})</span> : null}</TableCell>
+                    <TableCell>{secs(r.medianActiveMs)} <span className="text-xs text-muted-foreground">N={r.medianN}</span></TableCell>
+                    <TableCell>{r.helpedAttempts}/{r.attempts} <span className="text-xs text-muted-foreground">{pct(r.helpRate)}</span></TableCell>
+                    <TableCell>{r.instructorReceivedAttempts}/{r.attempts} <span className="text-xs text-muted-foreground">{pct(r.instructorRate)} · {t("admin.requested")}: {r.instructorRequestedAttempts}</span></TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{t("admin.notMeasured")}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

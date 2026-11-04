@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -135,7 +136,14 @@ export function EvaluationDrawer() {
             <Button variant="outline" className="w-full" onClick={() => setConfirmFinish(true)}>{t("finish.button")}</Button>
           )}
           {ev.questionnaireUrl && (
-            <a className="block text-center text-sm text-primary underline" href={ev.questionnaireUrl} target="_blank" rel="noreferrer">{t("finish.questionnaire")}</a>
+            <div className="space-y-2 rounded-md border border-border p-3">
+              <div className="text-xs text-muted-foreground">{t("finish.participantIdNote")}</div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-sm">{ev.participantId}</span>
+                <Button size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(ev.participantId).then(() => toast.success(t("finish.idCopied")), () => toast.error(t("finish.idCopyFailed"))); }}>{t("finish.copyId")}</Button>
+              </div>
+              <a className="block text-center text-sm text-primary underline" href={ev.questionnaireUrl} target="_blank" rel="noreferrer">{t("finish.questionnaire")}</a>
+            </div>
           )}
         </div>
       </SheetContent>
