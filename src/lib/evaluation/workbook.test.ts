@@ -47,7 +47,8 @@ describe("evaluation XLSX export", () => {
     expect(wb.worksheets[0].getCell("O12").formula).toContain('=0,"",MEDIAN(');
     expect(wb.worksheets[0].getCell("O12").result).toBe("");
     const empty = await buildEvaluationWorkbook({ ...fixture, assignments: [], attempts: [], events: [], sessions: [] });
-    expect(empty.worksheets[0].getCell("C11").value).toEqual({ formula: "0", result: 0 });
+    expect(empty.worksheets[0].getCell("C11").formula).toBe("0");
+    expect(empty.worksheets[0].getCell("C11").result).toBe(0);
   });
   it("never exports account identifiers or raw metadata; feedback remains text, not a formula", async () => {
     const wb = await buildEvaluationWorkbook(fixture);
