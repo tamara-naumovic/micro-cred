@@ -77,6 +77,14 @@
     "idCopied": "ID copied",
     "idCopyFailed": "Copy failed — please write the ID down manually."
   },
+  "participantIds": {
+    "title": "Your evaluation IDs",
+    "description": "Your pseudonymized participant ID for each campaign remains available after testing ends. Use the ID for the matching campaign in the USE questionnaire.",
+    "loading": "Loading evaluation IDs",
+    "error": "Your evaluation IDs could not be loaded.",
+    "retry": "Try again",
+    "campaign": "Evaluation campaign"
+  },
   "admin": {
     "title": "Evaluation",
     "description": "Task-based usability testing for selected earner accounts. Off by default.",
