@@ -7,6 +7,7 @@ import { Loader2, Save } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { PageShell } from "@/components/PageShell";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
+import { EvaluationParticipantIds } from "@/components/evaluation/EvaluationParticipantIds";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,14 @@ import { getMyProfile, updateMyProfile, updateMyLanguage } from "@/lib/admin-use
 import { setAppLanguage, type AppLanguage } from "@/i18n";
 
 export const Route = createFileRoute("/earner/settings")({
-  head: () => ({ meta: [{ title: "Settings — ISKRA" }] }),
+  head: () => ({ meta: [
+    { title: "Earner settings — ISKRA" },
+    { name: "description", content: "Manage your ISKRA language, profile, password and evaluation participant IDs." },
+    { property: "og:title", content: "Earner settings — ISKRA" },
+    { property: "og:description", content: "Manage your profile preferences and view your evaluation participant IDs." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: () => (
     <RoleGuard role="earner">
       <SettingsPage />
@@ -40,6 +48,7 @@ function SettingsPage() {
         <LanguageCard />
         <AboutForm />
         <ChangePasswordForm />
+        <EvaluationParticipantIds />
       </div>
     </PageShell>
   );

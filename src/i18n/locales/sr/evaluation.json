@@ -77,6 +77,14 @@
     "idCopied": "ID je kopiran",
     "idCopyFailed": "Kopiranje nije uspelo — prepišite ID ručno."
   },
+  "participantIds": {
+    "title": "Vaši ID-evi evaluacije",
+    "description": "Vaš pseudonimizovani ID učesnika za svaku kampanju dostupan je i nakon završetka testiranja. U USE upitnik unesite ID odgovarajuće kampanje.",
+    "loading": "Učitavanje ID-eva evaluacije",
+    "error": "Vaši ID-evi evaluacije nisu učitani.",
+    "retry": "Pokušaj ponovo",
+    "campaign": "Evaluaciona kampanja"
+  },
   "admin": {
     "title": "Evaluacija",
     "description": "Vođeno testiranje upotrebljivosti za izabrane naloge nosilaca. Podrazumevano isključeno.",
