@@ -35,12 +35,26 @@ Opšte pravilo: dokaz se računa samo ako nastane **tokom aktivnog pokušaja** (
 | E6B Odbijanje | Ponuda odbijena uz sačuvan razlog, različita od one iz E6A (već postoji + provera razlike) | Odbijena bez razloga | blokirano ako nema druge ponude |
 | E7A Sakrivanje atributa | Isti kredencijal: jedan prikazni atribut isključen, pa ponovo uključen tokom pokušaja | Samo isključen | not_assessed |
 | E7B Sakrivanje kredencijala | Javnost isključena, pa ponovo uključena (već postoji) | Samo isključena | not_assessed |
-| E8 Deljenje i provera | Kopiran link sopstvenog javnog kredencijala + taj kredencijal otvoren na javnoj stranici provere iz iste prijavljene sesije (bez praćenja drugih posetilaca) | Samo kopiran link | not_assessed |
-| E9 Javni profil | Otvoren sopstveni javni profil + tačan odgovor „Koliko je kredencijala javno vidljivo?" (server poredi) | Otvoren profil | not_assessed |
+| E8 Deljenje i provera | Link za deljenje kredencijala generisan/kopiran **i** server zabeležio najmanje jednu posetu tom linku tokom pokušaja (javna stranica kredencijala učitana preko tog linka) | Link kopiran, bez posete | not_assessed |
+| E9 Javni profil | Link za deljenje profila generisan/kopiran **i** server zabeležio najmanje jednu posetu tom linku tokom pokušaja; opciono + tačan odgovor „Koliko je kredencijala javno vidljivo?" | Link kopiran / profil pregledan u aplikaciji, bez posete | not_assessed |
 | E10 Obaveštenja i podešavanja | Otvorena oba dela + bar jedno obaveštenje označeno kao pročitano ili promenjeno podešavanje (npr. jezik) | Otvoren samo jedan deo | not_assessed |
 | E11 Odjava | Server zabeleži odjavu pre gašenja sesije, a sledeći zahtev ka zaštićenim podacima bez prijave je odbijen | Samo zabeležena odjava | not_assessed |
 
 Napomene: „Blokirano" = nedostaje preduslov, nije neuspeh i ne ulazi u imenilac stope uspeha. Pitanja razumevanja (E2, E4, E5, E9) su opciona po kampanji i uključuju se samo pri kreiranju nove kampanje, ne usred aktivne. E1 i E10 nemaju pitanje, pa njihov uspeh znači „pronašao", ne „razumeo" — tako se i označava u izvozu.
+
+Posete linku (E8, E9): javna stranica pri učitavanju javlja serveru samo „link ovog kredencijala/profila je otvoren" — bez IP adrese, imena, kolačića ili bilo kakvog podatka o posetiocu. Server tu posetu pripisuje isključivo aktivnom E8/E9 pokušaju vlasnika linka. Poseta se računa bez obzira da li link otvara sam učesnik (npr. u novom tabu) ili neko kome ga je poslao.
+
+## 2a. Nova uputstva za scenarije
+
+Uputstva (koraci i opis uspeha, EN i SR) za svih 13 scenarija prepisuju se tako da korak po korak vode do tačno onog što server proverava. Primer za E8:
+1. Otvorite „Moji kredencijali" i izaberite kredencijal.
+2. Uključite javnu vidljivost ako je isključena.
+3. Kliknite „Podeli" i kopirajte link.
+4. Otvorite kopirani link u novom tabu (ili ga pošaljite nekome da ga otvori).
+5. Na javnoj stranici pokrenite proveru i vratite se ovde, pa kliknite „Završi scenario".
+Uspeh: „Link je otvoren najmanje jednom (proverava se automatski)."
+
+Isti obrazac važi za ostale: svaki korak je konkretan klik/stranica, a opis uspeha navodi šta se proverava automatski. Izmena se upisuje kao nova verzija scenarija (v2) kako stari rezultati ostanu uporedivi; postojeće kampanje na v1 se ne menjaju. Kompletan tekst svih uputstava pokazujem pre upisa.
 
 ## 3. Predloženi redosled (iterativno)
 
