@@ -53,3 +53,36 @@ describe("evaluation rules", () => {
     expect(sanitizeMeta({ email: "a@b.c", scenario_code: "E3", token: "x" })).toEqual({ scenario_code: "E3" });
   });
 });
+
+import { computeScenarioMetrics, dedupeEvents, recoverActive } from "./logic";
+
+describe("evaluation v2 rules", () => {
+  it("after a reload, credits the running interval only up to the last heartbeat", () => {
+    expect(recoverActive(1000, "2026-01-01T10:00:00Z", "2026-01-01T10:00:30Z")).toBe(31_000);
+    expect(recoverActive(1000, "2026-01-01T10:00:00Z", null)).toBe(1000);
+  });
+
+  it("counts repeated instructor clicks within 3 s once", () => {
+    const e = (t: string) => ({ attempt_id: "a", event_type: "instructor_help_received", occurred_at: t });
+    expect(dedupeEvents([e("2026-01-01T10:00:00Z"), e("2026-01-01T10:00:01Z"), e("2026-01-01T10:00:10Z")])).toHaveLength(2);
+  });
+
+  it("verified rate excludes not-assessed and skipped attempts from the denominator", () => {
+    const a = (id: string, status: string, outcome: string) => ({ id, assignment_id: "p", status, outcome, active_duration_ms: 1000, help_count: 0 });
+    const m = computeScenarioMetrics([a("1", "completed", "verified_success"), a("2", "completed", "not_assessed"), a("3", "skipped", "not_assessed"), a("4", "completed", "partial")]);
+    expect(m.verifiedRate).toBe(0.5);
+    expect(m.notAssessed).toBe(2);
+    expect(m.medianN).toBe(3);
+  });
+
+  it("help rate = attempts with a help_opened event / started attempts; instructor received counted separately", () => {
+    const a = (id: string) => ({ id, assignment_id: "p", status: "completed", outcome: "not_assessed", active_duration_ms: 0, help_count: 0 });
+    const m = computeScenarioMetrics([a("1"), a("2")], [
+      { attempt_id: "1", event_type: "help_opened" },
+      { attempt_id: "2", event_type: "instructor_help_received" },
+    ]);
+    expect(m.helpRate).toBe(0.5);
+    expect(m.instructorRate).toBe(0.5);
+    expect(m.instructorRequestedAttempts).toBe(0);
+  });
+});
