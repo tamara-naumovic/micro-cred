@@ -28,6 +28,7 @@ type Ctx = {
   activeAttempt: EvalAttempt | null;
   activeScenario: EvalScenario | null;
   questionnaireUrl: string | null;
+  participantId: string;
   panelOpen: boolean;
   setPanelOpen: (v: boolean) => void;
   showInvite: boolean;
@@ -333,7 +334,7 @@ export function EvaluationProvider({ children }: { children: ReactNode }) {
   }, [activeAttempt, activeScenario, logEvent, patchAttempt]);
 
   const value: Ctx | null = assignment ? {
-    assignment, scenarios, attempts, activeAttempt, activeScenario, questionnaireUrl, panelOpen, setPanelOpen,
+    assignment, scenarios, attempts, activeAttempt, activeScenario, questionnaireUrl, participantId: assignment.anonymous_export_id, panelOpen, setPanelOpen,
     showInvite: assignment.consent_status === "invited" && !postponed, helpOpen,
     accept, postpone, decline, finishParticipation, start, pause, resume, skip, complete, openHelp, closeHelp, instructorHelp,
   } : null;
