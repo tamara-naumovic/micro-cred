@@ -45,7 +45,7 @@ describe("evaluation XLSX export", () => {
     expect(wb.worksheets[0].getCell("D11").value).toMatchObject({ result: 1 });
     expect(wb.worksheets[0].getCell("O11").value).toMatchObject({ result: 1.851 });
     expect(wb.worksheets[0].getCell("O12").formula).toContain('=0,"",MEDIAN(');
-    expect(wb.worksheets[0].getCell("O12").result).toBeUndefined();
+    expect(wb.worksheets[0].getCell("O12").result).toBe("");
     const empty = await buildEvaluationWorkbook({ ...fixture, assignments: [], attempts: [], events: [], sessions: [] });
     expect(empty.worksheets[0].getCell("C11").value).toEqual({ formula: "0", result: 0 });
   });
