@@ -4,4 +4,6 @@
 - [x] Add pending, saved, and error feedback to both instructor-help buttons; evaluation tests passed and build OK.
 - [ ] Verify both clicks on a real earner account — blocked: available browser session belongs to a platform administrator, not the participant shown in the screenshot.
 - [x] Replace campaign CSV export with a pseudonymized XLSX workbook containing scenario summaries and complete per-participant attempt metrics.
-- [x] Verify authenticated XLSX download and real campaign results; recalculate 221 formulas with zero errors and inspect all three sheets.
+- [x] Verify authenticated XLSX download and real campaign results; recalculate 221 formulas with zero errors and inspect all three sheets.- [x] Evaluation v2: server-only outcomes (guard trigger), per-scenario server rules (E1–E11), E8/E9 share-link visit, E11 server logout, timer t2 (no idle pause, heartbeat, help time persisted), instructor double-click dedupe, USE participant ID + copy, dashboard/export rates with N; new v2 scenario instructions.
+- [ ] Manual pass E1, E3, E5, E6, E7, E8, E11 with two earner test accounts — needs a participant session (only admin session available).
+- [ ] Optional knowledge-check questions (E2, E4, E5, E9) and "prerequisite missing" badge before start — deferred per plan.
