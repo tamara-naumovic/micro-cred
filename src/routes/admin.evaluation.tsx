@@ -291,6 +291,15 @@ function EvaluationAdmin() {
                     </div>
                   )}
                 </div>
+                <div className="mb-4 space-y-2">
+                  <textarea
+                    className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder={t("admin.bulkPlaceholder")}
+                    value={bulkEmails}
+                    onChange={(e) => setBulkEmails(e.target.value)}
+                  />
+                  <Button size="sm" variant="outline" disabled={!bulkEmails.trim() || bulkBusy} onClick={() => void bulkInvite()}>{t("admin.bulkAdd")}</Button>
+                </div>
                 <Table>
                   <TableHeader><TableRow>
                     <TableHead>{t("admin.pseudonym")}</TableHead><TableHead>{t("admin.name")}</TableHead>
