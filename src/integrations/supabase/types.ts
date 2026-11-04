@@ -758,16 +758,22 @@ export type Database = {
           feedback_text: string | null
           help_count: number
           help_duration_ms: number
+          help_started_at: string | null
           id: string
           instructor_help_count: number
+          last_heartbeat_at: string | null
           last_resumed_at: string | null
+          not_assessed_reason: string | null
           outcome: string
           outcome_source: string | null
           scenario_id: string
           session_id: string
           started_at: string
           status: string
+          timer_definition_version: string
+          timer_quality: string
           updated_at: string
+          verification_rule: string | null
         }
         Insert: {
           active_duration_ms?: number
@@ -778,16 +784,22 @@ export type Database = {
           feedback_text?: string | null
           help_count?: number
           help_duration_ms?: number
+          help_started_at?: string | null
           id?: string
           instructor_help_count?: number
+          last_heartbeat_at?: string | null
           last_resumed_at?: string | null
+          not_assessed_reason?: string | null
           outcome?: string
           outcome_source?: string | null
           scenario_id: string
           session_id: string
           started_at?: string
           status?: string
+          timer_definition_version?: string
+          timer_quality?: string
           updated_at?: string
+          verification_rule?: string | null
         }
         Update: {
           active_duration_ms?: number
@@ -798,16 +810,22 @@ export type Database = {
           feedback_text?: string | null
           help_count?: number
           help_duration_ms?: number
+          help_started_at?: string | null
           id?: string
           instructor_help_count?: number
+          last_heartbeat_at?: string | null
           last_resumed_at?: string | null
+          not_assessed_reason?: string | null
           outcome?: string
           outcome_source?: string | null
           scenario_id?: string
           session_id?: string
           started_at?: string
           status?: string
+          timer_definition_version?: string
+          timer_quality?: string
           updated_at?: string
+          verification_rule?: string | null
         }
         Relationships: [
           {
@@ -1642,6 +1660,7 @@ export type Database = {
     Functions: {
       can_access_application: { Args: { _app_id: string }; Returns: boolean }
       can_view_profile: { Args: { _profile_id: string }; Returns: boolean }
+      eval_finalize_attempt: { Args: { _attempt_id: string }; Returns: string }
       eval_owns_active_assignment: {
         Args: { _assignment_id: string }
         Returns: boolean
@@ -1649,6 +1668,11 @@ export type Database = {
       eval_owns_assignment: {
         Args: { _assignment_id: string }
         Returns: boolean
+      }
+      eval_record_logout: { Args: never; Returns: undefined }
+      eval_record_share_visit: {
+        Args: { _kind: string; _token: string }
+        Returns: undefined
       }
       eval_record_verified: {
         Args: {
