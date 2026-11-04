@@ -145,6 +145,31 @@ function EvaluationAdmin() {
     setSearch("");
     await loadCampaign(campaignId!);
   };
+  const [bulkEmails, setBulkEmails] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const bulkInvite = async () => {
+    const emails = [...new Set(bulkEmails.split(/[\s,;]+/).map((e) => e.trim().toLowerCase()).filter(Boolean))];
+    const byEmail = new Map(earners.map((e) => [String(e.email ?? "").toLowerCase(), e]));
+    const notFound: string[] = [];
+    const already: string[] = [];
+    const ids: string[] = [];
+    for (const em of emails) {
+      const p = byEmail.get(em);
+      if (!p) notFound.push(em);
+      else if (assignedIds.has(p.id)) already.push(em);
+      else ids.push(p.id);
+    }
+    setBulkBusy(true);
+    if (ids.length) {
+      const { error } = await db.from("evaluation_assignments").insert(ids.map((user_id) => ({ campaign_id: campaignId, user_id })));
+      if (error) { setBulkBusy(false); return toast.error(error.message); }
+    }
+    setBulkBusy(false);
+    toast.success(t("admin.bulkResult", { added: ids.length, already: already.length, missing: notFound.length }));
+    if (notFound.length) toast.warning(t("admin.bulkNotFound", { list: notFound.join(", ") }));
+    setBulkEmails(notFound.join("\n"));
+    await loadCampaign(campaignId!);
+  };
   const toggleEnabled = async (a: Row) => {
     await db.from("evaluation_assignments").update({ enabled: !a.enabled, disabled_at: a.enabled ? new Date().toISOString() : null }).eq("id", a.id);
     await loadCampaign(campaignId!);
