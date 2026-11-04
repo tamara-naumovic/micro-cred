@@ -55,6 +55,7 @@
     "driver.js": "^1.4.0",
     "embla-carousel-react": "^8.6.0",
     "ethers": "^6.16.0",
+    "exceljs": "^4.4.0",
     "fflate": "^0.8.3",
     "i18next": "^26.3.1",
     "input-otp": "^1.4.2",

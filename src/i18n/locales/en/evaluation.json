@@ -46,7 +46,7 @@
     "summary": "Per-scenario summary", "scenario": "Scenario", "started": "Started", "completed": "Completed",
     "skipped": "Skipped", "verified": "Verified", "selfReported": "Self-reported", "medianTime": "Median active time",
     "helpRate": "Used Help", "instructorRate": "Instructor help", "attempts": "Attempts", "outcome": "Outcome",
-    "time": "Active time", "helpCount": "Help", "comment": "Comment", "export": "Export CSV",
+    "time": "Active time", "helpCount": "Help", "comment": "Comment", "export": "Prepare XLSX", "exporting": "Preparing XLSX…", "downloadXlsx": "Download XLSX", "exportError": "The report could not be prepared. Please try again.",
     "noCampaign": "Create a campaign to start.", "none": "No data yet.", "detail": "Attempts of participant",
     "dataNote": "Skipped and not-started scenarios are reported as not assessed, never as failures. Verified and self-reported outcomes are listed separately."
   }

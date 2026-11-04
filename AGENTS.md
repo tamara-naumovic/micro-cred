@@ -1,2 +1,3 @@
 - Evaluation Mode (usability study) is isolated in src/lib/evaluation + evaluation_* tables; core tables only get fail-safe AFTER triggers that never block the main operation — why: research tracking must never affect real credential flows.
 - Resolve evaluation scenarios through the shared evaluation scenario loader for participant lists and admin reports — why: fallback must preserve the same scenario IDs in tasks, results, and exports.
+- Campaign workbooks use a browser-only ExcelJS module, fresh paginated RLS reads, and explicit pseudonymous field allowlists — why: complete research exports must not leak account identifiers or truncate results.
